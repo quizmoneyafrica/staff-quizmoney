@@ -6,6 +6,7 @@ import { useState } from "react";
 import WithdrawalApi from "@/app/api/withdrawalApi";
 import copy from "copy-to-clipboard";
 import { Copy } from "lucide-react";
+import { Avatar } from "@radix-ui/themes";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -64,10 +65,10 @@ const WithdrawDetailsModal: React.FunctionComponent<
           <div className="border-t border-b py-4 flex items-center justify-between">
             <div className="inline-flex items-center gap-2">
               <div className="w-[40px] h-[40px] p-1 rounded-full bg-primary-50">
-                <img
-                  src="https://parsefiles.back4app.com/dowjS3cNrNj5Vw20BJARrzFjP6NWYTjSmCqA64XU/57db5bc0c198035c83009eb13f7245fa_Male.png"
-                  alt=""
-                  className="w-full h-full object-cover rounded-full"
+                <Avatar
+                  fallback={data.firstName?.charAt(0).toUpperCase()}
+                  radius="full"
+                  className="bg-primary-50"
                 />
               </div>
 

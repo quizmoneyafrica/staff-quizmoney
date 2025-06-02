@@ -6,8 +6,6 @@ function AppLiveQueries() {
   return (
     <>
       <DashboardQueries />
-      <WalletQueries />
-      <LeaderboardQueries />
     </>
   );
 }
