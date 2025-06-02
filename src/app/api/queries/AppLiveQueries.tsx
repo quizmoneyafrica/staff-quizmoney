@@ -1,13 +1,11 @@
 "use client";
 import React from "react";
-import HomeQueries from "./DashboardQueries";
-import WalletQueries from "./walletQueries";
-import LeaderboardQueries from "./leaderboardQueries";
+import DashboardQueries from "./DashboardQueries";
 
 function AppLiveQueries() {
   return (
     <>
-      <HomeQueries />
+      <DashboardQueries />
       <WalletQueries />
       <LeaderboardQueries />
     </>
