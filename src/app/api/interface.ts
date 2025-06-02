@@ -105,7 +105,7 @@ export interface User {
     __type: "Date";
     iso?: Date;
   };
-  promotionalMails?: boolean;
+  promotionalMails?: boolean; 
   referralCode?: string;
   referralPoints?: number;
   sessionToken?: string;
