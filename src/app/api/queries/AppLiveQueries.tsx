@@ -5,7 +5,7 @@ import DashboardQueries from "./DashboardQueries";
 function AppLiveQueries() {
   return (
     <>
-      <DashboardQueries />
+      <DashboardQueries /> 
     </>
   );
 }
