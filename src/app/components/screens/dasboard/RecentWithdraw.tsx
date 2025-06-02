@@ -1,0 +1,95 @@
+import * as React from "react";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import WithdrawalApi from "@/app/api/withdrawalApi";
+import { useAppDispatch, useAppSelector } from "@/app/hooks/useAuth";
+import {
+  setWithdrawalRequests,
+  WithdrawalRequest,
+} from "@/app/store/withdrawalSlice";
+import RecentWithdrawTable from "../withdrawal/table";
+import QmDrawer from "../../drawer/drawer";
+import WithdrawDetailsModal from "../withdrawal/WithdrawDrawer";
+
+const RecentWithdraw: React.FunctionComponent = () => {
+  const dispatch = useAppDispatch();
+  const { requests } = useAppSelector((state) => state.withdraw);
+  const [openViewModal, setOpenViewModal] = React.useState(false);
+  const [selectedData, setSelectedData] = React.useState<WithdrawalRequest>();
+  const [fetching, setFetching] = React.useState(false);
+
+  const fetchWithdrawalRequest = React.useCallback(async () => {
+    if (requests.length > 0) return;
+    setFetching(true);
+    try {
+      const res = await WithdrawalApi.fetchWithdrawalRequest();
+      console.log("Request", res.data.result.withdrawalRequests);
+      dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
+    } catch {
+      toast.error("Error fetching Withdrawal Request. Please refresh");
+    } finally {
+      setFetching(false);
+    }
+  }, [dispatch, requests.length]);
+
+  React.useEffect(() => {
+    fetchWithdrawalRequest();
+  }, [fetchWithdrawalRequest]);
+
+  const handleOpenViewDetails = (data: WithdrawalRequest) => {
+    setOpenViewModal(true);
+    setSelectedData(data);
+  };
+
+  const closeViewDetails = () => {
+    setOpenViewModal(false);
+  };
+
+  // console.log(selectedData);
+  if (fetching) {
+    return (
+      <motion.div
+        layout
+        className="animate-pulse p-4 bg-neutral-300 rounded-lg h-[223px] w-full col-span-2"
+      ></motion.div>
+    );
+  }
+  return (
+    <div>
+      <div className="p-4">
+        <p className="text-neutral-800 text-base font-heading">
+          Pending Withdrawal Request
+        </p>
+      </div>
+
+      <QmDrawer
+        open={openViewModal}
+        onOpenChange={setOpenViewModal}
+        heightClass="h-auto lg:h-[80%]"
+        trigger={
+          <RecentWithdrawTable
+            data={requests.slice(0, 5)}
+            viewDetails={handleOpenViewDetails}
+          />
+        }
+      >
+        {selectedData && (
+          <WithdrawDetailsModal
+            data={selectedData}
+            onClose={closeViewDetails}
+          />
+        )}
+      </QmDrawer>
+      {/* {openViewModal && (
+        <WithdrawDetailsModal
+          isOpen={openViewModal}
+          onClose={closeViewDetails}
+          data={selectedData}
+          fetchWithdrawalRequest={fetchWithdrawalRequest}
+        />
+      )} */}
+    </div>
+  );
+};
+
+export default RecentWithdraw;

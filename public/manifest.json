@@ -1,0 +1,25 @@
+{
+  "theme_color": "#17478b",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "display": "standalone",
+  "lang": "en-US",
+  "name": "QM Staff",
+  "short_name": "QM Staff",
+  "start_url": "/",
+  "description": "Quiz Money Staff",
+  "icons": [
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "icon512_maskable.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "icon512_rounded.png",
+      "type": "image/png"
+    }
+  ]
+}
