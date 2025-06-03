@@ -14,7 +14,7 @@ import { AxiosError } from "axios";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import React, { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "sonner"; 
 
 const initialForm = {
   firstName: "",
