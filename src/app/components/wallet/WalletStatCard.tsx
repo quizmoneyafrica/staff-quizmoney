@@ -19,6 +19,8 @@ const cardColors = {
     text: 'text-[#006E7D]',
     value: 'text-[#006E7D]',
     icon: '/icons/w1.svg',
+    imgd: '/icons/wa1.svg',
+
   },
   blue: {
     bg: 'bg-[#E4F1FA]',
@@ -26,6 +28,8 @@ const cardColors = {
     text: 'text-[#17478B]',
     value: 'text-[#17478B]',
     icon: '/icons/w2.svg',
+    imgd: '/icons/wa2.svg',
+
   },
   green: {
     bg: 'bg-[#E7FEED]',
@@ -33,6 +37,7 @@ const cardColors = {
     text: 'text-[#009028]',
     value: 'text-[#009028]',
     icon: '/icons/w3.svg',
+    imgd: '/icons/wa3.svg',
   },
 };
 
@@ -90,9 +95,9 @@ const WalletStatCard: React.FC<WalletStatCardProps> = ({ title, value, color, sh
         transition={{ duration: 0.5, delay: 0.6 }}
       >
         <CustomImage
-          src={colors.icon}
+          src={colors.imgd}
           alt=""
-          className="absolute bottom-0 size-28 right-0 pointer-events-none"
+          className=" absolute right-0 pointer-events-none"
         />
       </motion.div>
     </motion.div>

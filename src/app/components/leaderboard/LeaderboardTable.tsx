@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import Pagination from './Pagination';
 import PlayerProfileModal from './PlayerProfileModal';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 
 
@@ -207,7 +208,7 @@ const LeaderboardTable= () => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.date}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div className="flex items-center text-primary-900">
-                    <CustomImage src={row.avatarUrl} alt={`${row.username}'s avatar`} className="w-8 h-8 rounded-full mr-2" />
+                    <Image src={row.avatarUrl} alt={`${row.username}'s avatar`} className=" h-10 w-10  rounded-full mr-2"  width={40} height={40} />
                     {row.username}
                   </div>
                 </td>
