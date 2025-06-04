@@ -99,7 +99,7 @@ function AppHeader() {
           className="capitalize flex items-center flex-wrap overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] sm:max-w-none"
         >
           <div className=" flex-row flex items-center gap-2">
-            {(pathname.split("/").length > 2 ||
+            {((pathname.split("/").length > 2 && !pathname.includes('player-profile')) ||
               pathname.includes("notification")) && (
               <button
                 onClick={() => router?.back()}
@@ -108,11 +108,15 @@ function AppHeader() {
                 <CircleArrowLeft />
               </button>
             )}
-            <span className=" lg:flex">
+            {!pathname.includes('player-profile')&&<span className=" lg:flex">
               {lastSegment === "Home"
                 ? `Welcome, ${user?.firstName} 👋`
                 : lastSegment}
-            </span>
+            </span>}
+            {pathname.includes('player-profile')&&<span className=" lg:flex text-[#1B212D]">
+            User Profile 
+            </span>}
+
           </div>
 
           {/* <span className="lg:hidden">{lastSegment}</span> */}
