@@ -38,12 +38,18 @@ const baseConfig = {
   compiler: {
     removeConsole: isProd,
   },
+ 
   images: {
     remotePatterns: [
       {
         hostname: "parsefiles.back4app.com",
         protocol: "https" as const,
       },
+      {
+        protocol: "https" as const,
+        hostname: "github.com",
+        pathname: "/**",
+      }
     ],
   },
   async headers() {

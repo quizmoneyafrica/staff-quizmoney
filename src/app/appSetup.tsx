@@ -1,8 +1,8 @@
-"use client";
+"use client"; 
 import React, { useEffect } from "react";
 import { Theme } from "@radix-ui/themes";
 import { Provider } from "react-redux";
-import { persistor, store } from "./store/store";
+import { persistor, store } from "./store/store"; 
 import { useAppDispatch } from "./hooks/useAuth";
 import { PersistGate } from "redux-persist/integration/react";
 import { setRehydrated } from "./store/authSlice";
