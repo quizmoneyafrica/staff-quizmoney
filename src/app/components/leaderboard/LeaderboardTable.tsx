@@ -174,7 +174,7 @@ const LeaderboardTable= () => {
           <span className=' md:block hidden  '>Filter by</span>
         </button>
       </div>
-      <div className="w-full overflow-x-auto rounded-lg  shadow-sm max-w-full">
+      <div className="w-full overflow-x-auto rounded-lg   max-w-full">
         <table className="min-w-full">
           <thead className="bg-inherit">
             <tr>
