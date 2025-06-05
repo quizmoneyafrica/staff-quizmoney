@@ -2,6 +2,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import CustomImage from '../CustomImage';
+import { useSelector } from 'react-redux';
+import { selectPlayers } from '@/app/store/playersSlice';
+import {Skeleton} from '@radix-ui/themes';
 
 interface Stat {
   title: string;
@@ -15,24 +18,63 @@ interface StatCardProps {
   index: number;
 }
 
+const LoadingStatCard: React.FC<{ index: number }> = ({ index }) => {
+  const cardVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: 20,
+      scale: 0.95
+    },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: [0.4, 0, 0.2, 1],
+        delay: index * 0.1
+      }
+    }
+  };
+
+  return (
+    <motion.div 
+      className="bg-[#E4F1FA] rounded-xl px-6 py-14 relative overflow-hidden"
+      variants={cardVariants}
+    >
+      <div className="flex items-start justify-between relative z-10">
+        <div className="flex-1 flex items-center gap-5">
+          <Skeleton className="w-12 h-12 rounded-lg" />
+          <div className='flex-col gap-3 flex'>
+            <Skeleton className="h-6 w-32 rounded" />
+            <Skeleton className="h-8 w-24 rounded" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 const UserStatsComponent: React.FC = () => {
+  const {playersData,isLoading:isStatLoading}=useSelector(selectPlayers)
+  const {totalActiveUsers,totalInactiveUsers,totalNoOfUsers}=playersData??{}
   const stats: Stat[] = [
     {
       title: "Total No of Users",
-      value: "1000",
+      value: `${totalNoOfUsers??0}`,
       icon: <CustomImage src={'/icons/useruser.svg'} className="w-6 h-6" alt='user profile' />,
       iconBg: "bg-[#BCDDF4]"
     },
     {
       title: "Total active Users", 
-      value: "800",
+      value:`${totalActiveUsers??0}`,
            icon: <CustomImage src={'/icons/useruser.svg'} className="w-6 h-6" alt='user profile' />,
 
       iconBg: "bg-[#BCDDF4]"
     },
     {
       title: "Total No of inactive Users",
-      value: "100", 
+      value: `${totalInactiveUsers??0}`, 
         icon: <CustomImage src={'/icons/useruser.svg'} className="w-6 h-6" alt='user profile' />,
 
       iconBg: "bg-[#BCDDF4]"
@@ -49,6 +91,39 @@ const UserStatsComponent: React.FC = () => {
       }
     }
   };
+
+  if (isStatLoading) {
+    return (
+      <motion.div 
+        className="w-full"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <motion.div 
+          className="hidden md:grid md:grid-cols-3 gap-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {[0, 1, 2].map((index) => (
+            <LoadingStatCard key={index} index={index} />
+          ))}
+        </motion.div>
+
+        <motion.div 
+          className="md:hidden space-y-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {[0, 1, 2].map((index) => (
+            <LoadingStatCard key={index} index={index} />
+          ))}
+        </motion.div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 

@@ -21,7 +21,7 @@ type SalesData = {
   name: string;
   value: number;
 };
-
+  
 
 const data: SalesData[] = [
   { name: 'Monday', value: 600000 },

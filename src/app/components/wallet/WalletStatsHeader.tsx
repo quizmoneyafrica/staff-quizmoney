@@ -10,7 +10,7 @@ const WalletStatsHeader = () => {
 
   return (
     <div className="flex justify-between items-center ">
-      <h2 className="text-2xl font-semibold">Wallet Statistic</h2>
+      <h2 className="text-2xl font-semibold">Wallet Statistic </h2>
       <TimeRangeDropdown 
         options={options}
         selected={selected}

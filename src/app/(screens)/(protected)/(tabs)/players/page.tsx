@@ -1,13 +1,15 @@
-import UserStatsComponent from "@/app/components/player/UserStatsComponent";
-import PlayersTable from "@/app/components/player/PlayersTable";
 import React from "react";
+import PlayersParent from "@/app/components/player/PlayersParent";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Players | QM Admin",
+  description: "Manage and view player information in the QM Admin dashboard",
+};
 
 function Page() {
   return (
-       <div className="w-full max-w-full overflow-x-hiddengap-12 grid gap-6  py-6">
-      <UserStatsComponent/>
-      <PlayersTable />
-    </div>
+    <PlayersParent/>
   );
 }
 

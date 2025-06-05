@@ -5,6 +5,8 @@ import dashboardReducer from "./dashboardSlice";
 import leaderboardReducer from "./leaderboardSlice";
 import gameReducer from "./gameSlice";
 import withdrawReducer from "./withdrawalSlice";
+import salesReducer from "./salesSlice";
+import playersReducer from "./playersSlice";
 
 import { createFilter } from "redux-persist-transform-filter";
 
@@ -34,6 +36,8 @@ export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
     notifications: notificationReducer,
+    salseData:salesReducer,
+    players:playersReducer,
     dashboard: dashboardReducer,
     leaderboard: leaderboardReducer,
     game: gameReducer,
