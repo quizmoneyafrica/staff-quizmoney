@@ -49,23 +49,23 @@ const WalletStatCard: React.FC<WalletStatCardProps> = ({ title, value, color, sh
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`rounded-2xl py-14 px-6 flex flex-col gap-4 min-w-[260px] ${colors.bg} relative overflow-hidden`}
+      className={`rounded-2xl py-8 sm:py-14 px-4 sm:px-6 flex flex-col gap-3 sm:gap-4 min-w-[260px] ${colors.bg} relative overflow-hidden`}
     >
-      <div className="flex items-center  gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className={`rounded-xl p-3 ${colors.iconBg}`}
+          className={`rounded-xl p-2 sm:p-3 ${colors.iconBg}`}
         >
-          <CustomImage src={colors.icon} alt="" className="w-8 h-8" />
+          <CustomImage src={colors.icon} alt="" className="w-6 h-6 sm:w-8 sm:h-8" />
         </motion.div>
-        <div className='flex-col flex gap-2'>
+        <div className='flex-col flex gap-1 sm:gap-2'>
           <motion.span 
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.3 }}
-            className={`font-semibold text-lg ${colors.text}`}
+            className={`font-semibold text-base sm:text-lg ${colors.text}`}
           >
             {title}
           </motion.span>
@@ -73,16 +73,16 @@ const WalletStatCard: React.FC<WalletStatCardProps> = ({ title, value, color, sh
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.4 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1 sm:gap-2"
           >
-            <span className={`text-3xl font-bold ${colors.value}`}>{value}</span>
+            <span className={`text-2xl sm:text-3xl font-bold ${colors.value}`}>{value}</span>
             {showEye && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.2, delay: 0.5 }}
               >
-                <EyeOff className="w-5 h-5 text-[#17478B] opacity-60" />
+                <EyeOff className="w-4 h-4 sm:w-5 sm:h-5 text-[#17478B] opacity-60" />
               </motion.div>
             )}
           </motion.div>

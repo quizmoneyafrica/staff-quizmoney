@@ -1,8 +1,8 @@
 import WalletStatCard from "@/app/components/wallet/WalletStatCard";
-import TransactionTable from "@/app/components/wallet/TransactionTable";
 import React from "react";
 import WalletStatsHeader from "@/app/components/wallet/WalletStatsHeader";
 import SalesChart from "@/app/components/sales/SalesChart";
+import TotalTransactionsTable from "@/app/components/sales/TotalTransactionsTable";
 
 type WalletStat = {
   title: string;
@@ -44,7 +44,7 @@ function Page() {
 
     <SalesChart />
 
-   {/* <TransactionTable /> */}
+   <TotalTransactionsTable />
 
   </div>;
 }
