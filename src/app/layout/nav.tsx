@@ -3,7 +3,7 @@ import {
   HomeIcon,
   LogoutIcon,
   SettingIcon,
-  StoreIcon,
+  StoreIcon, 
   SupportIcon,
   WalletIcon,
 } from "../icons/icons";
