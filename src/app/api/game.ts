@@ -12,17 +12,24 @@ const GameApi = {
   fetchNextGame(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(`${BASE_URL}/errorLoad`, {}, { headers: appHeaders });
   },
-  registerForGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
+  getAllGames(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
-      `${BASE_URL}/registerForGame`,
+      `${BASE_URL}/getAllGames`,
+      {},
+      { headers: getSessionTokenHeaders() }
+    );
+  },
+  deleteGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
+    return axios.post(
+      `${BASE_URL}/deleteGame`,
       { gameId },
       { headers: getSessionTokenHeaders() }
     );
   },
-  removeUserFromGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
+  getGameById(objectId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
-      `${BASE_URL}/removeUserFromGame`,
-      { gameId },
+      `${BASE_URL}/getGameById`,
+      { objectId },
       { headers: getSessionTokenHeaders() }
     );
   },

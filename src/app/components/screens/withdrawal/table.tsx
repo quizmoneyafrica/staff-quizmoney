@@ -19,9 +19,15 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
   data,
   viewDetails,
 }) => {
-    type SortableWithdrawalKeys = "id" | "firstName" | "amount" | "balance" | "status" | "createdAt";
+  type SortableWithdrawalKeys =
+    | "id"
+    | "firstName"
+    | "amount"
+    | "balance"
+    | "status"
+    | "createdAt";
 
-    const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | "">("");
+  const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | "">("");
   const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
 
   const handleSort = (key: SortableWithdrawalKeys) => {
@@ -39,7 +45,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
         const order = sortOrder === "asc" ? 1 : -1;
         const aValue = a[sortBy] as string | number | Date;
         const bValue = b[sortBy] as string | number | Date;
-  
+
         if (aValue < bValue) return -1 * order;
         if (aValue > bValue) return 1 * order;
         return 0;
@@ -92,7 +98,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div className="w-[40px] h-[40px] p-1 rounded-full flex items-center justify-center bg-primary-50">
                         <Avatar
-                          src={item.id}
+                          src=""
                           fallback={item.firstName?.charAt(0).toUpperCase()}
                           radius="full"
                           className="bg-primary-50"
