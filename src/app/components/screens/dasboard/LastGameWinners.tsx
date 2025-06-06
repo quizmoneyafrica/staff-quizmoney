@@ -39,7 +39,6 @@ const LastGameWinners: React.FunctionComponent = () => {
     );
   }
 
-
   return (
     <>
       <motion.div className="order-2 lg:order-1 p-4 bg-white rounded-lg h-[323px] w-full lg:col-span-1">
@@ -54,7 +53,7 @@ const LastGameWinners: React.FunctionComponent = () => {
         </div>
 
         <div className="space-y-4 mt-3">
-          {lastGame.slice(0, 6).map((item, index) => {
+          {lastGame.slice(0, 5).map((item, index) => {
             return (
               <UserTable
                 key={index}
