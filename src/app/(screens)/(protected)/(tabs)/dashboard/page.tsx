@@ -41,7 +41,6 @@ function Page() {
       dispatch(setDashboardDetails(res.data.result));
       setFetchingDashData(false);
     } catch (error: any) {
-      console.log(error);
       toast.error('Error loading Dashboard Details, please refresh');
       setFetchingDashData(false);
     }

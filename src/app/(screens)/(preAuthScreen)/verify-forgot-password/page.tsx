@@ -64,14 +64,12 @@ function Page() {
     setCanResend(false);
     try {
       const response = await UserAPI.forgotPassword(email || '');
-      console.log('response: ', response);
       toast.success('OTP Reset Successfully', {
         position: toastPosition,
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.log('ERROR Forgot Password', err);
       toast.error(`${err.response.data.error}`, {
         position: toastPosition,
       });

@@ -32,7 +32,6 @@ const WithdrawDetailsModal: React.FunctionComponent<
       setIsLoading(true);
       const response = await WithdrawalApi.approveWithdrawal(data.id, fee);
 
-      console.log('Response:', response);
       toast.success('Withdrawal approved successfully!');
       onClose();
     } catch (error: any) {

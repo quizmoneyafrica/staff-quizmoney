@@ -102,7 +102,6 @@ function Page() {
     handleStep(1);
     // handle saving game logic here
   };
-  console.log(game);
 
   return (
     <>

@@ -23,7 +23,6 @@ const RecentWithdraw: React.FunctionComponent = () => {
     setFetching(true);
     try {
       const res = await WithdrawalApi.fetchWithdrawalRequest();
-      console.log('Request', res.data.result.withdrawalRequests);
       dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
     } catch {
       toast.error('Error fetching Withdrawal Request. Please refresh');
@@ -45,7 +44,6 @@ const RecentWithdraw: React.FunctionComponent = () => {
     setOpenViewModal(false);
   };
 
-  // console.log(selectedData);
   if (fetching) {
     return (
       <motion.div

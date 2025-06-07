@@ -20,11 +20,9 @@ function GameZone() {
   const fetchGames = useCallback(async () => {
     try {
       const res = await GameApi.getAllGames();
-      console.log(res.data.result);
       dispatch(setAdminGames(res.data.result));
       setFetchingData(false);
-    } catch (error: any) {
-      console.log(error);
+    } catch (error) {
       toast.error('An error occurred loading games, please refresh.');
       setFetchingData(false);
     }
@@ -60,7 +58,6 @@ function GameZone() {
       </div>
     );
   }
-  console.log('Admin Games', adminGames);
 
   const filteredGames = adminGames.filter((game) =>
     game.name.toLowerCase().includes(searchQuery.toLowerCase()),

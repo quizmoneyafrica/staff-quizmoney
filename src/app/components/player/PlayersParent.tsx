@@ -18,15 +18,12 @@ export default function PlayersParent() {
       try {
         store.dispatch(setLoadingPlayers(true));
         const res = await PlayersApi.fetchAdminPlayers();
-        console.log('Player daata');
-
-        console.log(JSON.stringify(res?.data?.result, null, 2));
 
         if (res.data.result) {
           store?.dispatch(setPlayersData(res.data.result));
         }
       } catch (error) {
-        console.log(error, 'Sales Error');
+        console.error('error: ', error);
       } finally {
         store.dispatch(setLoadingPlayers(false));
       }

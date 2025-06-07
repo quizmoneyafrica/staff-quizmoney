@@ -50,9 +50,6 @@ function SalesParent() {
       try {
         store.dispatch(setLoadingSales(true));
         const res = await SalesApi.getSalesDetails();
-        console.log('Sales daata');
-
-        console.log(JSON.stringify(res?.data?.result, null, 2));
 
         if (res.data.result) {
           store?.dispatch(setSalesData(res.data.result));

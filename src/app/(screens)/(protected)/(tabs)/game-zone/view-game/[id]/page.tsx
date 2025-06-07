@@ -35,7 +35,6 @@ function Page() {
   if (fetchingData) {
     return <AppLoader />;
   }
-  console.log(fetchedData);
   if (!fetchedData) return <p>No Data</p>;
   const isoString = fetchedData?.startDate?.iso;
   const dateObj = isoString ? new Date(isoString) : null;

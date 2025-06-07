@@ -41,7 +41,7 @@ function AppHeader() {
       dispatch(setNotifications(res.data.result.notifications));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.log(err.message);
+      console.error(err.message);
     }
   }, [dispatch]);
   useEffect(() => {
@@ -63,15 +63,12 @@ function AppHeader() {
       subscription = await liveQueryClient.subscribe(query);
 
       subscription?.on('create', () => {
-        // console.log("this object was created: ", object);
         fetchNotifications();
       });
       subscription?.on('update', () => {
-        // console.log("this object was updated: ", object);
         fetchNotifications();
       });
       subscription?.on('delete', () => {
-        // console.log("this object was deleted: ", object);
         fetchNotifications();
       });
     };
