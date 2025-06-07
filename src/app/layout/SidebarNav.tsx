@@ -15,7 +15,6 @@ function SidebarNav() {
   const [openLogout, setOpenLogout] = useState(false);
 
   const handleTabRoute = (path: string) => {
-    console.log(path);
     if (pathname !== path) {
       router.push(path);
       window.scrollTo(0, 0);
