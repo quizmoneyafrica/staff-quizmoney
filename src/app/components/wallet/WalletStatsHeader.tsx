@@ -9,9 +9,9 @@ const WalletStatsHeader = () => {
   const [selected, setSelected] = useState(options[0]);
 
   return (
-    <div className="flex justify-between items-center ">
+    <div className="flex items-center justify-between ">
       <h2 className="text-2xl font-semibold">Wallet Statistic </h2>
-      <TimeRangeDropdown 
+      <TimeRangeDropdown
         options={options}
         selected={selected}
         onSelect={setSelected}

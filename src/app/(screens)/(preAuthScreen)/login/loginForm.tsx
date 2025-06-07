@@ -1,23 +1,23 @@
-"use client";
-import UserAPI from "@/app/api/userApi";
-import { useAuth } from "@/app/hooks/useAuth";
-import useFcmToken from "@/app/hooks/useFcmToken";
-import { EyeIcon, EyeSlash, MailIcon } from "@/app/icons/icons";
-import getDeviceId from "@/app/pwa/deviceId";
+'use client';
+import UserAPI from '@/app/api/userApi';
+import { useAuth } from '@/app/hooks/useAuth';
+import useFcmToken from '@/app/hooks/useFcmToken';
+import { EyeIcon, EyeSlash, MailIcon } from '@/app/icons/icons';
+import getDeviceId from '@/app/pwa/deviceId';
 
-import { encryptData } from "@/app/utils/crypto";
-import CustomButton from "@/app/utils/CustomBtn";
-import CustomTextField from "@/app/utils/CustomTextField";
+import { encryptData } from '@/app/utils/crypto';
+import CustomButton from '@/app/utils/CustomBtn';
+import CustomTextField from '@/app/utils/CustomTextField';
 import {
   capitalizeFirstLetter,
   isValidEmail,
   toastPosition,
-} from "@/app/utils/utils";
-import { Flex } from "@radix-ui/themes";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useState } from "react";
-import { toast } from "sonner";
+} from '@/app/utils/utils';
+import { Flex } from '@radix-ui/themes';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 type Props = {
   loading: boolean;
@@ -25,8 +25,8 @@ type Props = {
 };
 
 const LoginForm = ({ loading, setLoading }: Props) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { token, notificationPermissionStatus } = useFcmToken();
   const { loginUser } = useAuth();
@@ -37,10 +37,10 @@ const LoginForm = ({ loading, setLoading }: Props) => {
     setLoading(true);
     if (
       notificationPermissionStatus &&
-      notificationPermissionStatus !== "granted"
+      notificationPermissionStatus !== 'granted'
     ) {
       toast.info(`Notification is not set for Quiz Money`, {
-        position: "bottom-right",
+        position: 'bottom-right',
       });
     }
     if (!email || !password) {
@@ -54,7 +54,7 @@ const LoginForm = ({ loading, setLoading }: Props) => {
     const newValues = {
       email: email.toLowerCase().trim(),
       password: password,
-      deviceToken: token || "",
+      deviceToken: token || '',
       deviceId: deviceId,
     };
     try {
@@ -69,13 +69,13 @@ const LoginForm = ({ loading, setLoading }: Props) => {
           // Dispatch to Redux
           loginUser(encryptedUser);
 
-          router.replace("/dashboard");
+          router.replace('/dashboard');
 
           toast.success(
             `Welcome Back ${capitalizeFirstLetter(userData?.firstName)}`,
             {
-              position: "top-center",
-            }
+              position: 'top-center',
+            },
           );
         } else {
           toast.error(`You are not authorized to access.`, {
@@ -111,7 +111,7 @@ const LoginForm = ({ loading, setLoading }: Props) => {
           label="Password"
           name="password"
           value={password}
-          type={showPassword ? "text" : "password"}
+          type={showPassword ? 'text' : 'password'}
           autoComplete="current-password"
           placeholder="Enter your password"
           onChange={(e) => setPassword(e.target.value)}
@@ -134,17 +134,17 @@ const LoginForm = ({ loading, setLoading }: Props) => {
         <Flex justify="end">
           <Link
             href="/forgot-password"
-            className="underline underline-offset-4 text-primary-900"
+            className="text-primary-900 underline underline-offset-4"
           >
             Forgot your password?
           </Link>
         </Flex>
-        <div className="pt-4 w-full">
+        <div className="w-full pt-4">
           {!loading ? (
             <CustomButton
               type="submit"
               width="full"
-              disabled={!isValidEmail(email) || password === ""}
+              disabled={!isValidEmail(email) || password === ''}
             >
               Login
             </CustomButton>
@@ -168,7 +168,7 @@ export function IconButton({ children, onClick }: IconButtonProps) {
     <button
       type="button"
       onClick={onClick}
-      className="bg-[#ECECEC] hover:bg-[#e2e1e1] cursor-pointer py-3 px-8 rounded-[10px] transition"
+      className="cursor-pointer rounded-[10px] bg-[#ECECEC] px-8 py-3 transition hover:bg-[#e2e1e1]"
     >
       {children}
     </button>

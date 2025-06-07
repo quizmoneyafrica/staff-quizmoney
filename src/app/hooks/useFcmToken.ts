@@ -1,32 +1,32 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { onMessage, Unsubscribe } from "firebase/messaging";
-import { fetchToken, messaging } from "@/app/firebase/firebase";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from 'react';
+import { onMessage, Unsubscribe } from 'firebase/messaging';
+import { fetchToken, messaging } from '@/app/firebase/firebase';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 async function getNotificationPermissionAndToken() {
   // Step 1: Check if Notifications are supported in the browser.
-  if (!("Notification" in window)) {
-    console.info("This browser does not support desktop notification");
+  if (!('Notification' in window)) {
+    console.info('This browser does not support desktop notification');
     return null;
   }
 
   // Step 2: Check if permission is already granted.
-  if (Notification.permission === "granted") {
+  if (Notification.permission === 'granted') {
     return await fetchToken();
   }
 
   // Step 3: If permission is not denied, request permission from the user.
-  if (Notification.permission !== "denied") {
+  if (Notification.permission !== 'denied') {
     const permission = await Notification.requestPermission();
-    if (permission === "granted") {
+    if (permission === 'granted') {
       return await fetchToken();
     }
   }
 
-  console.log("Notification permission not granted.");
+  console.log('Notification permission not granted.');
   return null;
 }
 declare global {
@@ -50,11 +50,11 @@ const useFcmToken = () => {
     const token = await getNotificationPermissionAndToken(); // Fetch the token.
 
     // Step 5: Handle the case where permission is denied.
-    if (Notification.permission === "denied") {
-      setNotificationPermissionStatus("denied");
+    if (Notification.permission === 'denied') {
+      setNotificationPermissionStatus('denied');
       console.info(
-        "%cPush Notifications issue - permission denied",
-        "color: green; background: #c7c7c7; padding: 8px; font-size: 20px"
+        '%cPush Notifications issue - permission denied',
+        'color: green; background: #c7c7c7; padding: 8px; font-size: 20px',
       );
       isLoading.current = false;
       return;
@@ -65,10 +65,10 @@ const useFcmToken = () => {
 
     if (token) {
       setToken(token);
-      setNotificationPermissionStatus("granted");
+      setNotificationPermissionStatus('granted');
       console.info(
-        "%cPush Notifications enabled",
-        "color: green; background: #c7c7c7; padding: 8px; font-size: 20px"
+        '%cPush Notifications enabled',
+        'color: green; background: #c7c7c7; padding: 8px; font-size: 20px',
       );
     } else {
       // Handle the case where permission is not granted and token is not fetched.
@@ -76,7 +76,7 @@ const useFcmToken = () => {
       if (retryLoadToken.current < 3) {
         setTimeout(loadToken, 1000); // Retry after 1 second.
       } else {
-        console.error("Failed to fetch FCM token after 3 retries.");
+        console.error('Failed to fetch FCM token after 3 retries.');
       }
     }
 
@@ -88,7 +88,7 @@ const useFcmToken = () => {
 
   useEffect(() => {
     // Step 8: Initialize token loading when the component mounts.
-    if ("Notification" in window) {
+    if ('Notification' in window) {
       loadToken();
     }
   });
@@ -103,9 +103,9 @@ const useFcmToken = () => {
 
       // Step 9: Register a listener for incoming FCM messages.
       const unsubscribe = onMessage(m, (payload) => {
-        if (Notification.permission !== "granted") return;
+        if (Notification.permission !== 'granted') return;
 
-        console.log("Foreground push notification received:", payload);
+        console.log('Foreground push notification received:', payload);
         const link = payload.fcmOptions?.link || payload.data?.link;
 
         if (link) {
@@ -113,7 +113,7 @@ const useFcmToken = () => {
             `${payload.notification?.title}: ${payload.notification?.body}`,
             {
               action: {
-                label: "Visit",
+                label: 'Visit',
                 onClick: () => {
                   const link = payload.fcmOptions?.link || payload.data?.link;
                   if (link) {
@@ -122,16 +122,16 @@ const useFcmToken = () => {
                 },
               },
               duration: 10000,
-              position: "top-center",
-            }
+              position: 'top-center',
+            },
           );
         } else {
           toast.info(
             `${payload.notification?.title}: ${payload.notification?.body}`,
             {
               duration: 10000,
-              position: "top-center",
-            }
+              position: 'top-center',
+            },
           );
         }
 

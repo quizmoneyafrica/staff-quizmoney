@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --background: #ffffff;
@@ -291,13 +291,13 @@ h6,
 }
 
 #bg-main::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url("/background-desktop.png");
+  background-image: url('/background-desktop.png');
   background-size: cover;
   background-position: center center;
   opacity: 0.4;
@@ -324,7 +324,7 @@ h6,
   border-bottom-right-radius: 0.75rem;
 }
 .hero {
-  background-image: url("/assets/images/background-desktop.png");
+  background-image: url('/assets/images/background-desktop.png');
   background-size: cover;
   background-position: top;
   background-repeat: no-repeat;
@@ -339,15 +339,15 @@ h6,
   display: none; /* Chrome, Safari */
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type='date']::-webkit-calendar-picker-indicator {
   display: none;
   opacity: 0;
 }
-input[type="date"]::-moz-focus-inner {
+input[type='date']::-moz-focus-inner {
   border: 0;
 }
 #splash {
-  background-image: url("/assets/images/background.png");
+  background-image: url('/assets/images/background.png');
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -395,7 +395,7 @@ input[type="date"]::-moz-focus-inner {
 }
 @media screen and (min-width: 768px) {
   #splash {
-    background-image: url("/assets/images/background-desktop.png");
+    background-image: url('/assets/images/background-desktop.png');
   }
 }
 
@@ -406,27 +406,26 @@ input[type="date"]::-moz-focus-inner {
   background-color: white;
   border-radius: 6px;
   padding: 5px;
-  box-shadow:
-    0px 10px 38px -10px rgba(22, 23, 24, 0.35),
+  box-shadow: 0px 10px 38px -10px rgba(22, 23, 24, 0.35),
     0px 10px 20px -15px rgba(22, 23, 24, 0.2);
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
 }
-.DropdownMenuContent[data-side="top"],
-.DropdownMenuSubContent[data-side="top"] {
+.DropdownMenuContent[data-side='top'],
+.DropdownMenuSubContent[data-side='top'] {
   animation-name: slideDownAndFade;
 }
-.DropdownMenuContent[data-side="right"],
-.DropdownMenuSubContent[data-side="right"] {
+.DropdownMenuContent[data-side='right'],
+.DropdownMenuSubContent[data-side='right'] {
   animation-name: slideLeftAndFade;
 }
-.DropdownMenuContent[data-side="bottom"],
-.DropdownMenuSubContent[data-side="bottom"] {
+.DropdownMenuContent[data-side='bottom'],
+.DropdownMenuSubContent[data-side='bottom'] {
   animation-name: slideUpAndFade;
 }
-.DropdownMenuContent[data-side="left"],
-.DropdownMenuSubContent[data-side="left"] {
+.DropdownMenuContent[data-side='left'],
+.DropdownMenuSubContent[data-side='left'] {
   animation-name: slideRightAndFade;
 }
 
@@ -449,7 +448,7 @@ input[type="date"]::-moz-focus-inner {
   cursor: pointer;
   font-weight: 500;
 }
-.DropdownMenuSubTrigger[data-state="open"] {
+.DropdownMenuSubTrigger[data-state='open'] {
   background-color: var(--color-primary-900);
   color: var(--color-neutral-50);
 }

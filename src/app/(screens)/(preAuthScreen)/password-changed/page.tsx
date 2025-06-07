@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { Container, Flex, Grid, Heading, Text } from "@radix-ui/themes";
-import LeftSide from "../forgot-password/leftSide";
-import CustomButton from "@/app/utils/CustomBtn";
-import { SuccessIcon } from "@/app/utils/successIcon";
-import { useRouter } from "next/navigation";
+import { Container, Flex, Grid, Heading, Text } from '@radix-ui/themes';
+import LeftSide from '../forgot-password/leftSide';
+import CustomButton from '@/app/utils/CustomBtn';
+import { SuccessIcon } from '@/app/utils/successIcon';
+import { useRouter } from 'next/navigation';
 
 function Page() {
   const router = useRouter();
 
   return (
     <>
-      <Grid columns={{ initial: "1", md: "2" }} className="h-screen">
+      <Grid columns={{ initial: '1', md: '2' }} className="h-screen">
         <LeftSide />
-        <Container className="flex items-center lg:justify-center px-4 lg:px-28 pt-8 ">
+        <Container className="flex items-center px-4 pt-8 lg:justify-center lg:px-28 ">
           <div className="space-y-10">
             <Flex
               align="center"
@@ -30,7 +30,7 @@ function Page() {
             <CustomButton
               type="button"
               width="full"
-              onClick={() => router.replace("/login")}
+              onClick={() => router.replace('/login')}
             >
               Login
             </CustomButton>

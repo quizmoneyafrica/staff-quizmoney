@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface User {
   userId: string;
@@ -30,18 +30,18 @@ const initialState: LeaderBoardState = {
 };
 
 const leaderboardSlice = createSlice({
-  name: "leaderboard",
+  name: 'leaderboard',
   initialState,
   reducers: {
     setLastGameLeaderboard: (
       state,
-      action: PayloadAction<LeaderBoardInterface[]>
+      action: PayloadAction<LeaderBoardInterface[]>,
     ) => {
       state.lastGame = action.payload;
     },
     setAllTimeLeaderboard: (
       state,
-      action: PayloadAction<LeaderBoardInterface[]>
+      action: PayloadAction<LeaderBoardInterface[]>,
     ) => {
       state.allTime = action.payload;
     },

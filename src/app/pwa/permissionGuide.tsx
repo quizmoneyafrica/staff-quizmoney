@@ -1,7 +1,7 @@
-import { BellIcon, Link2Icon } from "@radix-ui/react-icons";
-import { Callout, Container } from "@radix-ui/themes";
-import Link from "next/link";
-import React from "react";
+import { BellIcon, Link2Icon } from '@radix-ui/react-icons';
+import { Callout, Container } from '@radix-ui/themes';
+import Link from 'next/link';
+import React from 'react';
 
 function PermissionGuide() {
   return (
@@ -17,7 +17,7 @@ function PermissionGuide() {
               enable notifications in your browser settings.
             </span>
             <Link
-              className="underline font-bold flex items-center gap-1"
+              className="flex items-center gap-1 font-bold underline"
               href="https://quizmoney.ng/how-to-install-app/"
               target="_blank"
             >

@@ -1,14 +1,14 @@
-import { configureStore } from "@reduxjs/toolkit";
-import authReducer from "./authSlice";
-import notificationReducer from "./notificationSlice";
-import dashboardReducer from "./dashboardSlice";
-import leaderboardReducer from "./leaderboardSlice";
-import gameReducer from "./gameSlice";
-import withdrawReducer from "./withdrawalSlice";
-import salesReducer from "./salesSlice";
-import playersReducer from "./playersSlice";
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './authSlice';
+import notificationReducer from './notificationSlice';
+import dashboardReducer from './dashboardSlice';
+import leaderboardReducer from './leaderboardSlice';
+import gameReducer from './gameSlice';
+import withdrawReducer from './withdrawalSlice';
+import salesReducer from './salesSlice';
+import playersReducer from './playersSlice';
 
-import { createFilter } from "redux-persist-transform-filter";
+import { createFilter } from 'redux-persist-transform-filter';
 
 import {
   persistStore,
@@ -19,13 +19,13 @@ import {
   PERSIST,
   PURGE,
   REGISTER,
-} from "redux-persist";
-import localForage from "localforage";
+} from 'redux-persist';
+import localForage from 'localforage';
 
-const authTransform = createFilter("auth", ["userEncryptedData"]);
+const authTransform = createFilter('auth', ['userEncryptedData']);
 
 const authPersistConfig = {
-  key: "auth",
+  key: 'auth',
   storage: localForage,
   transforms: [authTransform],
 };
@@ -36,8 +36,8 @@ export const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
     notifications: notificationReducer,
-    salseData:salesReducer,
-    players:playersReducer,
+    salseData: salesReducer,
+    players: playersReducer,
     dashboard: dashboardReducer,
     leaderboard: leaderboardReducer,
     game: gameReducer,

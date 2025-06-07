@@ -1,29 +1,29 @@
-"use client";
-import { Container, Flex, Grid, Heading, Text } from "@radix-ui/themes";
-import React, { useState } from "react";
-import LeftSide from "../forgot-password/leftSide";
-import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import CustomTextField from "@/app/utils/CustomTextField";
-import { EyeIcon, EyeSlash } from "@/app/icons/icons";
-import CustomButton from "@/app/utils/CustomBtn";
-import { toastPosition } from "@/app/utils/utils";
-import UserAPI from "@/app/api/userApi";
-import { toast } from "sonner";
-import { PasswordChip } from "@/app/utils/passwordChip";
+'use client';
+import { Container, Flex, Grid, Heading, Text } from '@radix-ui/themes';
+import React, { useState } from 'react';
+import LeftSide from '../forgot-password/leftSide';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
+import CustomTextField from '@/app/utils/CustomTextField';
+import { EyeIcon, EyeSlash } from '@/app/icons/icons';
+import CustomButton from '@/app/utils/CustomBtn';
+import { toastPosition } from '@/app/utils/utils';
+import UserAPI from '@/app/api/userApi';
+import { toast } from 'sonner';
+import { PasswordChip } from '@/app/utils/passwordChip';
 
 const initialForm = {
-  password: "",
-  confirmPassword: "",
+  password: '',
+  confirmPassword: '',
   showPassword: false,
   showConfirmPassword: false,
 };
 function Page() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email");
+  const email = searchParams.get('email');
   const router = useRouter();
   if (!email) {
-    router.replace("/forgot-password");
+    router.replace('/forgot-password');
   }
   //
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,7 @@ function Page() {
     }));
   };
   const toggleResetFieldVisibility = (
-    field: "showPassword" | "showConfirmPassword"
+    field: 'showPassword' | 'showConfirmPassword',
   ) => {
     setResetForm((prev) => ({
       ...prev,
@@ -59,7 +59,7 @@ function Page() {
     e.preventDefault();
     setLoading(true);
     const newValues = {
-      email: email?.toLowerCase().trim() || "",
+      email: email?.toLowerCase().trim() || '',
       password: resetForm.password,
     };
 
@@ -67,7 +67,7 @@ function Page() {
       const response = await UserAPI.resetPasswordAuth(newValues);
       if (response.status === 200) {
         router.push(
-          `/password-changed?email=${encodeURIComponent(email || "")}`
+          `/password-changed?email=${encodeURIComponent(email || '')}`,
         );
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,9 +81,9 @@ function Page() {
   };
   return (
     <>
-      <Grid columns={{ initial: "1", md: "2" }} className="h-screen">
+      <Grid columns={{ initial: '1', md: '2' }} className="h-screen">
         <LeftSide />
-        <Container className="flex items-center lg:justify-center px-4 lg:px-28 pt-8 ">
+        <Container className="flex items-center px-4 pt-8 lg:justify-center lg:px-28 ">
           <form onSubmit={handleResetPassword}>
             <div className="space-y-8">
               <div className="lg:hidden ">
@@ -116,7 +116,7 @@ function Page() {
                     label="Password"
                     name="password"
                     value={resetForm.password}
-                    type={resetForm.showPassword ? "text" : "password"}
+                    type={resetForm.showPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     placeholder="Enter your password"
                     onChange={handleResetFormChange}
@@ -125,14 +125,14 @@ function Page() {
                         <EyeIcon
                           className="text-[#A6ABC4]"
                           onClick={() =>
-                            toggleResetFieldVisibility("showPassword")
+                            toggleResetFieldVisibility('showPassword')
                           }
                         />
                       ) : (
                         <EyeSlash
                           className="text-[#A6ABC4]"
                           onClick={() =>
-                            toggleResetFieldVisibility("showPassword")
+                            toggleResetFieldVisibility('showPassword')
                           }
                         />
                       )
@@ -163,7 +163,7 @@ function Page() {
                     label="Confirm Password"
                     name="confirmPassword"
                     value={resetForm.confirmPassword}
-                    type={resetForm.showConfirmPassword ? "text" : "password"}
+                    type={resetForm.showConfirmPassword ? 'text' : 'password'}
                     autoComplete="current-password"
                     placeholder="Enter your password"
                     onChange={handleResetFormChange}
@@ -172,14 +172,14 @@ function Page() {
                         <EyeIcon
                           className="text-[#A6ABC4]"
                           onClick={() =>
-                            toggleResetFieldVisibility("showConfirmPassword")
+                            toggleResetFieldVisibility('showConfirmPassword')
                           }
                         />
                       ) : (
                         <EyeSlash
                           className="text-[#A6ABC4]"
                           onClick={() =>
-                            toggleResetFieldVisibility("showConfirmPassword")
+                            toggleResetFieldVisibility('showConfirmPassword')
                           }
                         />
                       )
@@ -190,10 +190,10 @@ function Page() {
                     <PasswordChip
                       text={`${
                         resetForm.confirmPassword.length < 1
-                          ? "Password Match"
+                          ? 'Password Match'
                           : resetForm.confirmPassword === resetForm.password
-                          ? "Password Match"
-                          : "Passwords do not match"
+                          ? 'Password Match'
+                          : 'Passwords do not match'
                       }`}
                       valid={resetForm.password === resetForm.confirmPassword}
                     />

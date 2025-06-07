@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
-import DashboardApi from "@/app/api/dashboardApi";
-import { getAuthUser } from "@/app/api/userApi";
+'use client';
+import DashboardApi from '@/app/api/dashboardApi';
+import { getAuthUser } from '@/app/api/userApi';
 import DashboardCards, {
   DashboardCardsLoading,
-} from "@/app/components/screens/dasboard/Cards";
-import LastGameWinners from "@/app/components/screens/dasboard/LastGameWinners";
-import NextLiveGame from "@/app/components/screens/dasboard/NextLiveGame";
-import RecentWithdraw from "@/app/components/screens/dasboard/RecentWithdraw";
-import { useAppDispatch, useAppSelector } from "@/app/hooks/useAuth";
+} from '@/app/components/screens/dasboard/Cards';
+import LastGameWinners from '@/app/components/screens/dasboard/LastGameWinners';
+import NextLiveGame from '@/app/components/screens/dasboard/NextLiveGame';
+import RecentWithdraw from '@/app/components/screens/dasboard/RecentWithdraw';
+import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
 import {
   EyeIcon,
   EyeSlash,
@@ -18,18 +18,18 @@ import {
   UsersIconBig,
   WalletCardIcon,
   WalletIconBig,
-} from "@/app/icons/icons";
-import { setDashboardDetails } from "@/app/store/dashboardSlice";
-import { formatNaira } from "@/app/utils/utils";
-import React, { useCallback, useState } from "react";
-import { toast } from "sonner";
+} from '@/app/icons/icons';
+import { setDashboardDetails } from '@/app/store/dashboardSlice';
+import { formatNaira } from '@/app/utils/utils';
+import React, { useCallback, useState } from 'react';
+import { toast } from 'sonner';
 
 function Page() {
   const user = getAuthUser();
   const dispatch = useAppDispatch();
   const [fetchingDashData, setFetchingDashData] = useState(false);
   const { noOfUsers, lastGamePlayers, availableWalletBalance } = useAppSelector(
-    (state) => state.dashboard
+    (state) => state.dashboard,
   );
   const [showTotalAmount, setShowTotalAmount] = useState(false);
 
@@ -42,7 +42,7 @@ function Page() {
       setFetchingDashData(false);
     } catch (error: any) {
       console.log(error);
-      toast.error("Error loading Dashboard Details, please refresh");
+      toast.error('Error loading Dashboard Details, please refresh');
       setFetchingDashData(false);
     }
   }, [
@@ -59,7 +59,7 @@ function Page() {
 
   return (
     <div className="space-y-10">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {fetchingDashData ? (
           <DashboardCardsLoading />
         ) : (
@@ -120,11 +120,11 @@ function Page() {
           </DashboardCards>
         )}
       </div>
-      <div className="grid grid-cols-1  lg:grid-cols-3 gap-y-10 lg:gap-4 w-full">
+      <div className="grid w-full  grid-cols-1 gap-y-10 lg:grid-cols-3 lg:gap-4">
         <LastGameWinners />
         <NextLiveGame />
       </div>
-      <div className="bg-white rounded-lg w-full ">
+      <div className="w-full rounded-lg bg-white ">
         <RecentWithdraw />
       </div>
     </div>

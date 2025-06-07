@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface Game {
   objectId: string;
@@ -31,7 +31,7 @@ const initialState: GameState = {
 };
 
 const gameSlice = createSlice({
-  name: "game",
+  name: 'game',
   initialState,
   reducers: {
     setCurrentGame: (state, action: PayloadAction<Game>) => {

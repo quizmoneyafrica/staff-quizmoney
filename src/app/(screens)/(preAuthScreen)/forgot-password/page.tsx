@@ -1,28 +1,28 @@
-"use client";
-import { Container, Flex, Grid, Heading, Text } from "@radix-ui/themes";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAppSelector } from "@/app/hooks/useAuth";
-import AppLoader from "@/app/components/loader/loader";
-import Image from "next/image";
-import { CircleArrowLeft, MailIcon } from "@/app/icons/icons";
-import CustomButton from "@/app/utils/CustomBtn";
-import { isValidEmail, toastPosition } from "@/app/utils/utils";
-import CustomTextField from "@/app/utils/CustomTextField";
-import Link from "next/link";
-import UserAPI from "@/app/api/userApi";
-import { toast } from "sonner";
-import LeftSide from "./leftSide";
+'use client';
+import { Container, Flex, Grid, Heading, Text } from '@radix-ui/themes';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAppSelector } from '@/app/hooks/useAuth';
+import AppLoader from '@/app/components/loader/loader';
+import Image from 'next/image';
+import { CircleArrowLeft, MailIcon } from '@/app/icons/icons';
+import CustomButton from '@/app/utils/CustomBtn';
+import { isValidEmail, toastPosition } from '@/app/utils/utils';
+import CustomTextField from '@/app/utils/CustomTextField';
+import Link from 'next/link';
+import UserAPI from '@/app/api/userApi';
+import { toast } from 'sonner';
+import LeftSide from './leftSide';
 
 function Page() {
-  const [emailAddress, setEmailAddress] = useState("");
+  const [emailAddress, setEmailAddress] = useState('');
   const router = useRouter();
   const { isAuthenticated, rehydrated } = useAppSelector((s) => s.auth);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (rehydrated && isAuthenticated) {
-      router.replace("/home");
+      router.replace('/home');
     }
   }, [isAuthenticated, rehydrated, router]);
 
@@ -35,7 +35,7 @@ function Page() {
       await UserAPI.forgotPassword(emailAddress);
 
       router.push(
-        `/verify-forgot-password?email=${encodeURIComponent(emailAddress)}`
+        `/verify-forgot-password?email=${encodeURIComponent(emailAddress)}`,
       );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,9 +48,9 @@ function Page() {
   };
   return (
     <>
-      <Grid columns={{ initial: "1", md: "2" }} className="h-screen">
+      <Grid columns={{ initial: '1', md: '2' }} className="h-screen">
         <LeftSide />
-        <Container className="flex items-center lg:justify-center px-4 lg:px-28 pt-8 ">
+        <Container className="flex items-center px-4 pt-8 lg:justify-center lg:px-28 ">
           <form onSubmit={handleForgot}>
             <div className="space-y-8">
               <div className="lg:hidden ">
@@ -110,7 +110,7 @@ function Page() {
                 <Flex align="center" justify="center">
                   <Link
                     href="/login"
-                    className="inline-block font-medium underline underline-offset-2 text-primary-900 text-center"
+                    className="text-primary-900 inline-block text-center font-medium underline underline-offset-2"
                   >
                     Login instead
                   </Link>

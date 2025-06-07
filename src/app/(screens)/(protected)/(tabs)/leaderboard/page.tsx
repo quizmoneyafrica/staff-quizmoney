@@ -1,35 +1,35 @@
-import React from "react";
-import LeaderboardCard from "@/app/components/leaderboard/LeaderboardCard";
-import LeaderboardTable from "@/app/components/leaderboard/LeaderboardTable";
+import React from 'react';
+import LeaderboardCard from '@/app/components/leaderboard/LeaderboardCard';
+import LeaderboardTable from '@/app/components/leaderboard/LeaderboardTable';
 
 function Page() {
   const exampleData = [
     {
       rank: 1,
-      playerName: "Joemicky",
+      playerName: 'Joemicky',
       gamesPlayed: 10,
-      prize: "₦50,000",
-      avatarUrl: "https://github.com/shadcn.png", // Replace with actual avatar URL or logic
+      prize: '₦50,000',
+      avatarUrl: 'https://github.com/shadcn.png', // Replace with actual avatar URL or logic
     },
     {
       rank: 2,
-      playerName: "Joemicky",
+      playerName: 'Joemicky',
       gamesPlayed: 10,
-      prize: "₦30,000",
-      avatarUrl: "https://github.com/shadcn.png", // Replace with actual avatar URL or logic
+      prize: '₦30,000',
+      avatarUrl: 'https://github.com/shadcn.png', // Replace with actual avatar URL or logic
     },
     {
       rank: 3,
-      playerName: "Joemicky",
+      playerName: 'Joemicky',
       gamesPlayed: 10,
-      prize: "₦25,000",
-      avatarUrl: "https://github.com/shadcn.png", // Replace with actual avatar URL or logic
+      prize: '₦25,000',
+      avatarUrl: 'https://github.com/shadcn.png', // Replace with actual avatar URL or logic
     },
   ];
 
   return (
     <div className="w-full max-w-full overflow-x-hidden  py-6">
-      <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-3 w-full">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
         {exampleData.map((data) => (
           <LeaderboardCard
             key={data.rank}
@@ -42,7 +42,7 @@ function Page() {
         ))}
       </div>
       <div className="mt-8">
-        <LeaderboardTable /> 
+        <LeaderboardTable />
       </div>
     </div>
   );

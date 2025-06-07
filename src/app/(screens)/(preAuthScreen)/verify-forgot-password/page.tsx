@@ -1,29 +1,29 @@
-"use client";
-import { Container, Flex, Grid, Heading, Text } from "@radix-ui/themes";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { CircleArrowLeft } from "@/app/icons/icons";
-import { useSearchParams } from "next/navigation";
-import CustomButton from "@/app/utils/CustomBtn";
-import { unstable_OneTimePasswordField as OneTimePasswordField } from "radix-ui";
-import { formatCountDown, resendTimer, toastPosition } from "@/app/utils/utils";
-import UserAPI from "@/app/api/userApi";
-import { toast } from "sonner";
-import LeftSide from "../forgot-password/leftSide";
-import Link from "next/link";
+'use client';
+import { Container, Flex, Grid, Heading, Text } from '@radix-ui/themes';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { CircleArrowLeft } from '@/app/icons/icons';
+import { useSearchParams } from 'next/navigation';
+import CustomButton from '@/app/utils/CustomBtn';
+import { unstable_OneTimePasswordField as OneTimePasswordField } from 'radix-ui';
+import { formatCountDown, resendTimer, toastPosition } from '@/app/utils/utils';
+import UserAPI from '@/app/api/userApi';
+import { toast } from 'sonner';
+import LeftSide from '../forgot-password/leftSide';
+import Link from 'next/link';
 
 function Page() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email");
+  const email = searchParams.get('email');
   const router = useRouter();
-  const [otpCode, setOtpCode] = useState("");
+  const [otpCode, setOtpCode] = useState('');
   const [countdown, setCountdown] = useState(resendTimer);
   const [canResend, setCanResend] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!email) {
-    router.replace("/forgot-password");
+    router.replace('/forgot-password');
   }
   useEffect(() => {
     if (countdown <= 0) {
@@ -43,13 +43,13 @@ function Page() {
     setLoading(true);
 
     const newValues = {
-      email: email?.toLowerCase().trim() || "",
+      email: email?.toLowerCase().trim() || '',
       otp: otpCode,
     };
     try {
       const response = await UserAPI.verifyForgotPasswordOtp(newValues);
       if (response.status === 200) {
-        router.push(`/reset-password?email=${encodeURIComponent(email || "")}`);
+        router.push(`/reset-password?email=${encodeURIComponent(email || '')}`);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -63,15 +63,15 @@ function Page() {
     setCountdown(resendTimer);
     setCanResend(false);
     try {
-      const response = await UserAPI.forgotPassword(email || "");
-      console.log("Forgot Password:", response);
-      toast.success("OTP Reset Successfully", {
+      const response = await UserAPI.forgotPassword(email || '');
+      console.log('Forgot Password:', response);
+      toast.success('OTP Reset Successfully', {
         position: toastPosition,
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.log("ERROR Forgot Password", err);
+      console.log('ERROR Forgot Password', err);
       toast.error(`${err.response.data.error}`, {
         position: toastPosition,
       });
@@ -79,9 +79,9 @@ function Page() {
   };
   return (
     <>
-      <Grid columns={{ initial: "1", md: "2" }} className="h-screen">
+      <Grid columns={{ initial: '1', md: '2' }} className="h-screen">
         <LeftSide />
-        <Container className="flex items-center lg:justify-center px-4 lg:px-28 pt-8 ">
+        <Container className="flex items-center px-4 pt-8 lg:justify-center lg:px-28 ">
           <form onSubmit={handleVerify}>
             <div className="space-y-8">
               <Link href="/" className="lg:hidden ">
@@ -111,10 +111,10 @@ function Page() {
               </Flex>
               <div>
                 <Text className="text-neutral-600 ">
-                  Please enter the 6-digit code sent to your email{" "}
+                  Please enter the 6-digit code sent to your email{' '}
                   <span className="text-secondary-900 underline underline-offset-2">
                     {email}
-                  </span>{" "}
+                  </span>{' '}
                   to reset your password
                 </Text>
               </div>
@@ -148,14 +148,14 @@ function Page() {
               </div>
               <div>
                 <Text className="text-neutral-600 ">
-                  Didn&apos;t get code?{" "}
+                  Didn&apos;t get code?{' '}
                   <button
                     type="button"
                     onClick={handleResendOTP}
                     className={`font-medium underline underline-offset-2 ${
                       canResend
-                        ? "text-primary-900 cursor-pointer"
-                        : "text-gray-400 cursor-not-allowed"
+                        ? 'text-primary-900 cursor-pointer'
+                        : 'cursor-not-allowed text-gray-400'
                     }`}
                   >
                     Resend Code

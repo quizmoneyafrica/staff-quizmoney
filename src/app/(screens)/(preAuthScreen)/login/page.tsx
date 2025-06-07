@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Flex, Heading, Text } from "@radix-ui/themes";
-import Image from "next/image";
-import { useState } from "react";
-import LoginForm from "./loginForm";
+import { Flex, Heading, Text } from '@radix-ui/themes';
+import Image from 'next/image';
+import { useState } from 'react';
+import LoginForm from './loginForm';
 
 const LoginPage = () => {
   const [loading, setLoading] = useState(false);
 
   return (
     <>
-      <div className="flex lg:justify-center px-4 lg:px-28 pt-8 bg-primary-50 min-h-screen w-full">
-        <div className="space-y-8 w-full max-w-xl">
+      <div className="bg-primary-50 flex min-h-screen w-full px-4 pt-8 lg:justify-center lg:px-28">
+        <div className="w-full max-w-xl space-y-8">
           <div>
             <Image
               src="/icons/quizmoney-logo-blue.svg"

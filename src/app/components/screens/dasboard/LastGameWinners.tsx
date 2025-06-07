@@ -1,12 +1,12 @@
-import * as React from "react";
-import { motion } from "framer-motion";
-import { useAppDispatch, useAppSelector } from "@/app/hooks/useAuth";
-import LeaderboardAPI from "@/app/api/leaderboardApi";
-import { toast } from "sonner";
-import Link from "next/link";
-import { setLastGameLeaderboard } from "@/app/store/leaderboardSlice";
-import { Avatar } from "@radix-ui/themes";
-import { formatNaira } from "@/app/utils/utils";
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
+import LeaderboardAPI from '@/app/api/leaderboardApi';
+import { toast } from 'sonner';
+import Link from 'next/link';
+import { setLastGameLeaderboard } from '@/app/store/leaderboardSlice';
+import { Avatar } from '@radix-ui/themes';
+import { formatNaira } from '@/app/utils/utils';
 
 const LastGameWinners: React.FunctionComponent = () => {
   const dispatch = useAppDispatch();
@@ -21,7 +21,7 @@ const LastGameWinners: React.FunctionComponent = () => {
       dispatch(setLastGameLeaderboard(res.data.result.rankings));
       setFetching(false);
     } catch {
-      toast.error("Error loading Last Game Winners, please refresh");
+      toast.error('Error loading Last Game Winners, please refresh');
       setFetching(false);
     }
   }, [dispatch, lastGame]);
@@ -34,26 +34,25 @@ const LastGameWinners: React.FunctionComponent = () => {
     return (
       <motion.div
         layout
-        className="animate-pulse p-4 bg-neutral-300 rounded-lg h-[323px] w-full lg:col-span-1"
+        className="h-[323px] w-full animate-pulse rounded-lg bg-neutral-300 p-4 lg:col-span-1"
       ></motion.div>
     );
   }
 
-
   return (
     <>
-      <motion.div className="order-2 lg:order-1 p-4 bg-white rounded-lg h-[323px] w-full lg:col-span-1">
+      <motion.div className="order-2 h-[323px] w-full rounded-lg bg-white p-4 lg:order-1 lg:col-span-1">
         <div className="flex items-center justify-between">
           <p>Last Game Winners</p>
           <Link
             href="/leaderboard"
-            className="underline font-heading text-secondary-900"
+            className="font-heading text-secondary-900 underline"
           >
             Show all
           </Link>
         </div>
 
-        <div className="space-y-4 mt-3">
+        <div className="mt-3 space-y-4">
           {lastGame.slice(0, 6).map((item, index) => {
             return (
               <UserTable
@@ -89,7 +88,7 @@ const UserTable: React.FunctionComponent<UserTableProp> = ({
     <div className="grid grid-cols-2 items-center">
       <div className="flex items-center gap-2 overflow-clip">
         <p className="font-heading text-neutral-900">{num}</p>
-        <div className="w-[40px] h-[40px] flex items-center justify-center rounded-full bg-primary-50">
+        <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full">
           <Avatar
             src={image}
             fallback={name?.charAt(0).toUpperCase()}
@@ -97,11 +96,11 @@ const UserTable: React.FunctionComponent<UserTableProp> = ({
             className="bg-primary-50"
           />
         </div>
-        <p className="capitalize text-primary-800 font-bold">{name}</p>
+        <p className="text-primary-800 font-bold capitalize">{name}</p>
       </div>
 
       <div className="flex items-center justify-end overflow-clip">
-        <p className="inline-block text-primary-800 bg-primary-50 rounded-xl px-2 py-1">
+        <p className="text-primary-800 bg-primary-50 inline-block rounded-xl px-2 py-1">
           {formatNaira(Number(amount), true)}
         </p>
       </div>

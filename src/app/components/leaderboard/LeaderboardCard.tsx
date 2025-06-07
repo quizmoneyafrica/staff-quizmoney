@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import CustomImage from '@/app/components/CustomImage';
 import classNames from 'classnames';
 import React from 'react';
@@ -12,68 +12,139 @@ interface LeaderboardCardProps {
   avatarUrl: string; // Assuming avatar is an image
 }
 
-const LeaderboardCard: React.FC<LeaderboardCardProps> = ({ rank, playerName, gamesPlayed, prize, avatarUrl }) => {
-  const cardStyles = rank === 1 ? 'bg-[#E4F1FA]' : rank === 2 ? 'bg-[#E7FEED]' : 'bg-[#FFFCE7]';
-  const rankStyles = rank === 1 ? 'text-[#BCDDF4]' : rank === 2 ? 'text-[#C4FBD2]' : 'text-[#FFF6C5]';
-  const prizeStyle = rank === 1 ? 'bg-[#BCDDF4]' : rank === 2 ? 'bg-[#C4FBD2]' : 'bg-[#FFF6C5]';
-  const nameStyles = rank === 1 ? 'text-[#17478B]' : rank === 2 ? 'text-[#009028]' : 'text-[#ED7B2B]';
+const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
+  rank,
+  playerName,
+  gamesPlayed,
+  prize,
+  avatarUrl,
+}) => {
+  const cardStyles =
+    rank === 1 ? 'bg-[#E4F1FA]' : rank === 2 ? 'bg-[#E7FEED]' : 'bg-[#FFFCE7]';
+  const rankStyles =
+    rank === 1
+      ? 'text-[#BCDDF4]'
+      : rank === 2
+      ? 'text-[#C4FBD2]'
+      : 'text-[#FFF6C5]';
+  const prizeStyle =
+    rank === 1 ? 'bg-[#BCDDF4]' : rank === 2 ? 'bg-[#C4FBD2]' : 'bg-[#FFF6C5]';
+  const nameStyles =
+    rank === 1
+      ? 'text-[#17478B]'
+      : rank === 2
+      ? 'text-[#009028]'
+      : 'text-[#ED7B2B]';
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: rank * 0.1 }}
       whileHover={{ scale: 1.02 }}
-      className={`flex w-full py-8 relative flex-col items-center px-4 rounded-lg ${cardStyles}`}
+      className={`relative flex w-full flex-col items-center rounded-lg px-4 py-8 ${cardStyles}`}
     >
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: rank * 0.1 + 0.2 }}
-        className={`text-4xl absolute left-0 ml-5 font-bold mb-4 ${rankStyles}`}
+        className={`absolute left-0 mb-4 ml-5 text-4xl font-bold ${rankStyles}`}
       >
         {rank}st
       </motion.div>
-      <motion.div 
+      <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20, delay: rank * 0.1 + 0.3 }}
+        transition={{
+          type: 'spring',
+          stiffness: 260,
+          damping: 20,
+          delay: rank * 0.1 + 0.3,
+        }}
         className="relative mb-2"
       >
-        <div className={classNames('flex items-center justify-center size-16 rounded-full', prizeStyle)}>
-          <CustomImage src={avatarUrl} alt={`${playerName}'s avatar`} className="w-10 h-10 rounded-full" />
+        <div
+          className={classNames(
+            'size-16 flex items-center justify-center rounded-full',
+            prizeStyle,
+          )}
+        >
+          <CustomImage
+            src={avatarUrl}
+            alt={`${playerName}'s avatar`}
+            className="h-10 w-10 rounded-full"
+          />
         </div>
-        <motion.div 
+        <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20, delay: rank * 0.1 + 0.4 }}
-          className="absolute bottom-3 right-0 -mr-4 bg-inherit rounded-full"
+          transition={{
+            type: 'spring',
+            stiffness: 260,
+            damping: 20,
+            delay: rank * 0.1 + 0.4,
+          }}
+          className="absolute bottom-3 right-0 -mr-4 rounded-full bg-inherit"
         >
           {/* Ribbon/Badge icon based on rank */}
-          {rank === 1 && <CustomImage src="/assets/images/first.svg" alt="1st place ribbon" className="size-7" />}
-          {rank === 2 && <CustomImage src="/assets/images/second.svg" alt="2nd place ribbon" className="size-7" />}
-          {rank === 3 && <CustomImage src="/assets/images/third.svg" alt="3rd place ribbon" className="size-7" />}
+          {rank === 1 && (
+            <CustomImage
+              src="/assets/images/first.svg"
+              alt="1st place ribbon"
+              className="size-7"
+            />
+          )}
+          {rank === 2 && (
+            <CustomImage
+              src="/assets/images/second.svg"
+              alt="2nd place ribbon"
+              className="size-7"
+            />
+          )}
+          {rank === 3 && (
+            <CustomImage
+              src="/assets/images/third.svg"
+              alt="3rd place ribbon"
+              className="size-7"
+            />
+          )}
         </motion.div>
       </motion.div>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: rank * 0.1 + 0.5 }}
-        className={`text-lg font-semibold mb-2 ${nameStyles}`}
+        className={`mb-2 text-lg font-semibold ${nameStyles}`}
       >
         {playerName}
       </motion.div>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: rank * 0.1 + 0.6 }}
-        className="flex justify-center gap-3 w-full mb-2"
+        className="mb-2 flex w-full justify-center gap-3"
       >
-        <span className={classNames("rounded-full px-3 py-1 text-sm", prizeStyle, nameStyles)}>{gamesPlayed} games</span>
-        <span className={classNames("rounded-full px-3 py-1 text-sm", prizeStyle, nameStyles)}>{prize}</span>
+        <span
+          className={classNames(
+            'rounded-full px-3 py-1 text-sm',
+            prizeStyle,
+            nameStyles,
+          )}
+        >
+          {gamesPlayed} games
+        </span>
+        <span
+          className={classNames(
+            'rounded-full px-3 py-1 text-sm',
+            prizeStyle,
+            nameStyles,
+          )}
+        >
+          {prize}
+        </span>
       </motion.div>
     </motion.div>
   );
 };
 
-export default LeaderboardCard; 
+export default LeaderboardCard;

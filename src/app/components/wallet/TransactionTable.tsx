@@ -1,17 +1,15 @@
-'use client'
+'use client';
 import React, { useState } from 'react';
 import { Search, ListFilter, MoreVertical } from 'lucide-react';
 import classNames from 'classnames';
-import Pagination from '../leaderboard/Pagination'; 
+import Pagination from '../leaderboard/Pagination';
 import { motion } from 'framer-motion';
 import CustomImage from '@/app/components/CustomImage';
 import TransactionDetailsModal from './TransactionDetailsModal';
 
-
-
-const TransactionTable= () => {
+const TransactionTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7; 
+  const itemsPerPage = 7;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -20,7 +18,7 @@ const TransactionTable= () => {
       id: 'ID1234567',
       date: '21/02/2024 09:00',
       username: 'Joemicky',
-      avatarUrl: 'https://github.com/shadcn.png', 
+      avatarUrl: 'https://github.com/shadcn.png',
       transactionType: 'Withdrawal',
       transactionAmount: '₦50,000',
       transactionStatus: 'Successful',
@@ -29,41 +27,38 @@ const TransactionTable= () => {
       id: 'ID1234567',
       date: '21/02/2024 09:00',
       username: 'Inioluwa',
-      avatarUrl: 'https://github.com/shadcn.png', 
+      avatarUrl: 'https://github.com/shadcn.png',
       transactionType: 'Deposit',
       transactionAmount: '₦50,000',
       transactionStatus: 'Failed',
     },
-     {
+    {
       id: 'ID1234567',
       date: '21/02/2024 09:00',
       username: 'Hanax',
-      avatarUrl: 'https://github.com/shadcn.png', 
+      avatarUrl: 'https://github.com/shadcn.png',
       transactionType: 'Deposit',
       transactionAmount: '₦50,000',
       transactionStatus: 'Successful',
     },
-     {
+    {
       id: 'ID1234567',
       date: '21/02/2024 09:00',
       username: 'Joemicky',
-      avatarUrl: 'https://github.com/shadcn.png', 
+      avatarUrl: 'https://github.com/shadcn.png',
       transactionType: 'Withdrawal',
       transactionAmount: '₦50,000',
       transactionStatus: 'Pending',
     },
-     {
+    {
       id: 'ID1234567',
       date: '21/02/2024 09:00',
       username: 'Joemicky',
-      avatarUrl: 'https://github.com/shadcn.png', 
+      avatarUrl: 'https://github.com/shadcn.png',
       transactionType: 'Withdrawal',
       transactionAmount: '₦50,000',
       transactionStatus: 'Successful',
     },
-     
-
-
   ];
 
   const totalPages = Math.ceil(exampleData.length / itemsPerPage);
@@ -80,17 +75,17 @@ const TransactionTable= () => {
   const rowVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    hover: { scale: 1.01, y: -2 }
+    hover: { scale: 1.01, y: -2 },
   };
 
   const rowTransition = {
     duration: 0.5,
     hover: {
-      duration: 0.2
-    }
+      duration: 0.2,
+    },
   };
 
-    const getStatusClass = (status: string) => {
+  const getStatusClass = (status: string) => {
     switch (status) {
       case 'Successful':
         return 'bg-[#D4F9E4] text-[#006E2D]';
@@ -105,37 +100,48 @@ const TransactionTable= () => {
 
   return (
     <div className="">
-      <div className="flex md:flex-row flex-col md:items-center items-start justify-between bg-white py-5 px-5 rounded-md mb-4 gap-4">
-        <div className="flex gap-4 items-center ">
+      <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
+        <div className="flex items-center gap-4 ">
           <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
             <input
               type="text"
               placeholder="Search"
-              className="w-full pl-10 pr-4 py-2 border rounded-md border-[#D9D9D9] outline-none focus:ring-primary-900 focus:ring-0 "
+              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0 "
             />
           </div>
-          <button className="flex cursor-pointer gap-1 items-center px-4 py-2 border rounded-md  outline-none border-[#D9D9D9]">
-         <ListFilter className=' size-5 text-[#1B212D]'/>
-          <span className=' md:block hidden  '>Filter by</span>
-        </button>
+          <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4  py-2 outline-none">
+            <ListFilter className=" size-5 text-[#1B212D]" />
+            <span className=" hidden md:block  ">Filter by</span>
+          </button>
         </div>
-       
       </div>
 
-      <div className="bg-white  rounded-lg overflow-hidden overflow-x-auto">
+      <div className="overflow-hidden  overflow-x-auto rounded-lg bg-white">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Users</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                Transaction ID
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                Users
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                Transaction Type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                Transaction Amount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                Transaction Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                Action
+              </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {currentData.map((transaction, index) => (
               <motion.tr
                 key={index} // Using index as key for example data, ideally use a unique id
@@ -144,39 +150,62 @@ const TransactionTable= () => {
                 animate="animate"
                 whileHover="hover"
                 transition={rowTransition}
-                className='cursor-pointer'
+                className="cursor-pointer"
               >
-
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{transaction.id}</div>
-                  <div className="text-sm text-gray-500">{transaction.date}</div>
+                <td className="whitespace-nowrap px-6 py-4">
+                  <div className="text-sm font-medium text-gray-900">
+                    {transaction.id}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {transaction.date}
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <CustomImage className="h-10 w-10 rounded-full" src={transaction.avatarUrl} alt={`${transaction.username}'s avatar`} width={40} height={40} />
+                    <div className="h-10 w-10 flex-shrink-0">
+                      <CustomImage
+                        className="h-10 w-10 rounded-full"
+                        src={transaction.avatarUrl}
+                        alt={`${transaction.username}'s avatar`}
+                        width={40}
+                        height={40}
+                      />
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-primary-900">{transaction.username}</div>
+                      <div className="text-primary-900 text-sm font-medium">
+                        {transaction.username}
+                      </div>
                     </div>
                   </div>
                 </td>
-                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{transaction.transactionType}</div>
+                <td className="whitespace-nowrap px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {transaction.transactionType}
+                  </div>
                 </td>
-                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{transaction.transactionAmount}</div>
+                <td className="whitespace-nowrap px-6 py-4">
+                  <div className="text-sm text-gray-900">
+                    {transaction.transactionAmount}
+                  </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={classNames("px-2 inline-flex text-xs leading-5 font-semibold rounded-full", getStatusClass(transaction.transactionStatus))}>
+                <td className="whitespace-nowrap px-6 py-4">
+                  <span
+                    className={classNames(
+                      'inline-flex rounded-full px-2 text-xs font-semibold leading-5',
+                      getStatusClass(transaction.transactionStatus),
+                    )}
+                  >
                     {transaction.transactionStatus}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <MoreVertical className='text-gray-500 cursor-pointer' onClick={() => {
-                    setSelectedTransaction(transaction);
-                    setIsModalOpen(true);
-                  }}/>
+                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                  <MoreVertical
+                    className="cursor-pointer text-gray-500"
+                    onClick={() => {
+                      setSelectedTransaction(transaction);
+                      setIsModalOpen(true);
+                    }}
+                  />
                 </td>
               </motion.tr>
             ))}
@@ -184,9 +213,11 @@ const TransactionTable= () => {
         </table>
       </div>
 
-      <div className="flex md:flex-row flex-col md:justify-between items-center mt-4 gap-4 p-4">
+      <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
         <div className="text-sm text-gray-500">
-          Showing data {startIndex + 1} to {Math.min(endIndex, exampleData.length)} of {exampleData.length} entries
+          Showing data {startIndex + 1} to{' '}
+          {Math.min(endIndex, exampleData.length)} of {exampleData.length}{' '}
+          entries
         </div>
         <Pagination
           currentPage={currentPage}
@@ -204,4 +235,4 @@ const TransactionTable= () => {
   );
 };
 
-export default TransactionTable; 
+export default TransactionTable;

@@ -21,16 +21,20 @@ interface TransactionDetailsModalProps {
   transactionData: Transaction | null;
 }
 
-const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({ isOpen, onClose, transactionData }) => {
+const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
+  isOpen,
+  onClose,
+  transactionData,
+}) => {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
+        delayChildren: 0.2,
+      },
+    },
   };
 
   const itemVariants = {
@@ -40,9 +44,9 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({ isOpe
       y: 0,
       transition: {
         duration: 0.3,
-        ease: "easeOut"
-      }
-    }
+        ease: 'easeOut',
+      },
+    },
   };
 
   return (
@@ -56,75 +60,136 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({ isOpe
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-                className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white px-8 py-8 rounded-xl shadow-xl w-full max-w-lg focus:outline-none"
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="fixed left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform rounded-xl bg-white px-8 py-8 shadow-xl focus:outline-none"
               >
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
                 >
-                  <Dialog.Title className="text-xl font-semibold mb-6 text-gray-900">Transaction details</Dialog.Title>
+                  <Dialog.Title className="mb-6 text-xl font-semibold text-gray-900">
+                    Transaction details
+                  </Dialog.Title>
                 </motion.div>
-                
+
                 {transactionData && (
-                  <motion.div 
+                  <motion.div
                     className="flex flex-col gap-6"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                   >
                     {/* User Info */}
-                    <motion.div 
-                      className="flex items-center gap-4 pb-6 border-b border-gray-200"
+                    <motion.div
+                      className="flex items-center gap-4 border-b border-gray-200 pb-6"
                       variants={itemVariants}
                     >
-                      <div className="flex-shrink-0 h-12 w-12">
-                         <CustomImage className="h-12 w-12 rounded-full" src={transactionData.avatarUrl} alt={`${transactionData.username}'s avatar`} width={48} height={48} />
+                      <div className="h-12 w-12 flex-shrink-0">
+                        <CustomImage
+                          className="h-12 w-12 rounded-full"
+                          src={transactionData.avatarUrl}
+                          alt={`${transactionData.username}'s avatar`}
+                          width={48}
+                          height={48}
+                        />
                       </div>
                       <div className="flex-1">
-                        <div className="text-lg font-semibold text-gray-900">{transactionData.username}</div>
-                        <div className="text-sm text-gray-500">{transactionData.username.toLowerCase()}</div>
+                        <div className="text-lg font-semibold text-gray-900">
+                          {transactionData.username}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {transactionData.username.toLowerCase()}
+                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-gray-500 mb-1">Wallet Balance</div>
-                        <div className="text-lg font-semibold text-gray-900">₦100,000.00</div>
+                        <div className="mb-1 text-sm text-gray-500">
+                          Wallet Balance
+                        </div>
+                        <div className="text-lg font-semibold text-gray-900">
+                          ₦100,000.00
+                        </div>
                       </div>
                     </motion.div>
 
                     {/* Transaction Details */}
-                    <motion.div 
+                    <motion.div
                       className="flex flex-col gap-5"
                       variants={containerVariants}
                     >
-                      <motion.div variants={itemVariants} className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-600">Transaction ID</div>
-                        <div className="text-sm font-semibold text-gray-900">{transactionData.id}</div>
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Transaction ID
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {transactionData.id}
+                        </div>
                       </motion.div>
-                      
-                      <motion.div variants={itemVariants} className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-600">Transaction Type</div>
-                        <div className="text-sm font-semibold text-gray-900">{transactionData.transactionType}</div>
+
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Transaction Type
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {transactionData.transactionType}
+                        </div>
                       </motion.div>
-                      
-                      <motion.div variants={itemVariants} className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-600">Transaction Amount</div>
-                        <div className="text-sm font-semibold text-gray-900">{transactionData.transactionAmount}</div>
+
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Transaction Amount
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {transactionData.transactionAmount}
+                        </div>
                       </motion.div>
-                      
-                      <motion.div variants={itemVariants} className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-600">Transaction Method</div>
-                        <div className="text-sm font-semibold text-gray-900">Paystack-Bank Transfer</div>
+
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Transaction Method
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          Paystack-Bank Transfer
+                        </div>
                       </motion.div>
-                      
-                      <motion.div variants={itemVariants} className="flex justify-between items-center">
-                        <div className="text-sm font-medium text-gray-600">Transaction Time</div>
-                        <div className="text-sm font-semibold text-gray-900">{transactionData.date}</div>
+
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Transaction Time
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900">
+                          {transactionData.date}
+                        </div>
                       </motion.div>
-                      
-                      <motion.div variants={itemVariants} className="flex justify-between items-center pb-6 border-b border-dashed border-gray-300">
-                        <div className="text-sm font-medium text-gray-600">Transaction Status</div>
-                        <span className={classNames("px-3 py-1 text-xs font-semibold rounded-full", getStatusClass(transactionData.transactionStatus))}>
+
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between border-b border-dashed border-gray-300 pb-6"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Transaction Status
+                        </div>
+                        <span
+                          className={classNames(
+                            'rounded-full px-3 py-1 text-xs font-semibold',
+                            getStatusClass(transactionData.transactionStatus),
+                          )}
+                        >
                           {transactionData.transactionStatus}
                         </span>
                       </motion.div>
@@ -133,13 +198,13 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({ isOpe
                 )}
 
                 <Dialog.Close asChild>
-                  <motion.button 
+                  <motion.button
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
-                    className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 focus:outline-none transition-colors"
+                    className="absolute right-4 top-4 rounded-full p-2 transition-colors hover:bg-gray-100 focus:outline-none"
                   >
-                    <X className="w-5 h-5 text-gray-400" />
+                    <X className="h-5 w-5 text-gray-400" />
                   </motion.button>
                 </Dialog.Close>
               </motion.div>

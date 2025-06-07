@@ -1,12 +1,12 @@
-import { toast } from "sonner";
-import AppLoader from "../../loader/loader";
-import { formatDateTime, formatNaira, toastPosition } from "@/app/utils/utils";
-import { WithdrawalRequest } from "@/app/store/withdrawalSlice";
-import { useState } from "react";
-import WithdrawalApi from "@/app/api/withdrawalApi";
-import copy from "copy-to-clipboard";
-import { Copy } from "lucide-react";
-import { Avatar } from "@radix-ui/themes";
+import { toast } from 'sonner';
+import AppLoader from '../../loader/loader';
+import { formatDateTime, formatNaira, toastPosition } from '@/app/utils/utils';
+import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
+import { useState } from 'react';
+import WithdrawalApi from '@/app/api/withdrawalApi';
+import copy from 'copy-to-clipboard';
+import { Copy } from 'lucide-react';
+import { Avatar } from '@radix-ui/themes';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -24,7 +24,7 @@ const WithdrawDetailsModal: React.FunctionComponent<
 
   const handleApproved = async () => {
     if (!data || !data.id) {
-      toast.error("Invalid transaction data");
+      toast.error('Invalid transaction data');
       return;
     }
     const fee = 0;
@@ -32,11 +32,11 @@ const WithdrawDetailsModal: React.FunctionComponent<
       setIsLoading(true);
       const response = await WithdrawalApi.approveWithdrawal(data.id, fee);
 
-      console.log("Response:", response);
-      toast.success("Withdrawal approved successfully!");
+      console.log('Response:', response);
+      toast.success('Withdrawal approved successfully!');
       onClose();
     } catch (error: any) {
-      console.error("Error approving withdrawal:", error.message);
+      console.error('Error approving withdrawal:', error.message);
       toast.error(`Failed to approve withdrawal: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -50,21 +50,21 @@ const WithdrawDetailsModal: React.FunctionComponent<
     const success = copy(data);
 
     if (success) {
-      toast.success("Copied Successfully", { position: toastPosition });
+      toast.success('Copied Successfully', { position: toastPosition });
     }
   };
   const { time, fullDate } = data && formatDateTime(data.createdAt.iso);
   if (data)
     return (
       <>
-        <div className="py-5 space-y-7">
+        <div className="space-y-7 py-5">
           <div className="flex items-center justify-between">
-            <p className="font-bold font-heading">Withdrawal details</p>
+            <p className="font-heading font-bold">Withdrawal details</p>
           </div>
 
-          <div className="border-t border-b py-4 flex items-center justify-between">
+          <div className="flex items-center justify-between border-b border-t py-4">
             <div className="inline-flex items-center gap-2">
-              <div className="w-[40px] h-[40px] p-1 rounded-full bg-primary-50">
+              <div className="bg-primary-50 h-[40px] w-[40px] rounded-full p-1">
                 <Avatar
                   fallback={data.firstName?.charAt(0).toUpperCase()}
                   radius="full"
@@ -73,18 +73,18 @@ const WithdrawDetailsModal: React.FunctionComponent<
               </div>
 
               <div>
-                <p className="font-medium font-heading capitalize">
+                <p className="font-heading font-medium capitalize">
                   {data.firstName} {data.lastName}
                 </p>
                 <p>{data.email}</p>
               </div>
             </div>
             <div className="space-y-1">
-              <p className="font-medium font-heading">Wallet Balance</p>
+              <p className="font-heading font-medium">Wallet Balance</p>
               <p>{formatNaira(Number(data.balance), true)}</p>
             </div>
           </div>
-          <div className="border-b border-dashed pb-5 space-y-8">
+          <div className="space-y-8 border-b border-dashed pb-5">
             <LinedData title="Request ID" data={data.id} />
             <LinedData
               title="Request Amount "
@@ -114,18 +114,18 @@ const WithdrawDetailsModal: React.FunctionComponent<
               full={true}
               placeholder="Add Comments"
             ></CustomTextArea> */}
-            <div className="space-x-4 flex items-center justify-end">
+            <div className="flex items-center justify-end space-x-4">
               <button
                 onClick={handleReject}
-                disabled={data.status !== "pending"}
-                className="w-[120px] h-10 px-[18px] py-2 bg-error-400 rounded-3xl justify-center items-center inline-flex text-white"
+                disabled={data.status !== 'pending'}
+                className="bg-error-400 inline-flex h-10 w-[120px] items-center justify-center rounded-3xl px-[18px] py-2 text-white"
               >
                 Reject
               </button>
               <button
                 onClick={handleApproved}
-                disabled={data.status === "resolved"}
-                className="w-[120px] h-10 px-[18px] py-2 bg-positive-800 rounded-3xl justify-center items-center inline-flex text-white"
+                disabled={data.status === 'resolved'}
+                className="bg-positive-800 inline-flex h-10 w-[120px] items-center justify-center rounded-3xl px-[18px] py-2 text-white"
               >
                 Approve
               </button>
@@ -155,12 +155,12 @@ const LinedData: React.FunctionComponent<LinedDataProps> = ({
 
       <p
         className={`font-heading capitalize ${
-          data === "resolved"
-            ? "bg-positive-50 text-positive-900 py-1 px-4 rounded-full"
-            : data === "failed"
-            ? "bg-error-50 text-error-900 py-1 px-4 rounded-full"
-            : data === "pending"
-            ? "bg-warning-100 text-warning-900 py-1 px-4 rounded-full"
+          data === 'resolved'
+            ? 'bg-positive-50 text-positive-900 rounded-full px-4 py-1'
+            : data === 'failed'
+            ? 'bg-error-50 text-error-900 rounded-full px-4 py-1'
+            : data === 'pending'
+            ? 'bg-warning-100 text-warning-900 rounded-full px-4 py-1'
             : null
         }`}
       >

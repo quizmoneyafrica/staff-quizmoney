@@ -1,11 +1,11 @@
-"use client";
-import React from "react";
-import DashboardQueries from "./DashboardQueries";
+'use client';
+import React from 'react';
+import DashboardQueries from './DashboardQueries';
 
 function AppLiveQueries() {
   return (
     <>
-      <DashboardQueries /> 
+      <DashboardQueries />
     </>
   );
 }

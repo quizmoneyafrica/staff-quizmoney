@@ -1,7 +1,7 @@
-import { ApiResponse } from "@/app/api/interface";
-import { formatDateTime, truncateWords } from "@/app/utils/utils";
-import { Flex, Grid } from "@radix-ui/themes";
-import React from "react";
+import { ApiResponse } from '@/app/api/interface';
+import { formatDateTime, truncateWords } from '@/app/utils/utils';
+import { Flex, Grid } from '@radix-ui/themes';
+import React from 'react';
 
 type Props = {
   notification: ApiResponse;
@@ -24,25 +24,25 @@ export const NotificationBox = ({
     <>
       <button
         onClick={handleViewNotification}
-        className="border border-neutral-200 w-full bg-white p-4 rounded-[10px] hover:bg-primary-50 focus:bg-primary-50 cursor-pointer"
+        className="hover:bg-primary-50 focus:bg-primary-50 w-full cursor-pointer rounded-[10px] border border-neutral-200 bg-white p-4"
       >
         <Grid columns="3" align="center" justify="between">
-          <div className="grid grid-cols-[56px_1fr] col-span-2 gap-2 items-center">
+          <div className="col-span-2 grid grid-cols-[56px_1fr] items-center gap-2">
             <div
-              className={`h-14 w-14 rounded-full bg-primary-50 grid place-items-center`}
+              className={`bg-primary-50 grid h-14 w-14 place-items-center rounded-full`}
             >
               <span className="text-3xl">
-                {notification.message.includes("deposit")
-                  ? "💰"
-                  : notification.message.includes("purchased")
-                  ? "🛍"
-                  : notification.message.includes("request")
-                  ? "💸"
-                  : "🔔 "}
+                {notification.message.includes('deposit')
+                  ? '💰'
+                  : notification.message.includes('purchased')
+                  ? '🛍'
+                  : notification.message.includes('request')
+                  ? '💸'
+                  : '🔔 '}
               </span>
             </div>
             <Grid className="text-left">
-              <p className="font-bold text-primary-800">
+              <p className="text-primary-800 font-bold">
                 {notification.message}
               </p>
               <span className="text-xs text-neutral-600">
@@ -56,18 +56,18 @@ export const NotificationBox = ({
               direction="column"
               align="end"
               justify="end"
-              className="text-neutral-600 text-xs"
+              className="text-xs text-neutral-600"
             >
               <span>{time}</span>
               <Flex align="center" gap="1">
                 <span>{fullDate}</span>
                 {!notification.read && (
-                  <div className="h-[8px] w-[8px] bg-positive-900 rounded-full " />
+                  <div className="bg-positive-900 h-[8px] w-[8px] rounded-full " />
                 )}
               </Flex>
             </Flex>
             {!notification.read && (
-              <p className="text-xs text-neutral-400 text-right">Unread</p>
+              <p className="text-right text-xs text-neutral-400">Unread</p>
             )}
           </Grid>
         </Grid>

@@ -1,15 +1,15 @@
-import * as React from "react";
-import { motion } from "framer-motion";
-import { toast } from "sonner";
-import WithdrawalApi from "@/app/api/withdrawalApi";
-import { useAppDispatch, useAppSelector } from "@/app/hooks/useAuth";
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import WithdrawalApi from '@/app/api/withdrawalApi';
+import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
 import {
   setWithdrawalRequests,
   WithdrawalRequest,
-} from "@/app/store/withdrawalSlice";
-import RecentWithdrawTable from "../withdrawal/table";
-import QmDrawer from "../../drawer/drawer";
-import WithdrawDetailsModal from "../withdrawal/WithdrawDrawer";
+} from '@/app/store/withdrawalSlice';
+import RecentWithdrawTable from '../withdrawal/table';
+import QmDrawer from '../../drawer/drawer';
+import WithdrawDetailsModal from '../withdrawal/WithdrawDrawer';
 
 const RecentWithdraw: React.FunctionComponent = () => {
   const dispatch = useAppDispatch();
@@ -23,10 +23,10 @@ const RecentWithdraw: React.FunctionComponent = () => {
     setFetching(true);
     try {
       const res = await WithdrawalApi.fetchWithdrawalRequest();
-      console.log("Request", res.data.result.withdrawalRequests);
+      console.log('Request', res.data.result.withdrawalRequests);
       dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
     } catch {
-      toast.error("Error fetching Withdrawal Request. Please refresh");
+      toast.error('Error fetching Withdrawal Request. Please refresh');
     } finally {
       setFetching(false);
     }
@@ -50,14 +50,14 @@ const RecentWithdraw: React.FunctionComponent = () => {
     return (
       <motion.div
         layout
-        className="animate-pulse p-4 bg-neutral-300 rounded-lg h-[223px] w-full col-span-2"
+        className="col-span-2 h-[223px] w-full animate-pulse rounded-lg bg-neutral-300 p-4"
       ></motion.div>
     );
   }
   return (
     <div>
       <div className="p-4">
-        <p className="text-neutral-800 text-base font-heading">
+        <p className="font-heading text-base text-neutral-800">
           Pending Withdrawal Request
         </p>
       </div>

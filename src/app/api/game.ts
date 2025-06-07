@@ -1,12 +1,12 @@
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from 'axios';
 import {
   appHeaders,
   BASE_URL,
   getSessionTokenHeaders,
   SECRET_KEY,
-} from "./userApi";
-import { ApiResponse } from "./interface";
-import CryptoJS from "crypto-js";
+} from './userApi';
+import { ApiResponse } from './interface';
+import CryptoJS from 'crypto-js';
 
 const GameApi = {
   fetchNextGame(): Promise<AxiosResponse<ApiResponse>> {
@@ -16,30 +16,30 @@ const GameApi = {
     return axios.post(
       `${BASE_URL}/registerForGame`,
       { gameId },
-      { headers: getSessionTokenHeaders() }
+      { headers: getSessionTokenHeaders() },
     );
   },
   removeUserFromGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/removeUserFromGame`,
       { gameId },
-      { headers: getSessionTokenHeaders() }
+      { headers: getSessionTokenHeaders() },
     );
   },
   deactivateSession(gameId: string) {
     return axios.post(
       `${BASE_URL}/deactivateSession`,
       { gameId },
-      { headers: getSessionTokenHeaders() }
+      { headers: getSessionTokenHeaders() },
     );
   },
   getLoggedinUserGameResults(
-    gameId: string
+    gameId: string,
   ): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/getLoggedinUserGameResults`,
       { gameId },
-      { headers: getSessionTokenHeaders() }
+      { headers: getSessionTokenHeaders() },
     );
   },
 
@@ -47,14 +47,14 @@ const GameApi = {
     return axios.post(
       `${BASE_URL}/updateErasers`,
       { erasersUsed },
-      { headers: getSessionTokenHeaders() }
+      { headers: getSessionTokenHeaders() },
     );
   },
   recordGameAnswer(
     gameId: string,
     questionNumber: string,
     answer: string,
-    totalTime?: string
+    totalTime?: string,
   ) {
     return axios.post(
       `${BASE_URL}/recordGameAnswer`,
@@ -64,7 +64,7 @@ const GameApi = {
         answer,
         ...(totalTime && { totalTime }),
       },
-      { headers: getSessionTokenHeaders() }
+      { headers: getSessionTokenHeaders() },
     );
   },
 };

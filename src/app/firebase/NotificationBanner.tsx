@@ -1,6 +1,6 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { isSupported } from "firebase/messaging";
+'use client';
+import React, { useEffect, useState } from 'react';
+import { isSupported } from 'firebase/messaging';
 
 const NotificationBanner = () => {
   const [shouldShowBanner, setShouldShowBanner] = useState(false);
@@ -15,9 +15,9 @@ const NotificationBanner = () => {
       }
 
       const permission = Notification.permission;
-      if (permission === "granted") {
+      if (permission === 'granted') {
         setShouldShowBanner(false);
-      } else if (permission === "denied") {
+      } else if (permission === 'denied') {
         setShouldShowBanner(true);
       }
     };
@@ -33,8 +33,8 @@ const NotificationBanner = () => {
   if (!shouldShowBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-yellow-100 border-t border-yellow-400 p-4 z-50 shadow-md text-center text-sm md:text-base">
-      <p className="mb-2 text-yellow-900 font-medium">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-yellow-400 bg-yellow-100 p-4 text-center text-sm shadow-md md:text-base">
+      <p className="mb-2 font-medium text-yellow-900">
         🔔 Notifications are required to participate in Quiz Money!
       </p>
       <p className="mb-4 text-yellow-800">
@@ -43,7 +43,7 @@ const NotificationBanner = () => {
       <a
         href="https://quizmoney.ng/how-to-install-app/"
         target="_blank"
-        className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-2 rounded-lg"
+        className="rounded-lg bg-yellow-500 px-4 py-2 font-semibold text-white hover:bg-yellow-600"
       >
         Enable Notifications
       </a>

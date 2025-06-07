@@ -87,7 +87,7 @@ export interface User {
   createdAt?: Date; // ISO Date string
   deviceToken?: string;
   dob?: {
-    __type: "Date";
+    __type: 'Date';
     iso: string; // ISO Date string
   };
   dummyAccount?: boolean;
@@ -96,16 +96,16 @@ export interface User {
   erasers?: number;
   firstName?: string;
   // games: []; // You can replace `any` with a proper Game interface if known
-  gender?: "male" | "female";
+  gender?: 'male' | 'female';
   influencer?: boolean;
   lastName?: string;
   objectId?: string;
   otp?: string;
   otpExpiry?: {
-    __type: "Date";
+    __type: 'Date';
     iso?: Date;
   };
-  promotionalMails?: boolean; 
+  promotionalMails?: boolean;
   referralCode?: string;
   referralPoints?: number;
   sessionToken?: string;
@@ -123,7 +123,7 @@ export interface UpdateUserForm {
   dob?:
     | string
     | {
-        __type: "Date";
+        __type: 'Date';
         iso: string; // ISO Date string
       };
   gender?: string;

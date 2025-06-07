@@ -1,5 +1,5 @@
-"use client";
-import React, { useEffect, useState } from "react";
+'use client';
+import React, { useEffect, useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let deferredPrompt: any;
@@ -15,10 +15,10 @@ const InstallAppButton: React.FC = () => {
       setShowPrompt(true);
     };
 
-    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener('beforeinstallprompt', handler);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
 
@@ -26,10 +26,10 @@ const InstallAppButton: React.FC = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const result = await deferredPrompt.userChoice;
-      if (result.outcome === "accepted") {
-        console.log("User accepted install");
+      if (result.outcome === 'accepted') {
+        console.log('User accepted install');
       } else {
-        console.log("User dismissed install");
+        console.log('User dismissed install');
       }
       setShowPrompt(false);
     }
@@ -40,7 +40,7 @@ const InstallAppButton: React.FC = () => {
   return (
     <button
       onClick={handleInstall}
-      className="bg-primary-500 text-white px-4 py-2 rounded-full fixed top-6 right-6 shadow-xl z-50"
+      className="bg-primary-500 fixed right-6 top-6 z-50 rounded-full px-4 py-2 text-white shadow-xl"
     >
       📥 Install Quiz Money
     </button>

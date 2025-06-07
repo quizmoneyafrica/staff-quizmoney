@@ -1,40 +1,40 @@
-"use client";
-import { User } from "@/app/api/interface";
-import userApi, { getAuthUser } from "@/app/api/userApi";
-import { useAppSelector, useAuth } from "@/app/hooks/useAuth";
-import { ArrowDownIcon, MailIcon, PersonIcon } from "@/app/icons/icons";
-import { decryptData, encryptData } from "@/app/utils/crypto";
-import CustomButton from "@/app/utils/CustomBtn";
-import CustomSelect from "@/app/utils/CustomSelect";
-import CustomTextField from "@/app/utils/CustomTextField";
-import { formatDateTime } from "@/app/utils/utils";
-import { CalendarIcon, GlobeIcon, Pencil1Icon } from "@radix-ui/react-icons";
-import { Flex, Grid } from "@radix-ui/themes";
-import { AxiosError } from "axios";
-import { motion } from "framer-motion";
-import Image from "next/image";
-import React, { useState } from "react";
-import { toast } from "sonner"; 
+'use client';
+import { User } from '@/app/api/interface';
+import userApi, { getAuthUser } from '@/app/api/userApi';
+import { useAppSelector, useAuth } from '@/app/hooks/useAuth';
+import { ArrowDownIcon, MailIcon, PersonIcon } from '@/app/icons/icons';
+import { decryptData, encryptData } from '@/app/utils/crypto';
+import CustomButton from '@/app/utils/CustomBtn';
+import CustomSelect from '@/app/utils/CustomSelect';
+import CustomTextField from '@/app/utils/CustomTextField';
+import { formatDateTime } from '@/app/utils/utils';
+import { CalendarIcon, GlobeIcon, Pencil1Icon } from '@radix-ui/react-icons';
+import { Flex, Grid } from '@radix-ui/themes';
+import { AxiosError } from 'axios';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 
 const initialForm = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  dob: "",
-  gender: "",
-  country: "nigeria",
-  facebook: "",
-  instagram: "",
-  twitter: "",
-  whatsapp: "",
+  firstName: '',
+  lastName: '',
+  email: '',
+  dob: '',
+  gender: '',
+  country: 'nigeria',
+  facebook: '',
+  instagram: '',
+  twitter: '',
+  whatsapp: '',
 };
 
 const Page = () => {
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
   const user: User | null = encrypted ? decryptData(encrypted) : null;
-  const formattedDOB = new Date(user?.dob?.iso ?? "")
+  const formattedDOB = new Date(user?.dob?.iso ?? '')
     .toISOString()
-    .split("T")[0];
+    .split('T')[0];
   const [formData, setFormData] = useState({
     ...initialForm,
     ...user,
@@ -42,9 +42,9 @@ const Page = () => {
   });
   const authUser = getAuthUser();
   const { fullDate } = formatDateTime(
-    authUser.createdAt ?? new Date().toISOString()
+    authUser.createdAt ?? new Date().toISOString(),
   );
-  console.log("FormData:", formData);
+  console.log('FormData:', formData);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -52,7 +52,7 @@ const Page = () => {
   const { loginUser } = useAuth();
 
   const onChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const target = e.target as HTMLInputElement | HTMLSelectElement;
     const { name, value } = target;
@@ -69,18 +69,18 @@ const Page = () => {
         dob: formData.dob,
         gender: formData.gender,
         country: formData.country,
-        facebook: formData.facebook ?? "",
-        instagram: formData.instagram ?? "",
-        twitter: formData.twitter ?? "",
-        whatsapp: formData.whatsapp ?? "",
-        avatar: user?.avatar ?? "",
+        facebook: formData.facebook ?? '',
+        instagram: formData.instagram ?? '',
+        twitter: formData.twitter ?? '',
+        whatsapp: formData.whatsapp ?? '',
+        avatar: user?.avatar ?? '',
         promotionalMails: user?.promotionalMails ?? false,
       })
       .then((res) => {
         if (res.status === 200) {
           setIsEditing(false);
-          toast.success("Profile updated successfully", {
-            position: "top-center",
+          toast.success('Profile updated successfully', {
+            position: 'top-center',
           });
 
           const userData = res.data.result.updatedUser;
@@ -93,10 +93,10 @@ const Page = () => {
       .catch((err: AxiosError) => {
         toast.error(
           (err.response?.data as unknown as { error: string }).error ||
-            "Failed to update profile. Please try again later.",
+            'Failed to update profile. Please try again later.',
           {
-            position: "top-center",
-          }
+            position: 'top-center',
+          },
         );
       })
       .finally(() => {
@@ -109,49 +109,49 @@ const Page = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.25, ease: "easeInOut" }}
+      transition={{ duration: 0.25, ease: 'easeInOut' }}
     >
-      <div className="rounded-lg w-full bg-white overflow-hidden pb-12">
-        <div className="w-full h-[120px] md:h-[160px] bg-primary-800 overflow-hidden rounded-br-[60px]">
+      <div className="w-full overflow-hidden rounded-lg bg-white pb-12">
+        <div className="bg-primary-800 h-[120px] w-full overflow-hidden rounded-br-[60px] md:h-[160px]">
           <Image
             src="/assets/images/background-desktop.png"
             alt="background"
             width={500}
             height={500}
-            className="w-full h-full object-cover brightness-75 scale-125"
+            className="h-full w-full scale-125 object-cover brightness-75"
           />
         </div>
-        <div className="lg:px-20 px-4 h-full w-full">
+        <div className="h-full w-full px-4 lg:px-20">
           <div className="  relative min-h-[80vh] w-full ">
-            <div className=" -translate-y-12 w-full border-b border-gray-200 h-fit pb-10">
+            <div className=" h-fit w-full -translate-y-12 border-b border-gray-200 pb-10">
               {/* profile pic */}
               <div
                 // onClick={() => setIsImageModalOpen(true)}
-                className="cursor-pointer sm:w-[100px] sm:h-[100px] w-[80px] h-[80px] rounded-full  border-2 border-primary-400  z-10 bg-white/50 backdrop-blur-sm"
+                className="border-primary-400 z-10 h-[80px] w-[80px] cursor-pointer rounded-full  border-2 bg-white/50  backdrop-blur-sm sm:h-[100px] sm:w-[100px]"
               >
-                <div className="w-full h-full flex items-center justify-center relative">
+                <div className="relative flex h-full w-full items-center justify-center">
                   <Image
-                    src={user?.avatar ?? "/assets/images/profile.png"}
+                    src={user?.avatar ?? '/assets/images/profile.png'}
                     alt="profile"
                     width={100}
                     height={100}
-                    className="w-full h-full object-cover rounded-full"
+                    className="h-full w-full rounded-full object-cover"
                   />
                   <Image
-                    src={"/icons/camera.svg"}
+                    src={'/icons/camera.svg'}
                     alt="profile"
                     width={100}
                     height={100}
-                    className="w-6 h-6 absolute bottom-0 right-0 text-black fill-black z-40 bg-white"
+                    className="absolute bottom-0 right-0 z-40 h-6 w-6 bg-white fill-black text-black"
                   />
                 </div>
               </div>
 
-              <Flex justify="between" className="w-full mt-4">
+              <Flex justify="between" className="mt-4 w-full">
                 <div className="flex flex-col gap-2">
                   <p
                     // onClick={() => setIsImageModalOpen(true)}
-                    className=" font-medium text-primary-500 cursor-pointer"
+                    className=" text-primary-500 cursor-pointer font-medium"
                   >
                     Change Image
                   </p>
@@ -159,19 +159,19 @@ const Page = () => {
                     {user?.firstName} {user?.lastName}
                   </p>
                   <p className=" font-light">{user?.email}</p>
-                  <p className=" font-light text-xs block sm:hidden">
-                    Joined {user?.createdAt ? fullDate : "N/A"}
+                  <p className=" block text-xs font-light sm:hidden">
+                    Joined {user?.createdAt ? fullDate : 'N/A'}
                   </p>
                 </div>
 
-                <div className="flex flex-col justify-between items-end">
+                <div className="flex flex-col items-end justify-between">
                   {!isEditing && (
                     <div
                       onClick={() => setIsEditing(!isEditing)}
-                      className=" underline text-primary-500 cursor-pointer text-xs sm:text-sm flex items-center "
+                      className=" text-primary-500 flex cursor-pointer items-center text-xs underline sm:text-sm "
                     >
                       Edit Profile
-                      <Pencil1Icon className="w-4 h-4" />
+                      <Pencil1Icon className="h-4 w-4" />
                     </div>
                   )}
                   {/* <p className="font-light text-xs sm:block hidden">
@@ -183,8 +183,8 @@ const Page = () => {
 
             <div className=" space-y-10">
               <Grid
-                columns={{ initial: "1", md: "2" }}
-                gap={{ initial: "5", md: "40px" }}
+                columns={{ initial: '1', md: '2' }}
+                gap={{ initial: '5', md: '40px' }}
               >
                 <CustomTextField
                   label="First Name"
@@ -242,7 +242,7 @@ const Page = () => {
                   autoComplete="bday"
                   // onChange={onChange}
                   disabled={!isEditing}
-                  icon={<CalendarIcon className="text-[#A6ABC4] h-6 w-6" />}
+                  icon={<CalendarIcon className="h-6 w-6 text-[#A6ABC4]" />}
                   required
                   // className="min-0 !w-full"
                 />
@@ -251,26 +251,26 @@ const Page = () => {
                   label="Country"
                   name="gender"
                   value={formData.gender}
-                  options={[{ label: "Nigeria", value: "nigeria" }]}
+                  options={[{ label: 'Nigeria', value: 'nigeria' }]}
                   onChange={onChange}
                   disabled={!isEditing}
                   disabledOption="Select your country"
-                  icon={<GlobeIcon className="text-[#A6ABC4] h-6 w-6" />}
+                  icon={<GlobeIcon className="h-6 w-6 text-[#A6ABC4]" />}
                 />
               </Grid>
 
               {isEditing && (
-                <div className="flex flex-col-reverse sm:flex-row items-center gap-3">
+                <div className="flex flex-col-reverse items-center gap-3 sm:flex-row">
                   <CustomButton
                     onClick={updateUser}
                     loader={isUpdating}
                     disabled={isUpdating}
-                    className=" sm:w-fit w-full px-4 rounded-lg"
+                    className=" w-full rounded-lg px-4 sm:w-fit"
                   >
                     Update Profile
                   </CustomButton>
                   <CustomButton
-                    className=" bg-red-500 text-white w-full sm:w-fit px-4 rounded-lg"
+                    className=" w-full rounded-lg bg-red-500 px-4 text-white sm:w-fit"
                     onClick={() => setIsEditing(false)}
                   >
                     Cancel
@@ -288,6 +288,6 @@ const Page = () => {
 export default Page;
 
 const genders = [
-  { label: "Male", value: "male" },
-  { label: "Female", value: "female" },
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
 ];

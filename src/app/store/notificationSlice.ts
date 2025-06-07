@@ -1,23 +1,23 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { ApiResponse } from "../api/interface";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { ApiResponse } from '../api/interface';
 
 interface NotificationState {
-  notifications: ApiResponse["result"] | null;
+  notifications: ApiResponse['result'] | null;
 }
 const initialState: NotificationState = {
   notifications: null,
 };
 
 const notificationSlice = createSlice({
-  name: "notifications",
+  name: 'notifications',
   initialState,
   reducers: {
-    setNotifications(state, action: PayloadAction<ApiResponse["result"]>) {
+    setNotifications(state, action: PayloadAction<ApiResponse['result']>) {
       state.notifications = action.payload;
     },
     addNotification(
       state,
-      action: PayloadAction<ApiResponse["result"][number]>
+      action: PayloadAction<ApiResponse['result'][number]>,
     ) {
       if (state.notifications) {
         state.notifications.unshift(action.payload);
@@ -28,7 +28,7 @@ const notificationSlice = createSlice({
     markAsRead(state, action: PayloadAction<string>) {
       if (!state.notifications) return;
       const index = state.notifications.findIndex(
-        (n: ApiResponse) => n.objectId === action.payload
+        (n: ApiResponse) => n.objectId === action.payload,
       );
       if (index !== -1) {
         state.notifications[index].read = true;

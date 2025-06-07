@@ -1,14 +1,14 @@
-import * as React from "react";
+import * as React from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
-import { WithdrawalRequest } from "@/app/store/withdrawalSlice";
-import { formatDateTime, formatNaira } from "@/app/utils/utils";
-import { CaretSortIcon, DotsVerticalIcon } from "@radix-ui/react-icons";
-import { Avatar, Table } from "@radix-ui/themes";
+} from '@radix-ui/react-dropdown-menu';
+import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
+import { formatDateTime, formatNaira } from '@/app/utils/utils';
+import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
+import { Avatar, Table } from '@radix-ui/themes';
 
 interface IRecentWithdrawTableProps {
   data: WithdrawalRequest[];
@@ -19,27 +19,33 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
   data,
   viewDetails,
 }) => {
-    type SortableWithdrawalKeys = "id" | "firstName" | "amount" | "balance" | "status" | "createdAt";
+  type SortableWithdrawalKeys =
+    | 'id'
+    | 'firstName'
+    | 'amount'
+    | 'balance'
+    | 'status'
+    | 'createdAt';
 
-    const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | "">("");
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
+  const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | ''>('');
+  const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
 
   const handleSort = (key: SortableWithdrawalKeys) => {
     if (sortBy === key) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(key);
-      setSortOrder("asc");
+      setSortOrder('asc');
     }
   };
 
   const sortedData = React.useMemo(() => {
     if (sortBy) {
       return data.slice().sort((a, b) => {
-        const order = sortOrder === "asc" ? 1 : -1;
+        const order = sortOrder === 'asc' ? 1 : -1;
         const aValue = a[sortBy] as string | number | Date;
         const bValue = b[sortBy] as string | number | Date;
-  
+
         if (aValue < bValue) return -1 * order;
         if (aValue > bValue) return 1 * order;
         return 0;
@@ -56,15 +62,15 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
       >
         <Table.Header className="bg-primary-50">
           <Table.Row>
-            <Th label="Request ID" onClick={() => handleSort("id")} />
-            <Th label="First Name" onClick={() => handleSort("firstName")} />
-            <Th label="Wallet Balance" onClick={() => handleSort("balance")} />
-            <Th label="Amount Requested" onClick={() => handleSort("amount")} />
+            <Th label="Request ID" onClick={() => handleSort('id')} />
+            <Th label="First Name" onClick={() => handleSort('firstName')} />
+            <Th label="Wallet Balance" onClick={() => handleSort('balance')} />
+            <Th label="Amount Requested" onClick={() => handleSort('amount')} />
             <Th
               label="Withdrawal Status"
-              onClick={() => handleSort("status")}
+              onClick={() => handleSort('status')}
             />
-            <Table.Cell className="text-left px-4 py-2">Action</Table.Cell>
+            <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -74,13 +80,13 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
 
               return (
                 <Table.Row key={item.id}>
-                  <Table.Cell className="px-4 py-4 whitespace-nowrap">
+                  <Table.Cell className="whitespace-nowrap px-4 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="h-[48px] w-[48px] bg-neutral-50 rounded-full flex items-center justify-center">
+                      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-bold font-heading text-neutral-800 uppercase">
+                        <p className="font-heading font-bold uppercase text-neutral-800">
                           {/* {item.id} */}
                           {fullDate}
                         </p>
@@ -90,7 +96,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                   </Table.Cell>
                   <Table.Cell className="px-4 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-[40px] h-[40px] p-1 rounded-full flex items-center justify-center bg-primary-50">
+                      <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
                         <Avatar
                           src={item.id}
                           fallback={item.firstName?.charAt(0).toUpperCase()}
@@ -98,7 +104,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                           className="bg-primary-50"
                         />
                       </div>
-                      <p className="capitalize text-primary-800">
+                      <p className="text-primary-800 capitalize">
                         {item.firstName}
                       </p>
                     </div>
@@ -111,12 +117,12 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                   </Table.Cell>
                   <Table.Cell className="px-4 py-4">
                     <p
-                      className={`font-heading capitalize rounded-full text-center py-2 px-4 w-fit ${
-                        item.status === "resolved"
-                          ? "bg-green-100 text-green-800"
-                          : item.status === "failed"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
+                      className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
+                        item.status === 'resolved'
+                          ? 'bg-green-100 text-green-800'
+                          : item.status === 'failed'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
                       }`}
                     >
                       {item.status}
@@ -132,10 +138,10 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                       <DropdownMenuContent
                         side="bottom"
                         align="start"
-                        className="z-50 bg-white shadow-md rounded-md p-1 border w-40"
+                        className="z-50 w-40 rounded-md border bg-white p-1 shadow-md"
                       >
                         <DropdownMenuItem
-                          className="cursor-pointer px-2 py-1 hover:bg-primary-50 rounded text-sm text-primary-900 font-medium"
+                          className="hover:bg-primary-50 text-primary-900 cursor-pointer rounded px-2 py-1 text-sm font-medium"
                           onClick={() => viewDetails(item)}
                         >
                           View Details
@@ -150,7 +156,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
             <Table.Row>
               <Table.Cell
                 colSpan={6}
-                className="text-center py-12 font-bold text-error-500"
+                className="text-error-500 py-12 text-center font-bold"
               >
                 No Pending Request
               </Table.Cell>
@@ -170,7 +176,7 @@ interface ThProps {
 }
 
 const Th: React.FC<ThProps> = ({ label, onClick }) => (
-  <Table.Cell className="text-left px-4 py-2 cursor-pointer" onClick={onClick}>
+  <Table.Cell className="cursor-pointer px-4 py-2 text-left" onClick={onClick}>
     <div className="flex items-center gap-1">
       <span>{label}</span>
       <CaretSortIcon />

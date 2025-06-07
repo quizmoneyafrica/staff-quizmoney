@@ -11,28 +11,33 @@ interface TimeRangeDropdownProps {
   onSelect: (option: string) => void;
 }
 
-const TimeRangeDropdown = ({ options, selected, onSelect }: TimeRangeDropdownProps) => {
+const TimeRangeDropdown = ({
+  options,
+  selected,
+  onSelect,
+}: TimeRangeDropdownProps) => {
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger 
-        className="inline-flex items-center justify-center px-4 py-2 border rounded-md gap-2 cursor-pointer text-[#6D6D6D] select-none border-[#D9D9D9] outline-none focus:ring-0"
+      <DropdownMenu.Trigger
+        className="inline-flex cursor-pointer select-none items-center justify-center gap-2 rounded-md border border-[#D9D9D9] px-4 py-2 text-[#6D6D6D] outline-none focus:ring-0"
         aria-label="Select time range"
       >
-        <ListFilter/>{selected}
-        <ChevronDownIcon className="ml-2 w-4 h-4" />
+        <ListFilter />
+        {selected}
+        <ChevronDownIcon className="ml-2 h-4 w-4" />
       </DropdownMenu.Trigger>
 
-      <DropdownMenu.Content 
-        className="bg-white rounded-md shadow-md z-[100] p-2 mt-2 min-w-[150px] border border-gray-200"
+      <DropdownMenu.Content
+        className="z-[100] mt-2 min-w-[150px] rounded-md border border-gray-200 bg-white p-2 shadow-md"
         sideOffset={5}
       >
         {options.map((option) => (
           <DropdownMenu.Item
             key={option}
-            className={`px-3 py-2 rounded-md cursor-pointer select-none 
+            className={`cursor-pointer select-none rounded-md px-3 py-2 
               ${
-                option === selected 
-                  ? 'bg-primary-800 text-white' 
+                option === selected
+                  ? 'bg-primary-800 text-white'
                   : 'text-gray-900 hover:bg-gray-100'
               }`}
             onSelect={() => onSelect(option)}
@@ -45,4 +50,4 @@ const TimeRangeDropdown = ({ options, selected, onSelect }: TimeRangeDropdownPro
   );
 };
 
-export default TimeRangeDropdown; 
+export default TimeRangeDropdown;

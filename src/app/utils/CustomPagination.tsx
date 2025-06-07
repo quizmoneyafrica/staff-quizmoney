@@ -1,6 +1,6 @@
-import React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import clsx from "classnames";
+import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import clsx from 'classnames';
 
 interface PaginationProps {
   currentPage: number;
@@ -45,7 +45,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
     // Add ellipsis if needed
     if (rangeStart > 2) {
-      pages.push("...");
+      pages.push('...');
     }
 
     // Add pages in range
@@ -55,7 +55,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
     // Add ellipsis if needed
     if (rangeEnd < totalPages - 1) {
-      pages.push("...");
+      pages.push('...');
     }
 
     // Always show last page
@@ -63,31 +63,31 @@ const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="mt-6 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500">
+    <div className="mt-6 flex flex-col items-center justify-between text-sm text-gray-500 sm:flex-row">
       <div>
         Showing data {startEntry} to {endEntry} of {totalEntries} entries
       </div>
-      <div className="flex items-center space-x-1 mt-4 sm:mt-0">
+      <div className="mt-4 flex items-center space-x-1 sm:mt-0">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="p-1.5 rounded-md text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+          className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ChevronLeft size={16} />
         </button>
 
         {pages.map((page, index) => (
           <div key={index}>
-            {page === "..." ? (
+            {page === '...' ? (
               <span className="px-2 py-1.5">...</span>
             ) : (
               <button
                 onClick={() => onPageChange(page as number)}
                 className={clsx(
-                  "w-8 h-8 rounded-md flex items-center justify-center transition-colors",
+                  'flex h-8 w-8 items-center justify-center rounded-md transition-colors',
                   currentPage === page
-                    ? "bg-primary-700 text-white"
-                    : "text-gray-500 hover:bg-gray-100"
+                    ? 'bg-primary-700 text-white'
+                    : 'text-gray-500 hover:bg-gray-100',
                 )}
               >
                 {page}
@@ -99,7 +99,7 @@ const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="p-1.5 rounded-md text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+          className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ChevronRight size={16} />
         </button>

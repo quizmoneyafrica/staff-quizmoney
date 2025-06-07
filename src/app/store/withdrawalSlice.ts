@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface BankAccount {
   accountNumber: string;
@@ -14,10 +14,10 @@ export interface WithdrawalRequest {
   balance: number;
   amount: number;
   createdAt: {
-    __type: "Date";
+    __type: 'Date';
     iso: string;
   };
-  status: "pending" | "resolved" | "failed";
+  status: 'pending' | 'resolved' | 'failed';
   bankAccount: BankAccount;
   transactionId: string;
 }
@@ -31,12 +31,12 @@ const initialState: WithdrawalState = {
 };
 
 const withdrawalSlice = createSlice({
-  name: "withdrawals",
+  name: 'withdrawals',
   initialState,
   reducers: {
     setWithdrawalRequests: (
       state,
-      action: PayloadAction<WithdrawalRequest[]>
+      action: PayloadAction<WithdrawalRequest[]>,
     ) => {
       state.requests = action.payload;
     },
@@ -47,11 +47,11 @@ const withdrawalSlice = createSlice({
       state,
       action: PayloadAction<{
         id: string;
-        status: "pending" | "resolved" | "failed";
-      }>
+        status: 'pending' | 'resolved' | 'failed';
+      }>,
     ) => {
       const index = state.requests.findIndex(
-        (req) => req.id === action.payload.id
+        (req) => req.id === action.payload.id,
       );
       if (index !== -1) {
         state.requests[index].status = action.payload.status;

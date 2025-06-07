@@ -1,18 +1,18 @@
-"use client";
-import { ApiResponse } from "@/app/api/interface";
-import EmptyState from "@/app/components/notification/emptyState";
-import { NotificationBox } from "@/app/components/notification/NotificationBox";
-import { useAppSelector } from "@/app/hooks/useAuth";
-import { Grid } from "@radix-ui/themes";
-import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import ViewNotification from "@/app/components/notification/ViewNotification";
-import QmDrawer from "@/app/components/drawer/drawer";
-import NotificationApi from "@/app/api/notification";
+'use client';
+import { ApiResponse } from '@/app/api/interface';
+import EmptyState from '@/app/components/notification/emptyState';
+import { NotificationBox } from '@/app/components/notification/NotificationBox';
+import { useAppSelector } from '@/app/hooks/useAuth';
+import { Grid } from '@radix-ui/themes';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import ViewNotification from '@/app/components/notification/ViewNotification';
+import QmDrawer from '@/app/components/drawer/drawer';
+import NotificationApi from '@/app/api/notification';
 
 function Page() {
   const notifications = useAppSelector(
-    (state) => state.notifications.notifications
+    (state) => state.notifications.notifications,
   );
   const [openNotification, setOpenNotification] = useState(false);
   const [passedNotification, setPassedNotification] = useState<ApiResponse>({});
@@ -29,8 +29,8 @@ function Page() {
       NotificationApi.readNotification(passedNotification.objectId).catch(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (err: any) => {
-          console.error("Failed to mark notification as read", err);
-        }
+          console.error('Failed to mark notification as read', err);
+        },
       );
     }
 
@@ -42,7 +42,7 @@ function Page() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.25, ease: "easeInOut" }}
+      transition={{ duration: 0.25, ease: 'easeInOut' }}
       className="min-h-screen"
     >
       {notifications?.length < 1 ? (
@@ -65,7 +65,7 @@ function Page() {
                         setPassedNotification={setPassedNotification}
                       />
                     );
-                  }
+                  },
                 )}
               </Grid>
             }

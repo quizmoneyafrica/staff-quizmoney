@@ -1,11 +1,11 @@
-import * as React from "react";
-import { motion } from "framer-motion";
-import { useAppDispatch, useAppSelector } from "@/app/hooks/useAuth";
-import GameApi, { decryptGameData } from "@/app/api/game";
-import { toast } from "sonner";
-import { formatNaira, formatQuizDate, toastPosition } from "@/app/utils/utils";
-import { Flex, Heading, Link, Text } from "@radix-ui/themes";
-import { setCurrentGame } from "@/app/store/gameSlice";
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
+import GameApi, { decryptGameData } from '@/app/api/game';
+import { toast } from 'sonner';
+import { formatNaira, formatQuizDate, toastPosition } from '@/app/utils/utils';
+import { Flex, Heading, Link, Text } from '@radix-ui/themes';
+import { setCurrentGame } from '@/app/store/gameSlice';
 
 const NextLiveGame: React.FunctionComponent = () => {
   const dispatch = useAppDispatch();
@@ -22,7 +22,7 @@ const NextLiveGame: React.FunctionComponent = () => {
       dispatch(setCurrentGame(game));
       setFetching(false);
     } catch {
-      toast.error("Error loading Next Game, please refresh", {
+      toast.error('Error loading Next Game, please refresh', {
         position: toastPosition,
       });
       setFetching(false);
@@ -37,17 +37,17 @@ const NextLiveGame: React.FunctionComponent = () => {
     return (
       <motion.div
         layout
-        className="animate-pulse p-4 bg-neutral-300 rounded-lg h-[323px] w-full col-span-2"
+        className="col-span-2 h-[323px] w-full animate-pulse rounded-lg bg-neutral-300 p-4"
       ></motion.div>
     );
   }
   return (
     <motion.div
       layout
-      className="relative order-1 md:order-2 overflow-clip rounded-lg col-span-2 h-full bg-white flex items-center justify-center"
+      className="relative order-1 col-span-2 flex h-full items-center justify-center overflow-clip rounded-lg bg-white md:order-2"
     >
-      <div className="flex flex-col rounded-[20px] overflow-clip h-full">
-        <div className="relative overflow-hidden w-full px-4 py-14 h-full">
+      <div className="flex h-full flex-col overflow-clip rounded-[20px]">
+        <div className="relative h-full w-full overflow-hidden px-4 py-14">
           <Flex
             direction="column"
             gap="4"
@@ -66,20 +66,20 @@ const NextLiveGame: React.FunctionComponent = () => {
                 !currentGame.completed &&
                 new Date(currentGame.startDate.iso) <= new Date() && (
                   <div className="flex items-center gap-1">
-                    <div className="relative h-3 w-3 bg-error-500 rounded-full">
-                      <div className="h-3 w-3 bg-error-500 rounded-full animate-ping absolute left-0 top-0" />
+                    <div className="bg-error-500 relative h-3 w-3 rounded-full">
+                      <div className="bg-error-500 absolute left-0 top-0 h-3 w-3 animate-ping rounded-full" />
                     </div>
-                    <p className="text-error-500 font-bold animate-pulse">
+                    <p className="text-error-500 animate-pulse font-bold">
                       Live Game in Session
                     </p>
                   </div>
                 )}
 
               <Text className="text-neutral-800">
-                Next Game:{" "}
+                Next Game:{' '}
                 {currentGame && formatQuizDate(currentGame.startDate.iso)}
               </Text>
-              <Text className="text-neutral-800 font-medium">
+              <Text className="font-medium text-neutral-800">
                 Entry Fee: {formatNaira(Number(currentGame?.entryFee), true)}
               </Text>
             </Flex>
@@ -87,12 +87,12 @@ const NextLiveGame: React.FunctionComponent = () => {
         </div>
       </div>
       <Link href="https://quizmoney.ng/how-it-works" target="_blank">
-        <button className="text-white text-xl z-[4] shadow-xl cursor-pointer absolute right-4 top-3 font-bold bg-primary-400 rounded-full h-[1.7rem] w-[1.7rem]">
+        <button className="bg-primary-400 absolute right-4 top-3 z-[4] h-[1.7rem] w-[1.7rem] cursor-pointer rounded-full text-xl font-bold text-white shadow-xl">
           ?
         </button>
       </Link>
-      <div className="absolute -left-5 -bottom-14 z-[1] opacity-40 h-[150px] w-[150px] lg:h-[180px] lg:w-[180px] rounded-full bg-transparent border-8 border-primary-100" />
-      <div className="absolute -right-10 -top-8 z-[1] opacity-40 h-[150px] w-[150px] lg:h-[180px] lg:w-[180px] rounded-full bg-transparent border-8 border-primary-100" />
+      <div className="border-primary-100 absolute -bottom-14 -left-5 z-[1] h-[150px] w-[150px] rounded-full border-8 bg-transparent opacity-40 lg:h-[180px] lg:w-[180px]" />
+      <div className="border-primary-100 absolute -right-10 -top-8 z-[1] h-[150px] w-[150px] rounded-full border-8 bg-transparent opacity-40 lg:h-[180px] lg:w-[180px]" />
     </motion.div>
   );
 };

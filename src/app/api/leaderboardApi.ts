@@ -1,6 +1,6 @@
-import axios, { AxiosResponse } from "axios";
-import { BASE_URL, getAuthUser, getSessionTokenHeaders } from "./userApi";
-import { ApiResponse } from "./interface";
+import axios, { AxiosResponse } from 'axios';
+import { BASE_URL, getAuthUser, getSessionTokenHeaders } from './userApi';
+import { ApiResponse } from './interface';
 
 const user = getAuthUser();
 const LeaderboardAPI = {
@@ -12,7 +12,7 @@ const LeaderboardAPI = {
       },
       {
         headers: getSessionTokenHeaders(),
-      }
+      },
     );
   },
   getLastGameLeaderboard(): Promise<AxiosResponse<ApiResponse>> {
@@ -21,7 +21,7 @@ const LeaderboardAPI = {
       { userId: user?.objectId },
       {
         headers: getSessionTokenHeaders(),
-      }
+      },
     );
   },
 };

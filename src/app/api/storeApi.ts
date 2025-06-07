@@ -1,6 +1,6 @@
-import axios, { AxiosResponse } from "axios";
-import { appHeaders, BASE_URL, getSessionTokenHeaders } from "./userApi";
-import { ApiResponse } from "./interface";
+import axios, { AxiosResponse } from 'axios';
+import { appHeaders, BASE_URL, getSessionTokenHeaders } from './userApi';
+import { ApiResponse } from './interface';
 
 const StoreAPI = {
   getProducts(): Promise<AxiosResponse<ApiResponse>> {
@@ -11,14 +11,14 @@ const StoreAPI = {
     return axios.post(
       `${BASE_URL}/fetchSingleProduct`,
       { productId },
-      { headers: appHeaders }
+      { headers: appHeaders },
     );
   },
   purchaseItem(productId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/purchaseItem`,
       { productId },
-      { headers: getSessionTokenHeaders() }
+      { headers: getSessionTokenHeaders() },
     );
   },
   fetchCustomerWallet(): Promise<AxiosResponse<ApiResponse>> {

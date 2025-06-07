@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "./utils";
+import React from 'react';
+import { cn } from './utils';
 
 type CustomTextFieldProps = {
   label?: string;
@@ -21,7 +21,7 @@ type CustomTextFieldProps = {
 export default function CustomTextField({
   label,
   name,
-  type = "text",
+  type = 'text',
   placeholder,
   value,
   onChange,
@@ -29,7 +29,7 @@ export default function CustomTextField({
   disabled = false,
   required = false,
   icon,
-  autoComplete = "off",
+  autoComplete = 'off',
   readOnly = false,
 }: CustomTextFieldProps) {
   return (
@@ -56,13 +56,13 @@ export default function CustomTextField({
           autoComplete={autoComplete}
           readOnly={readOnly}
           className={cn(
-            "appearance-none min-w-0 w-full rounded-[6px] caret-primary-500 border border-neutral-300 px-4 py-3 pr-12 text-base focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:bg-neutral-100  disabled:cursor-not-allowed",
-            className
+            'caret-primary-500 focus:ring-primary-500 focus:border-primary-500 w-full min-w-0 appearance-none rounded-[6px] border border-neutral-300 px-4 py-3 pr-12 text-base focus:outline-none focus:ring-1 disabled:cursor-not-allowed  disabled:bg-neutral-100',
+            className,
           )}
         />
 
         {icon && (
-          <div className="absolute z-10 inset-y-0 right-3 flex items-center cursor-pointer ">
+          <div className="absolute inset-y-0 right-3 z-10 flex cursor-pointer items-center ">
             {icon}
           </div>
         )}

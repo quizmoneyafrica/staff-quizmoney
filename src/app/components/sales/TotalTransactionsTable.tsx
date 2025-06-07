@@ -11,8 +11,9 @@ import { selectSales, StoreTransaction } from '@/app/store/salesSlice';
 
 const TotalTransactionsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const {salesData,isLoading:isSalesLoading}=useSelector(selectSales)
-  const totalTransactions:StoreTransaction[]=salesData?.storeTransactions??[]
+  const { salesData, isLoading: isSalesLoading } = useSelector(selectSales);
+  const totalTransactions: StoreTransaction[] =
+    salesData?.storeTransactions ?? [];
 
   const itemsPerPage = 7;
 
@@ -30,14 +31,14 @@ const TotalTransactionsTable = () => {
   const rowVariants = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
-    hover: { scale: 1.01, y: -2 }
+    hover: { scale: 1.01, y: -2 },
   };
 
   const rowTransition = {
     duration: 0.5,
     hover: {
-      duration: 0.2
-    }
+      duration: 0.2,
+    },
   };
 
   const totalPages = Math.ceil(totalTransactions.length / itemsPerPage);
@@ -52,75 +53,90 @@ const TotalTransactionsTable = () => {
   };
 
   const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="bg-gray-50 rounded-full p-4 mb-4">
-        <AlertCircle className="w-8 h-8 text-gray-400" />
+    <div className="flex flex-col items-center justify-center px-4 py-12">
+      <div className="mb-4 rounded-full bg-gray-50 p-4">
+        <AlertCircle className="h-8 w-8 text-gray-400" />
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-1">No Transactions Found</h3>
-      <p className="text-sm text-gray-500 text-center max-w-sm">
-        There are no transactions to display at the moment. Check back later for updates.
+      <h3 className="mb-1 text-lg font-medium text-gray-900">
+        No Transactions Found
+      </h3>
+      <p className="max-w-sm text-center text-sm text-gray-500">
+        There are no transactions to display at the moment. Check back later for
+        updates.
       </p>
     </div>
   );
 
   return (
-    <div className="bg-white rounded-2xl w-full ">
-      <div className="flex flex-col sm:flex-row sm:items-center p-4 sm:p-8 justify-between mb-6 border-b border-b-[#D9D9D9] pb-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#3B3B3B]">Total Transactions</h2>
-        <div className="flex gap-4 items-center mt-4 sm:mt-0">
+    <div className="w-full rounded-2xl bg-white ">
+      <div className="mb-6 flex flex-col justify-between border-b border-b-[#D9D9D9] p-4 pb-4 sm:flex-row sm:items-center sm:p-8">
+        <h2 className="text-xl font-bold text-[#3B3B3B] sm:text-2xl">
+          Total Transactions
+        </h2>
+        <div className="mt-4 flex items-center gap-4 sm:mt-0">
           <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
             <input
               type="text"
               placeholder="Search"
-              className="w-full pl-10 pr-4 py-2 border rounded-md border-[#D9D9D9] outline-none focus:ring-primary-900 focus:ring-0 "
+              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0 "
             />
           </div>
-          <button className="flex cursor-pointer gap-1 items-center px-4 py-2 border rounded-md outline-none border-[#D9D9D9]">
-            <ListFilter className='size-5 text-[#1B212D]' />
-            <span className='md:block hidden'>Filter by</span>
+          <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4 py-2 outline-none">
+            <ListFilter className="size-5 text-[#1B212D]" />
+            <span className="hidden md:block">Filter by</span>
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg overflow-hidden overflow-x-auto">
+      <div className="overflow-hidden overflow-x-auto rounded-lg bg-white">
         {isSalesLoading ? (
           <table className="min-w-full">
             <thead className="bg-gray-50 p-4 sm:p-8">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Transaction ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Username
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Transaction Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Transaction Status
+                </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200 p-4 sm:p-8">
+            <tbody className="divide-y divide-gray-200 bg-white p-4 sm:p-8">
               {Array.from({ length: itemsPerPage }).map((_, index) => (
                 <tr key={index} className="animate-pulse">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center gap-1">
-                      <div className="bg-gray-200 rounded-full size-10"></div>
+                      <div className="size-10 rounded-full bg-gray-200"></div>
                       <div className="flex flex-col gap-2">
-                        <div className="h-4 bg-gray-200 rounded w-24"></div>
-                        <div className="h-3 bg-gray-200 rounded w-32"></div>
+                        <div className="h-4 w-24 rounded bg-gray-200"></div>
+                        <div className="h-3 w-32 rounded bg-gray-200"></div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
-                      <div className="bg-gray-200 rounded-full size-10"></div>
-                      <div className="ml-4 h-4 bg-gray-200 rounded w-20"></div>
+                      <div className="size-10 rounded-full bg-gray-200"></div>
+                      <div className="ml-4 h-4 w-20 rounded bg-gray-200"></div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded w-32"></div>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="h-4 w-32 rounded bg-gray-200"></div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="h-4 w-20 rounded bg-gray-200"></div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-6 bg-gray-200 rounded-full w-24"></div>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="h-6 w-24 rounded-full bg-gray-200"></div>
                   </td>
                 </tr>
               ))}
@@ -132,14 +148,24 @@ const TotalTransactionsTable = () => {
           <table className="min-w-full">
             <thead className="bg-gray-50 p-4 sm:p-8">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Transaction ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Username
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Transaction Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                  Transaction Status
+                </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200 p-4 sm:p-8">
+            <tbody className="divide-y divide-gray-200 bg-white p-4 sm:p-8">
               {currentData.map((transaction, index) => (
                 <motion.tr
                   key={transaction.objectId || index}
@@ -148,37 +174,58 @@ const TotalTransactionsTable = () => {
                   animate="animate"
                   whileHover="hover"
                   transition={rowTransition}
-                  className='cursor-pointer'
+                  className="cursor-pointer"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className=' flex items-center gap-1'>
-                      <div className=' bg-[#F9F9F9] rounded-full size-10 p-3'>
-                        <CustomImage alt='' src={'/icons/down.svg'}/>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className=" flex items-center gap-1">
+                      <div className=" size-10 rounded-full bg-[#F9F9F9] p-3">
+                        <CustomImage alt="" src={'/icons/down.svg'} />
                       </div>
-                      <div className=' flex flex-col'>
-                        <div className="text-sm font-medium text-gray-900">{transaction.objectId}</div>
-                        <div className="text-sm text-gray-500">{new Date(transaction.createdAt.iso).toLocaleString()}</div>
+                      <div className=" flex flex-col">
+                        <div className="text-sm font-medium text-gray-900">
+                          {transaction.objectId}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(transaction.createdAt.iso).toLocaleString()}
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <CustomImage className="h-10 w-10 rounded-full" src={transaction.avatar} alt={`${transaction.firstName}'s avatar`} width={40} height={40} />
+                      <div className="h-10 w-10 flex-shrink-0">
+                        <CustomImage
+                          className="h-10 w-10 rounded-full"
+                          src={transaction.avatar}
+                          alt={`${transaction.firstName}'s avatar`}
+                          width={40}
+                          height={40}
+                        />
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-primary-900">{transaction.firstName}</div>
+                        <div className="text-primary-900 text-sm font-medium">
+                          {transaction.firstName}
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{transaction.product.productName}</div>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      {transaction.product.productName}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">₦{transaction.amount.toFixed(2)}</div>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <div className="text-sm text-gray-900">
+                      ₦{transaction.amount.toFixed(2)}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={classNames("px-2 inline-flex text-xs leading-5 font-semibold rounded-full", getStatusClass(transaction.status))}>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <span
+                      className={classNames(
+                        'inline-flex rounded-full px-2 text-xs font-semibold leading-5',
+                        getStatusClass(transaction.status),
+                      )}
+                    >
                       {transaction.status}
                     </span>
                   </td>
@@ -190,9 +237,11 @@ const TotalTransactionsTable = () => {
       </div>
 
       {!isSalesLoading && totalTransactions.length > 0 && (
-        <div className="flex md:flex-row flex-col md:justify-between items-center mt-4 p-4 sm:p-8 gap-4 p-4">
+        <div className="mt-4 flex flex-col items-center gap-4 p-4 p-4 sm:p-8 md:flex-row md:justify-between">
           <div className="text-sm text-gray-500">
-            Showing data {startIndex + 1} to {Math.min(endIndex, totalTransactions.length)} of {totalTransactions.length} entries
+            Showing data {startIndex + 1} to{' '}
+            {Math.min(endIndex, totalTransactions.length)} of{' '}
+            {totalTransactions.length} entries
           </div>
           <Pagination
             currentPage={currentPage}
@@ -205,4 +254,4 @@ const TotalTransactionsTable = () => {
   );
 };
 
-export default TotalTransactionsTable; 
+export default TotalTransactionsTable;

@@ -7,12 +7,16 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}) => {
   // Generate page numbers for pagination
   const generatePageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       // Show all pages if total is less than max visible
       for (let i = 1; i <= totalPages; i++) {
@@ -23,28 +27,43 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
       if (currentPage <= 3) {
         pages.push(1, 2, 3, 4, '...', totalPages);
       } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+        pages.push(
+          1,
+          '...',
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        );
       } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+        pages.push(
+          1,
+          '...',
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          '...',
+          totalPages,
+        );
       }
     }
-    
+
     return pages;
   };
 
   return (
-    <div className="flex md:justify-end justify-center items-center mt-6 gap-2">
+    <div className="mt-6 flex items-center justify-center gap-2 md:justify-end">
       {/* Previous Button */}
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`p-2 rounded-lg ${
+        className={`rounded-lg p-2 ${
           currentPage === 1
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            ? 'cursor-not-allowed bg-gray-100 text-gray-400'
             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
         }`}
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="h-5 w-5" />
       </button>
 
       {/* Page Numbers */}
@@ -56,7 +75,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
             ) : (
               <button
                 onClick={() => onPageChange(page as number)}
-                className={`px-4 py-2 rounded-lg font-medium ${
+                className={`rounded-lg px-4 py-2 font-medium ${
                   currentPage === page
                     ? 'bg-primary-900 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -73,16 +92,16 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`p-2 rounded-lg ${
+        className={`rounded-lg p-2 ${
           currentPage === totalPages
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            ? 'cursor-not-allowed bg-gray-100 text-gray-400'
             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
         }`}
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className="h-5 w-5" />
       </button>
     </div>
   );
 };
 
-export default Pagination; 
+export default Pagination;

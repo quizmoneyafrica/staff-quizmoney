@@ -1,5 +1,5 @@
-import React, { ReactNode } from "react";
-import { motion } from "framer-motion";
+import React, { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
 type Props = {
   children: ReactNode;
@@ -15,8 +15,8 @@ const Backdrop = ({ children, onClick, open }: Props) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`fixed inset-0 z-[9999999] px-4 flex justify-center items-center transition-colors 
-     ${open ? "visible bg-black/50" : "invisible"}   `}
+      className={`fixed inset-0 z-[9999999] flex items-center justify-center px-4 transition-colors 
+     ${open ? 'visible bg-black/50' : 'invisible'}   `}
     >
       {children}
     </motion.div>

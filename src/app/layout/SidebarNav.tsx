@@ -1,11 +1,11 @@
-"use client";
-import { Flex, Text } from "@radix-ui/themes";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { bottomNav, navs } from "./nav";
-import { AnimatePresence, motion } from "framer-motion";
-import LogoutDialog from "../components/logout/logout";
-import { useState } from "react";
+'use client';
+import { Flex, Text } from '@radix-ui/themes';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { bottomNav, navs } from './nav';
+import { AnimatePresence, motion } from 'framer-motion';
+import LogoutDialog from '../components/logout/logout';
+import { useState } from 'react';
 
 function SidebarNav() {
   const router = useRouter();
@@ -25,7 +25,7 @@ function SidebarNav() {
     <>
       <motion.div
         layout
-        className="hidden lg:inline-block relative w-full h-screen overflow-y-auto bg-primary-900"
+        className="bg-primary-900 relative hidden h-screen w-full overflow-y-auto lg:inline-block"
       >
         <div className="grid place-items-center py-4">
           <Image
@@ -41,7 +41,7 @@ function SidebarNav() {
           {navs.map((nav, index) => {
             // const isActive = splitName.includes(nav.name.toLowerCase());
             const isActive =
-              pathname === nav.path || pathname.startsWith(nav.path + "/");
+              pathname === nav.path || pathname.startsWith(nav.path + '/');
             return (
               <motion.button
                 layout
@@ -50,18 +50,18 @@ function SidebarNav() {
                 // className={`relative cursor-pointer transition text-sm py-4 ${
                 //   isActive ? "text-white font-semibold" : "text-primary-300"
                 // }`}
-                className={`relative cursor-pointer transition text-sm py-4 ${
+                className={`relative cursor-pointer py-4 text-sm transition ${
                   isActive
-                    ? "text-white font-semibold bg-primary-500 rounded-[8px]"
-                    : "text-primary-300"
+                    ? 'bg-primary-500 rounded-[8px] font-semibold text-white'
+                    : 'text-primary-300'
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="nav-active-indicator"
-                    className="absolute inset-0 bg-primary-500 rounded-[8px] z-0"
+                    className="bg-primary-500 absolute inset-0 z-0 rounded-[8px]"
                     transition={{
-                      type: "spring",
+                      type: 'spring',
                       stiffness: 500,
                       damping: 30,
                     }}
@@ -73,7 +73,7 @@ function SidebarNav() {
                   gap="3"
                   mx="4"
                   className={`relative z-10 ${
-                    isActive ? "text-white font-semibold" : "text-primary-300"
+                    isActive ? 'font-semibold text-white' : 'text-primary-300'
                   }`}
                 >
                   {nav.icon}
@@ -89,11 +89,11 @@ function SidebarNav() {
           px="2"
           pb="4"
           gap="2"
-          className="relative pt-4 mt-4 border-t border-primary-800 w-full"
+          className="border-primary-800 relative mt-4 w-full border-t pt-4"
         >
           {bottomNav.map((nav, index) => {
             const isActive = pathname === nav.path;
-            const isLogout = nav.name === "Logout";
+            const isLogout = nav.name === 'Logout';
             const buttonContent = (
               <Flex
                 key={index.toString()}
@@ -101,8 +101,8 @@ function SidebarNav() {
                 gap="3"
                 mx="4"
                 className={`relative z-10 ${
-                  isActive ? "text-white font-semibold" : "text-primary-300"
-                } ${isLogout && "text-white"}`}
+                  isActive ? 'font-semibold text-white' : 'text-primary-300'
+                } ${isLogout && 'text-white'}`}
               >
                 {nav.icon}
                 <Text>{nav.name}</Text>
@@ -112,7 +112,7 @@ function SidebarNav() {
               <button
                 key={index.toString()}
                 onClick={() => setOpenLogout(true)}
-                className="relative  hover:bg-error-900 opacity-70 rounded-[8px] cursor-pointer transition text-sm py-4"
+                className="hover:bg-error-900  relative cursor-pointer rounded-[8px] py-4 text-sm opacity-70 transition"
               >
                 {buttonContent}
               </button>
@@ -120,8 +120,8 @@ function SidebarNav() {
               <button
                 key={index}
                 onClick={() => handleTabRoute(`${nav.path}`)}
-                className={`relative cursor-pointer transition text-sm py-4 ${
-                  isActive ? "text-white font-semibold" : "text-primary-300"
+                className={`relative cursor-pointer py-4 text-sm transition ${
+                  isActive ? 'font-semibold text-white' : 'text-primary-300'
                 }`}
               >
                 <AnimatePresence>
@@ -131,9 +131,9 @@ function SidebarNav() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute inset-0 bg-primary-500 rounded-[8px] z-0"
+                      className="bg-primary-500 absolute inset-0 z-0 rounded-[8px]"
                       transition={{
-                        type: "spring",
+                        type: 'spring',
                         stiffness: 300,
                         damping: 20,
                       }}

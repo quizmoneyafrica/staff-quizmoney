@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosResponse } from 'axios';
 import {
   ApiResponse,
   InAppChangePasswordForm,
@@ -8,9 +8,9 @@ import {
   UpdateUserForm,
   VerifyEmailForm,
   VerifyForgotPasswordOtpForm,
-} from "./interface";
-import { store } from "@/app/store/store";
-import { decryptData } from "../utils/crypto";
+} from './interface';
+import { store } from '@/app/store/store';
+import { decryptData } from '../utils/crypto';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -19,9 +19,9 @@ const XParseRESTAPIKey = process.env.NEXT_PUBLIC_XParseRESTAPIKey;
 const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY!;
 
 const appHeaders = {
-  "X-Parse-Application-Id": XParseApplicationId,
-  "X-Parse-REST-API-Key": XParseRESTAPIKey,
-  "Content-Type": "application/json",
+  'X-Parse-Application-Id': XParseApplicationId,
+  'X-Parse-REST-API-Key': XParseRESTAPIKey,
+  'Content-Type': 'application/json',
 };
 const getSessionTokenHeaders = () => {
   const encrypted = store.getState().auth.userEncryptedData;
@@ -29,10 +29,10 @@ const getSessionTokenHeaders = () => {
   const sessionToken = user?.sessionToken;
 
   return {
-    "X-Parse-Application-Id": process.env.NEXT_PUBLIC_XParseApplicationId!,
-    "X-Parse-REST-API-Key": process.env.NEXT_PUBLIC_XParseRESTAPIKey!,
-    "X-Parse-Session-Token": sessionToken,
-    "Content-Type": "application/json",
+    'X-Parse-Application-Id': process.env.NEXT_PUBLIC_XParseApplicationId!,
+    'X-Parse-REST-API-Key': process.env.NEXT_PUBLIC_XParseRESTAPIKey!,
+    'X-Parse-Session-Token': sessionToken,
+    'Content-Type': 'application/json',
   };
 };
 
@@ -49,25 +49,25 @@ const UserAPI = {
     });
   },
   signUp(form: SignUpForm): Promise<AxiosResponse<ApiResponse>> {
-    console.log("Form: ", form);
+    console.log('Form: ', form);
     return axios.post(`${BASE_URL}/signup`, form, {
       headers: appHeaders,
     });
   },
   verifyEmail(form: VerifyEmailForm): Promise<AxiosResponse<ApiResponse>> {
-    console.log("Form: ", form);
+    console.log('Form: ', form);
     return axios.post(`${BASE_URL}/verifyMail`, form, {
       headers: appHeaders,
     });
   },
   resendSignupOtp(email: string): Promise<AxiosResponse<ApiResponse>> {
-    console.log("Form: ", email);
+    console.log('Form: ', email);
     return axios.post(
       `${BASE_URL}/resendSignupOtp`,
       { email },
       {
         headers: appHeaders,
-      }
+      },
     );
   },
 
@@ -77,25 +77,25 @@ const UserAPI = {
       { email },
       {
         headers: appHeaders,
-      }
+      },
     );
   },
   verifyForgotPasswordOtp(
-    form: VerifyForgotPasswordOtpForm
+    form: VerifyForgotPasswordOtpForm,
   ): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(`${BASE_URL}/verifyForgotPasswordOtp`, form, {
       headers: appHeaders,
     });
   },
   resetPasswordAuth(
-    form: ResetPasswordForm
+    form: ResetPasswordForm,
   ): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(`${BASE_URL}/changePassword`, form, {
       headers: appHeaders,
     });
   },
   inAppChangePassword(
-    form: InAppChangePasswordForm
+    form: InAppChangePasswordForm,
   ): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(`${BASE_URL}/inAppChangePassword`, form, {
       headers: getSessionTokenHeaders(),
@@ -108,7 +108,7 @@ const UserAPI = {
       {},
       {
         headers: getSessionTokenHeaders(),
-      }
+      },
     );
   },
 
@@ -122,7 +122,7 @@ const UserAPI = {
     return axios.post(
       `${BASE_URL}/topGamersOfThisMonth`,
       {},
-      { headers: appHeaders }
+      { headers: appHeaders },
     );
   },
 
@@ -132,7 +132,7 @@ const UserAPI = {
       {},
       {
         headers: getSessionTokenHeaders(),
-      }
+      },
     );
   },
 };

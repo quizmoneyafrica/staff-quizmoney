@@ -1,9 +1,9 @@
-import Parse from "parse";
+import Parse from 'parse';
 
 // Your Back4App keys
 Parse.initialize(
   process.env.NEXT_PUBLIC_XParseApplicationId!,
-  process.env.NEXT_PUBLIC_XParseJSAPIKey!
+  process.env.NEXT_PUBLIC_XParseJSAPIKey!,
 );
 Parse.serverURL = process.env.NEXT_PUBLIC_BASE_URL!;
 

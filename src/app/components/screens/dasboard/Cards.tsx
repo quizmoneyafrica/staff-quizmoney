@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 
 interface IDashboardCardsProps {
   title: string;
@@ -9,34 +9,34 @@ interface IDashboardCardsProps {
 }
 
 const DashboardCards: React.FunctionComponent<IDashboardCardsProps> = (
-  props
+  props,
 ) => {
   const { title, children, bgColor, icon, bgImage } = props;
   return (
     <div
-      className={`relative flex items-center w-full h-[120px] lg:h-[169px] rounded-lg p-4 ${
-        bgColor === "blue"
-          ? "bg-primary-50"
-          : bgColor === "green"
-          ? "bg-positive-50"
-          : bgColor === "cyan"
-          ? "bg-secondary-50"
+      className={`relative flex h-[120px] w-full items-center rounded-lg p-4 lg:h-[169px] ${
+        bgColor === 'blue'
+          ? 'bg-primary-50'
+          : bgColor === 'green'
+          ? 'bg-positive-50'
+          : bgColor === 'cyan'
+          ? 'bg-secondary-50'
           : null
       }`}
     >
-      <div className="absolute bottom-0 z-[1] right-2">
+      <div className="absolute bottom-0 right-2 z-[1]">
         {bgImage}
         {/* <Image src={bgImage} alt="Admin" width={100} height={80} priority /> */}
       </div>
       <div className="relative z-[2] flex gap-2">
         <div
-          className={`w-12 h-12 flex items-center justify-center rounded-lg ${
-            bgColor === "blue"
-              ? "bg-primary-100 text-primary-900"
-              : bgColor === "green"
-              ? "bg-positive-100 text-positive-900"
-              : bgColor === "cyan"
-              ? "bg-secondary-200 text-secondary-900"
+          className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+            bgColor === 'blue'
+              ? 'bg-primary-100 text-primary-900'
+              : bgColor === 'green'
+              ? 'bg-positive-100 text-positive-900'
+              : bgColor === 'cyan'
+              ? 'bg-secondary-200 text-secondary-900'
               : null
           }`}
         >
@@ -44,26 +44,26 @@ const DashboardCards: React.FunctionComponent<IDashboardCardsProps> = (
         </div>
         <div>
           <p
-            className={`text-base font-normal font-heading ${
-              bgColor === "blue"
-                ? "text-primary-900"
-                : bgColor === "green"
-                ? "text-positive-900"
-                : bgColor === "cyan"
-                ? "text-secondary-900"
+            className={`font-heading text-base font-normal ${
+              bgColor === 'blue'
+                ? 'text-primary-900'
+                : bgColor === 'green'
+                ? 'text-positive-900'
+                : bgColor === 'cyan'
+                ? 'text-secondary-900'
                 : null
             }`}
           >
             {title}
           </p>
           <div
-            className={`flex items-center gap-4 font-bold font-body text-2xl ${
-              bgColor === "blue"
-                ? "text-primary-900"
-                : bgColor === "green"
-                ? "text-positive-900"
-                : bgColor === "cyan"
-                ? "text-secondary-900"
+            className={`font-body flex items-center gap-4 text-2xl font-bold ${
+              bgColor === 'blue'
+                ? 'text-primary-900'
+                : bgColor === 'green'
+                ? 'text-positive-900'
+                : bgColor === 'cyan'
+                ? 'text-secondary-900'
                 : null
             }`}
           >
@@ -80,7 +80,7 @@ export default DashboardCards;
 export const DashboardCardsLoading: React.FunctionComponent = () => {
   return (
     <div
-      className={`w-full h-[120px] lg:h-[169px] bg-neutral-300 rounded-lg p-4 animate-pulse`}
+      className={`h-[120px] w-full animate-pulse rounded-lg bg-neutral-300 p-4 lg:h-[169px]`}
     ></div>
   );
 };

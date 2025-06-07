@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface DashboardDetailsInterface {
   message: string;
@@ -8,19 +8,19 @@ interface DashboardDetailsInterface {
 }
 
 const initialState: DashboardDetailsInterface = {
-  message: "",
+  message: '',
   noOfUsers: 0,
   lastGamePlayers: 0,
   availableWalletBalance: 0,
 };
 
 const dashboardSlice = createSlice({
-  name: "dashboard",
+  name: 'dashboard',
   initialState,
   reducers: {
     setDashboardDetails: (
       state,
-      action: PayloadAction<DashboardDetailsInterface>
+      action: PayloadAction<DashboardDetailsInterface>,
     ) => {
       state.message = action.payload.message;
       state.noOfUsers = action.payload.noOfUsers;
@@ -37,7 +37,7 @@ const dashboardSlice = createSlice({
       state.noOfUsers = action.payload;
     },
     clearDashboardDetails: (state) => {
-      state.message = "";
+      state.message = '';
       state.noOfUsers = 0;
       state.lastGamePlayers = 0;
       state.availableWalletBalance = 0;

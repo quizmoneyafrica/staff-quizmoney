@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React from "react";
-import { cn } from "./utils";
+import React from 'react';
+import { cn } from './utils';
 
 type Option = {
   label: string;
@@ -32,7 +32,7 @@ export default function CustomSelect({
   disabled = false,
   required = false,
   icon,
-  disabledOption = "Select an option",
+  disabledOption = 'Select an option',
   readOnly = false,
 }: CustomSelectProps) {
   return (
@@ -56,9 +56,9 @@ export default function CustomSelect({
           required={required}
           aria-readonly={readOnly}
           className={cn(
-            "w-full appearance-none rounded-[6px] caret-primary-500 border border-neutral-300 px-4 py-3 pr-12 text-base focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:bg-neutral-100  disabled:cursor-not-allowed",
-            readOnly && "cursor-not-allowed",
-            className
+            'caret-primary-500 focus:ring-primary-500 focus:border-primary-500 w-full appearance-none rounded-[6px] border border-neutral-300 px-4 py-3 pr-12 text-base focus:outline-none focus:ring-1 disabled:cursor-not-allowed  disabled:bg-neutral-100',
+            readOnly && 'cursor-not-allowed',
+            className,
           )}
         >
           <option value="" disabled>
@@ -72,7 +72,7 @@ export default function CustomSelect({
         </select>
 
         {icon && (
-          <div className="absolute z-10 inset-y-0 right-3 flex items-center pointer-events-none">
+          <div className="pointer-events-none absolute inset-y-0 right-3 z-10 flex items-center">
             {icon}
           </div>
         )}

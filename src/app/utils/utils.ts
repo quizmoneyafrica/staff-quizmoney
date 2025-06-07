@@ -1,4 +1,4 @@
-import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
+import { format, isToday, isTomorrow, isPast, parseISO } from 'date-fns';
 
 // export function isIosPwaInstalled(): boolean {
 //   if (typeof window === "undefined") return false;
@@ -14,16 +14,16 @@ import { format, isToday, isTomorrow, isPast, parseISO } from "date-fns";
 // }
 
 export function isIosPwaInstalled(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === 'undefined') return false;
 
   const userAgent = window.navigator.userAgent.toLowerCase();
   const isIosDevice =
     /iphone|ipad|ipod/.test(userAgent) ||
-    (userAgent.includes("macintosh") && "ontouchend" in document);
+    (userAgent.includes('macintosh') && 'ontouchend' in document);
 
   const isStandalone =
-    ("standalone" in navigator && navigator.standalone === true) ||
-    window.matchMedia("(display-mode: standalone)").matches;
+    ('standalone' in navigator && navigator.standalone === true) ||
+    window.matchMedia('(display-mode: standalone)').matches;
 
   return isIosDevice && isStandalone;
 }
@@ -35,33 +35,33 @@ export function isIosPwaInstalled(): boolean {
 //   );
 // };
 export const isMobileOrTablet = () => {
-  if (typeof window === "undefined") return false;
+  if (typeof window === 'undefined') return false;
 
   const ua = window.navigator.userAgent.toLowerCase();
 
-  const isTouchMac = ua.includes("macintosh") && "ontouchend" in document; // modern iPads
+  const isTouchMac = ua.includes('macintosh') && 'ontouchend' in document; // modern iPads
 
   return /iphone|ipad|ipod|android|mobile/i.test(ua) || isTouchMac;
 };
 
 export function capitalizeFirstLetter(str: string) {
-  if (!str) return "";
+  if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 export function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(" ");
+  return classes.filter(Boolean).join(' ');
 }
 
-export const toastPosition = isMobileOrTablet() ? "top-center" : "top-right";
+export const toastPosition = isMobileOrTablet() ? 'top-center' : 'top-right';
 export const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export const formatCountDown = (seconds: number) => {
   const m = Math.floor(seconds / 60)
     .toString()
-    .padStart(2, "0");
-  const s = (seconds % 60).toString().padStart(2, "0");
+    .padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 };
 //For auth verification
@@ -70,15 +70,15 @@ export const resendTimer = 300;
 //Format Amounts
 export function formatNaira(
   amount: number | string,
-  showDecimals = false
+  showDecimals = false,
 ): string {
-  const value = typeof amount === "string" ? parseFloat(amount) : amount;
+  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
 
-  if (isNaN(value)) return "₦0";
+  if (isNaN(value)) return '₦0';
 
-  return new Intl.NumberFormat("en-NG", {
-    style: "currency",
-    currency: "NGN",
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
     minimumFractionDigits: showDecimals ? 2 : 0,
     maximumFractionDigits: showDecimals ? 2 : 0,
   }).format(value);
@@ -88,25 +88,25 @@ export function formatNaira(
 export function formatQuizDate(input: string): string {
   const date = parseISO(input);
 
-  const time = format(date, "h:mm a");
+  const time = format(date, 'h:mm a');
 
   if (isToday(date)) {
     return `Today, ${time}`;
   } else if (isTomorrow(date)) {
     return `Tomorrow, ${time}`;
   } else if (!isPast(date)) {
-    return `${format(date, "EEEE")}, ${time}`;
+    return `${format(date, 'EEEE')}, ${time}`;
   } else {
     // Past date
-    return `${format(date, "MMM do")}, ${time}`;
+    return `${format(date, 'MMM do')}, ${time}`;
   }
 }
 
 //notification
 export function formatDateTime(isoString: string) {
   const date = new Date(isoString);
-  const time = format(date, "h:mm a");
-  const fullDate = format(date, "MMM dd, yyyy");
+  const time = format(date, 'h:mm a');
+  const fullDate = format(date, 'MMM dd, yyyy');
 
   return {
     time,
@@ -121,13 +121,13 @@ export function readTotalTime(ms: number): string {
   const milliseconds = ms % 1000;
 
   const parts = [
-    hours > 0 ? `${hours} hour${hours !== 1 ? "s" : ""}` : "",
-    minutes > 0 ? `${minutes} min${minutes !== 1 ? "s" : ""}` : "",
-    seconds > 0 ? `${seconds} second${seconds !== 1 ? "s" : ""}` : "",
-    milliseconds > 0 ? `${milliseconds} ms` : "",
+    hours > 0 ? `${hours} hour${hours !== 1 ? 's' : ''}` : '',
+    minutes > 0 ? `${minutes} min${minutes !== 1 ? 's' : ''}` : '',
+    seconds > 0 ? `${seconds} second${seconds !== 1 ? 's' : ''}` : '',
+    milliseconds > 0 ? `${milliseconds} ms` : '',
   ];
 
-  return parts.filter(Boolean).join(", ");
+  return parts.filter(Boolean).join(', ');
 }
 export function readLeaderboardTotalTime(ms: number): string {
   const hours = Math.floor(ms / 3600000);
@@ -136,17 +136,17 @@ export function readLeaderboardTotalTime(ms: number): string {
   const milliseconds = ms % 1000;
 
   const parts = [
-    hours > 0 ? `${hours}h` : "",
-    minutes > 0 ? `${minutes}m` : "",
-    seconds > 0 ? `${seconds}s` : "",
-    milliseconds > 0 ? `${milliseconds}ms` : "",
+    hours > 0 ? `${hours}h` : '',
+    minutes > 0 ? `${minutes}m` : '',
+    seconds > 0 ? `${seconds}s` : '',
+    milliseconds > 0 ? `${milliseconds}ms` : '',
   ];
 
-  return parts.filter(Boolean).join(", ");
+  return parts.filter(Boolean).join(', ');
 }
 
 export function parseTimeStringToMilliseconds(time: string): number {
-  const [mm, ss, ms] = time?.split(":")?.map(Number);
+  const [mm, ss, ms] = time?.split(':')?.map(Number);
 
   return (mm || 0) * 60000 + (ss || 0) * 1000 + (ms || 0);
 }
@@ -154,23 +154,23 @@ export function parseTimeStringToMilliseconds(time: string): number {
 export function truncateWords(text: string, limit: number = 5): string {
   const words = text.trim().split(/\s+/);
   if (words.length <= limit) return text;
-  return words.slice(0, limit).join(" ") + " ...";
+  return words.slice(0, limit).join(' ') + ' ...';
 }
 export function formatRank(n: number): string {
-  const suffixes: { [key: number]: string } = { 1: "st", 2: "nd", 3: "rd" };
+  const suffixes: { [key: number]: string } = { 1: 'st', 2: 'nd', 3: 'rd' };
   const lastDigit = n % 10;
   const lastTwoDigits = n % 100;
 
   const suffix =
     lastTwoDigits >= 11 && lastTwoDigits <= 13
-      ? "th"
-      : suffixes[lastDigit] || "th";
+      ? 'th'
+      : suffixes[lastDigit] || 'th';
 
   return `${n}${suffix}`;
 }
 export function disableConsoleInProduction() {
-  if (process.env.NODE_ENV === "production") {
-    for (const method of ["log", "warn", "error", "info", "debug"] as const) {
+  if (process.env.NODE_ENV === 'production') {
+    for (const method of ['log', 'warn', 'error', 'info', 'debug'] as const) {
       console[method] = () => {};
     }
   }
@@ -178,7 +178,7 @@ export function disableConsoleInProduction() {
 
 export function formatTimeToMinutesAndSeconds(timeString: string): string {
   // Split the time string by colons
-  const parts = timeString.split(":").map(Number); // Convert each part to a number
+  const parts = timeString.split(':').map(Number); // Convert each part to a number
 
   let hours = 0;
   let minutes = 0;
@@ -194,9 +194,9 @@ export function formatTimeToMinutesAndSeconds(timeString: string): string {
   } else {
     // Handle invalid input format
     console.warn(
-      `Invalid time string format: ${timeString}. Expected HH:MM:SS, MM:SS, or SS.`
+      `Invalid time string format: ${timeString}. Expected HH:MM:SS, MM:SS, or SS.`,
     );
-    return ""; // Or throw an error, depending on desired behavior
+    return ''; // Or throw an error, depending on desired behavior
   }
 
   // Calculate total seconds from all parts
@@ -206,7 +206,7 @@ export function formatTimeToMinutesAndSeconds(timeString: string): string {
   const finalMinutes = Math.floor(totalSeconds / 60);
   const finalSeconds = totalSeconds % 60;
 
-  let formattedTime = "";
+  let formattedTime = '';
 
   if (finalMinutes > 0) {
     formattedTime += `${finalMinutes}m`;
@@ -216,21 +216,21 @@ export function formatTimeToMinutesAndSeconds(timeString: string): string {
   // and we still need to display the seconds (e.g., "0m 30s" vs "30s")
   if (
     finalSeconds > 0 ||
-    (finalMinutes === 0 && finalSeconds === 0 && timeString !== "")
+    (finalMinutes === 0 && finalSeconds === 0 && timeString !== '')
   ) {
     // Ensure seconds are displayed, especially if minutes are 0 (e.g., "30s" instead of nothing)
-    if (formattedTime !== "") {
+    if (formattedTime !== '') {
       // Add a space if minutes were already added
-      formattedTime += " ";
+      formattedTime += ' ';
     }
     formattedTime += `${finalSeconds}s`;
   } else if (
     finalMinutes === 0 &&
     finalSeconds === 0 &&
-    timeString === "00:00"
+    timeString === '00:00'
   ) {
     // Special case for '00:00' to show '0s'
-    formattedTime = "0s";
+    formattedTime = '0s';
   }
 
   return formattedTime.trim(); // Trim any leading/trailing space just in case

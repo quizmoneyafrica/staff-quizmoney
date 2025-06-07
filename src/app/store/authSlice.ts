@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { decryptData, encryptData } from "../utils/crypto";
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { decryptData, encryptData } from '../utils/crypto';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -14,7 +14,7 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: "auth",
+  name: 'auth',
   initialState,
   reducers: {
     login(state, action: PayloadAction<string>) {
@@ -29,7 +29,7 @@ const authSlice = createSlice({
       state.rehydrated = action.payload;
     },
     updateUser(state, action: PayloadAction<object>) {
-      const currentDecrypted = decryptData(state.userEncryptedData || "") ?? {};
+      const currentDecrypted = decryptData(state.userEncryptedData || '') ?? {};
       const updated = { ...currentDecrypted, ...action.payload };
       state.userEncryptedData = encryptData(updated);
     },

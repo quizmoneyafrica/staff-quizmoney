@@ -1,56 +1,56 @@
-import type { Metadata } from "next";
-import { Space_Grotesk, DM_Sans } from "next/font/google";
-import "./globals.css";
-import AppSetup from "./appSetup";
-import "@radix-ui/themes/styles.css";
+import type { Metadata } from 'next';
+import { Space_Grotesk, DM_Sans } from 'next/font/google';
+import './globals.css';
+import AppSetup from './appSetup';
+import '@radix-ui/themes/styles.css';
 
 const spacegrotesk = Space_Grotesk({
-  variable: "--spacegrotesk",
-  subsets: ["latin"],
+  variable: '--spacegrotesk',
+  subsets: ['latin'],
 });
 
 const dmsans = DM_Sans({
-  variable: "--dmsans",
-  subsets: ["latin"],
+  variable: '--dmsans',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Quiz Money Admin",
-    default: "Quiz Money - Rewarding Knowledge with Financial Income",
+    template: '%s | Quiz Money Admin',
+    default: 'Quiz Money - Rewarding Knowledge with Financial Income',
   },
-  description: "Engage in quiz game and win amazing cash prices",
-  generator: "Quiz Money Admin",
-  applicationName: "Quiz Money Admin",
-  referrer: "origin-when-cross-origin",
+  description: 'Engage in quiz game and win amazing cash prices',
+  generator: 'Quiz Money Admin',
+  applicationName: 'Quiz Money Admin',
+  referrer: 'origin-when-cross-origin',
   alternates: {
-    canonical: "https://app.quizmoney.ng",
+    canonical: 'https://app.quizmoney.ng',
     languages: {
-      "en-US": "/en-US",
+      'en-US': '/en-US',
     },
   },
   openGraph: {
-    title: "Quiz Money Admin",
-    description: "Engage in quiz game and win amazing cash prices",
-    url: "https://quizmoney.ng",
-    type: "website",
-    locale: "en_US",
+    title: 'Quiz Money Admin',
+    description: 'Engage in quiz game and win amazing cash prices',
+    url: 'https://quizmoney.ng',
+    type: 'website',
+    locale: 'en_US',
     images: [
       {
-        url: "/opengraph-image.png",
+        url: '/opengraph-image.png',
         width: 1024,
         height: 1024,
-        alt: "Quiz Money",
+        alt: 'Quiz Money',
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Quiz Money - Rewarding Knowledge with Financial Income",
-    description: "Engage in quiz game and win amazing cash prices",
-    images: ["/opengraph-image.png"],
+    card: 'summary_large_image',
+    title: 'Quiz Money - Rewarding Knowledge with Financial Income',
+    description: 'Engage in quiz game and win amazing cash prices',
+    images: ['/opengraph-image.png'],
   },
-  robots: "index, follow",
+  robots: 'index, follow',
 };
 
 export default function RootLayout({

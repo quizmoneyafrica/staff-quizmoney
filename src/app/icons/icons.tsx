@@ -55,7 +55,7 @@ export const AppleIcon: React.FC<React.SVGProps<SVGSVGElement>> = () => (
 );
 
 export const CircleArrowLeft: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -354,7 +354,7 @@ export const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 export const CalendarIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -381,7 +381,7 @@ export const CalendarIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
   </svg>
 );
 export const ArrowDownIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -426,7 +426,7 @@ export const PlusIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 export const ArrowDownFillIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -454,7 +454,7 @@ export const TimerIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 export const WrongCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -468,7 +468,7 @@ export const WrongCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
   </svg>
 );
 export const CorrectCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -486,7 +486,7 @@ export const CorrectCircleIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
       x="1"
       y="1"
       maskUnits="userSpaceOnUse"
-      style={{ maskType: "luminance" }}
+      style={{ maskType: 'luminance' }}
     >
       <path
         fill="currentColor"
@@ -541,7 +541,7 @@ export const Eraser: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 export const InstagramIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -642,7 +642,7 @@ export const UsersIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 
 export const UsersIconBig: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -703,7 +703,7 @@ export const GameIconBig: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 export const WalletIconBig: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -728,7 +728,7 @@ export const WalletIconBig: React.FC<React.SVGProps<SVGSVGElement>> = (
   </svg>
 );
 export const WalletCardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
-  props
+  props,
 ) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

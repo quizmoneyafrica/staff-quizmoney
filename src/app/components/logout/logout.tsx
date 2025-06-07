@@ -1,10 +1,10 @@
-"use client";
-import { useRouter } from "next/navigation";
-import { useAppDispatch } from "@/app/hooks/useAuth";
-import { logout } from "@/app/store/authSlice";
-import React, { useState } from "react";
-import { persistor } from "@/app/store/store";
-import Modal from "../modal/ModalWindow";
+'use client';
+import { useRouter } from 'next/navigation';
+import { useAppDispatch } from '@/app/hooks/useAuth';
+import { logout } from '@/app/store/authSlice';
+import React, { useState } from 'react';
+import { persistor } from '@/app/store/store';
+import Modal from '../modal/ModalWindow';
 
 type Props = {
   open: boolean;
@@ -29,7 +29,7 @@ const LogoutDialog = ({ open, onOpenChange }: Props) => {
     setLoading(false);
     onOpenChange(false);
 
-    router.replace("/login");
+    router.replace('/login');
   };
 
   return (

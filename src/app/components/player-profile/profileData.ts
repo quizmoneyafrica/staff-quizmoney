@@ -11,11 +11,11 @@ export const profileDetails: ProfileDetail[] = [
   { label: 'Email Address', value: 'Sample@gmail.com', className: 'break-all' },
   { label: 'Date of Birth', value: '01 January 2000' },
   { label: 'Gender', value: 'Male' },
-  { 
-    label: 'Country', 
+  {
+    label: 'Country',
     value: 'Nigeria',
     prefix: '🇳🇬',
-    className: 'items-center gap-2'
+    className: 'items-center gap-2',
   },
-  { label: 'Referred By', value: 'Null' }
-]; 
+  { label: 'Referred By', value: 'Null' },
+];

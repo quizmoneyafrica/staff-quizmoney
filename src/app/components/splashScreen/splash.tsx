@@ -1,8 +1,8 @@
-"use client";
-import { useAppSelector } from "@/app/hooks/useAuth";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import React, { useEffect } from "react";
+'use client';
+import { useAppSelector } from '@/app/hooks/useAuth';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
 
 export default function Splash() {
   const router = useRouter();
@@ -14,9 +14,9 @@ export default function Splash() {
 
     const timer = setTimeout(() => {
       if (isAuthenticated) {
-        router.replace("/dashboard");
+        router.replace('/dashboard');
       } else {
-        router.replace("/login");
+        router.replace('/login');
       }
     }, 1000);
 
@@ -26,7 +26,7 @@ export default function Splash() {
   return (
     <main
       id="splash"
-      className="fixed inset-0 top-0 left-0 h-screen w-full bg-primary-800 flex items-center justify-center"
+      className="bg-primary-800 fixed inset-0 left-0 top-0 flex h-screen w-full items-center justify-center"
     >
       <Image
         src="/icons/quizmoney-logo-white.svg"

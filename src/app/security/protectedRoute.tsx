@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useAppSelector } from "@/app/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import { useAppSelector } from '@/app/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
 
 export default function ProtectedRoute({
   children,
@@ -17,7 +17,7 @@ export default function ProtectedRoute({
     if (!rehydrated) return;
 
     if (!isAuthenticated) {
-      router.replace("/login");
+      router.replace('/login');
     } else {
       setChecking(false);
     }
@@ -25,8 +25,8 @@ export default function ProtectedRoute({
 
   if (!rehydrated || checking) {
     return (
-      <div className="h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500" />
+      <div className="flex h-screen items-center justify-center bg-white">
+        <div className="border-primary-500 h-12 w-12 animate-spin rounded-full border-b-2 border-t-2" />
       </div>
     );
   }
