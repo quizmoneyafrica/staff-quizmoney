@@ -20,11 +20,10 @@ function Page() {
       if (!params.id) return;
       try {
         const res = await GameApi.getGameById(`${params.id}`);
-        console.log(res.data.result);
         setFetchedData(res.data.result);
         setFetchingData(false);
       } catch (error: any) {
-        console.log(error);
+        console.error('error: ', error);
         toast.error('An error occurred loading games, please refresh.');
         setFetchingData(false);
       }

@@ -50,7 +50,7 @@ function Page() {
 
         setFetchingData(false);
       } catch (error: any) {
-        console.log(error);
+        console.error('error: ', error);
         toast.error('An error occurred loading games, please refresh.');
         setFetchingData(false);
       }
@@ -98,8 +98,6 @@ function Page() {
   if (fetchingData) {
     return <AppLoader />;
   }
-
-  console.log('Data', fetchedData);
 
   return (
     <>

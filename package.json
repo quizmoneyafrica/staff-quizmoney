@@ -11,7 +11,8 @@
     "format-codebase": "prettier --write \"**/*.{js,jsx,ts,tsx,md,css}\"",
     "postinstall": "husky install",
     "lint:fix": "npm run lint --fix",
-    "ts-error": "./node_modules/.bin/tsc"
+    "ts-error": "./node_modules/.bin/tsc",
+    "pipeline": "./deploy.sh snippet"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.13",

@@ -49,19 +49,16 @@ const UserAPI = {
     });
   },
   signUp(form: SignUpForm): Promise<AxiosResponse<ApiResponse>> {
-    console.log('Form: ', form);
     return axios.post(`${BASE_URL}/signup`, form, {
       headers: appHeaders,
     });
   },
   verifyEmail(form: VerifyEmailForm): Promise<AxiosResponse<ApiResponse>> {
-    console.log('Form: ', form);
     return axios.post(`${BASE_URL}/verifyMail`, form, {
       headers: appHeaders,
     });
   },
   resendSignupOtp(email: string): Promise<AxiosResponse<ApiResponse>> {
-    console.log('Form: ', email);
     return axios.post(
       `${BASE_URL}/resendSignupOtp`,
       { email },

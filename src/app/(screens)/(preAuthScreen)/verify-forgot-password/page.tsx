@@ -64,7 +64,7 @@ function Page() {
     setCanResend(false);
     try {
       const response = await UserAPI.forgotPassword(email || '');
-      console.log('Forgot Password:', response);
+      console.log('response: ', response);
       toast.success('OTP Reset Successfully', {
         position: toastPosition,
       });
