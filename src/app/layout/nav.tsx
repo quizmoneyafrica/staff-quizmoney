@@ -7,61 +7,62 @@ import {
   SupportIcon,
   WalletIcon,
 } from '../icons/icons';
+import { ROUTES } from '@/app/utils';
 
 export const navs = [
   {
     icon: <HomeIcon />,
-    path: '/dashboard',
+    path: ROUTES.DASHBOARD,
     name: 'Dashboard',
   },
   {
     icon: <WalletIcon />,
-    path: '/sales',
+    path: ROUTES.SALES,
     name: 'Sales',
   },
   {
     icon: <StoreIcon />,
-    path: '/products',
+    path: ROUTES.PRODUCTS,
     name: 'Products',
   },
   {
     icon: <CupIcon />,
-    path: '/game-zone',
+    path: ROUTES.GAME_ZONE,
     name: 'Game Zone',
   },
   {
     icon: <SettingIcon />,
-    path: '/players',
+    path: ROUTES.PLAYERS,
     name: 'Players',
   },
   {
     icon: <SettingIcon />,
-    path: '/wallet',
+    path: ROUTES.WALLET,
     name: 'Wallet',
   },
   {
     icon: <SettingIcon />,
-    path: '/withdrawal-request',
+    path: ROUTES.WITHDRAWAL_REQUEST,
     name: 'Withdrawal Request',
   },
   {
     icon: <SettingIcon />,
-    path: '/leaderboard',
+    path: ROUTES.LEADERBOARD,
     name: 'Leaderboard',
   },
   {
     icon: <SettingIcon />,
-    path: '/admin-management',
+    path: ROUTES.ADMIN_MANAGEMENT,
     name: 'Admin Management',
   },
   {
     icon: <SettingIcon />,
-    path: '/push-notification',
+    path: ROUTES.PUSH_NOTIFICATION,
     name: 'Push Notification',
   },
   {
     icon: <SettingIcon />,
-    path: '/settings',
+    path: ROUTES.SETTINGS,
     name: 'Settings',
   },
 ];
