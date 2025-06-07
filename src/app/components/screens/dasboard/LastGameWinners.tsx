@@ -53,7 +53,7 @@ const LastGameWinners: React.FunctionComponent = () => {
         </div>
 
         <div className="mt-3 space-y-4">
-          {lastGame.slice(0, 6).map((item, index) => {
+          {lastGame.slice(0, 5).map((item, index) => {
             return (
               <UserTable
                 key={index}

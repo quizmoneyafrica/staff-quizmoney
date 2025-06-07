@@ -1,7 +1,12 @@
 import React from 'react';
+import GameZone from './gameZone';
 
 function Page() {
-  return <div></div>;
+  return (
+    <>
+      <GameZone />
+    </>
+  );
 }
 
 export default Page;

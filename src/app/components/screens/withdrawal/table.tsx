@@ -98,7 +98,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                     <div className="flex items-center gap-2">
                       <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
                         <Avatar
-                          src={item.id}
+                          src=""
                           fallback={item.firstName?.charAt(0).toUpperCase()}
                           radius="full"
                           className="bg-primary-50"

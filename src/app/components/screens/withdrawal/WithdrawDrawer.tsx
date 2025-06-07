@@ -66,6 +66,7 @@ const WithdrawDetailsModal: React.FunctionComponent<
             <div className="inline-flex items-center gap-2">
               <div className="bg-primary-50 h-[40px] w-[40px] rounded-full p-1">
                 <Avatar
+                  src=""
                   fallback={data.firstName?.charAt(0).toUpperCase()}
                   radius="full"
                   className="bg-primary-50"
