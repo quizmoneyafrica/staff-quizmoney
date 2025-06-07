@@ -31,10 +31,12 @@ function AppSetup({ children }: Props) {
   const isVisible =
     notificationPermissionStatus === 'default' ||
     notificationPermissionStatus === 'denied';
+
   useEffect(() => {
     disableConsoleInProduction();
     window.scrollTo(0, 0);
   }, []);
+
   return (
     <Theme appearance="light" className="!font-text">
       <Provider store={store}>

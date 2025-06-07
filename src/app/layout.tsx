@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Space_Grotesk, DM_Sans } from 'next/font/google';
+import '@radix-ui/themes/styles.css';
 import './globals.css';
 import AppSetup from './appSetup';
-import '@radix-ui/themes/styles.css';
 
 const spacegrotesk = Space_Grotesk({
   variable: '--spacegrotesk',
