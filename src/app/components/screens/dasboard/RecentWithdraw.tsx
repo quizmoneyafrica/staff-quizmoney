@@ -66,7 +66,7 @@ const RecentWithdraw: React.FunctionComponent = () => {
         heightClass="h-auto lg:h-[80%]"
         trigger={
           <RecentWithdrawTable
-            data={requests.slice(0, 5)}
+            data={requests}
             viewDetails={handleOpenViewDetails}
           />
         }
