@@ -10,8 +10,6 @@ import { useState } from 'react';
 function SidebarNav() {
   const router = useRouter();
   const pathname = usePathname();
-  // const splitName = pathname.split("/");
-
   const [openLogout, setOpenLogout] = useState(false);
 
   const handleTabRoute = (path: string) => {
@@ -20,6 +18,7 @@ function SidebarNav() {
       window.scrollTo(0, 0);
     }
   };
+
   return (
     <>
       <motion.div
@@ -38,7 +37,6 @@ function SidebarNav() {
         </div>
         <Flex direction="column" px="2" className="relative flex-1">
           {navs.map((nav, index) => {
-            // const isActive = splitName.includes(nav.name.toLowerCase());
             const isActive =
               pathname === nav.path || pathname.startsWith(nav.path + '/');
             return (
@@ -46,9 +44,6 @@ function SidebarNav() {
                 layout
                 key={index}
                 onClick={() => handleTabRoute(`${nav.path}`)}
-                // className={`relative cursor-pointer transition text-sm py-4 ${
-                //   isActive ? "text-white font-semibold" : "text-primary-300"
-                // }`}
                 className={`relative cursor-pointer py-4 text-sm transition ${
                   isActive
                     ? 'bg-primary-500 rounded-[8px] font-semibold text-white'
@@ -82,7 +77,7 @@ function SidebarNav() {
             );
           })}
         </Flex>
-        {/* Bottom  */}
+
         <Flex
           direction="column"
           px="2"

@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
+import { X, Copy, Check } from 'lucide-react';
 import CustomImage from '@/app/components/CustomImage';
 import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 
-interface ExtendedWithdrawalRequest extends WithdrawalRequest {
+interface ExtendedWithdrawalRequest
+  extends Omit<WithdrawalRequest, 'bankAccount'> {
   userId?: string;
-  bankName?: string;
-  accountNumber?: string;
+  bankAccount?: {
+    bankName?: string;
+    accountNumber?: string;
+    accountName?: string;
+  };
 }
 
 interface WithdrawalModalProps {
@@ -24,6 +28,8 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
   onClose,
   withdrawalData,
 }) => {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -46,6 +52,33 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
       },
     },
   };
+
+  const copyToClipboard = async (text: string, fieldName: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(fieldName);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const CopyButton: React.FC<{ text: string; fieldName: string }> = ({
+    text,
+    fieldName,
+  }) => (
+    <button
+      onClick={() => copyToClipboard(text, fieldName)}
+      className="ml-2 rounded p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+      title={`Copy ${fieldName}`}
+    >
+      {copiedField === fieldName ? (
+        <Check className="h-4 w-4 text-green-500" />
+      ) : (
+        <Copy className="h-4 w-4" />
+      )}
+    </button>
+  );
 
   const getFormattedDateTime = () => {
     if (!withdrawalData?.createdAt?.iso) return { time: '', fullDate: '' };
@@ -142,10 +175,32 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         <div className="text-sm font-medium text-gray-600">
                           Request Amount
                         </div>
-                        <div className="text-sm font-semibold text-gray-900">
+                        <div className="flex items-center text-sm font-semibold text-gray-900">
                           {formatNaira(
                             Number(withdrawalData.amount || 0),
                             true,
+                          )}
+                          <CopyButton
+                            text={String(withdrawalData.amount || 0)}
+                            fieldName="Request Amount"
+                          />
+                        </div>
+                      </motion.div>
+
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Bank Name
+                        </div>
+                        <div className="flex items-center text-sm font-semibold text-gray-900">
+                          {withdrawalData.bankAccount?.bankName || 'N/A'}
+                          {withdrawalData.bankAccount?.bankName && (
+                            <CopyButton
+                              text={withdrawalData.bankAccount.bankName}
+                              fieldName="Bank Name"
+                            />
                           )}
                         </div>
                       </motion.div>
@@ -155,14 +210,34 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         className="flex items-center justify-between"
                       >
                         <div className="text-sm font-medium text-gray-600">
-                          Withdrawal Account
+                          Account No
                         </div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          {withdrawalData.bankName
-                            ? `${withdrawalData.bankName} - ${
-                                withdrawalData.accountNumber || '****'
-                              }`
-                            : 'Bank Transfer'}
+                        <div className="flex items-center text-sm font-semibold text-gray-900">
+                          {withdrawalData.bankAccount?.accountNumber || 'N/A'}
+                          {withdrawalData.bankAccount?.accountNumber && (
+                            <CopyButton
+                              text={withdrawalData.bankAccount.accountNumber}
+                              fieldName="Account Number"
+                            />
+                          )}
+                        </div>
+                      </motion.div>
+
+                      <motion.div
+                        variants={itemVariants}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="text-sm font-medium text-gray-600">
+                          Account Holder
+                        </div>
+                        <div className="flex items-center text-sm font-semibold text-gray-900">
+                          {withdrawalData.bankAccount?.accountName || 'N/A'}
+                          {withdrawalData.bankAccount?.accountName && (
+                            <CopyButton
+                              text={withdrawalData.bankAccount.accountName}
+                              fieldName="Account Holder"
+                            />
+                          )}
                         </div>
                       </motion.div>
 

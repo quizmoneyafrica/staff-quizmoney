@@ -6,6 +6,11 @@ import {
   StoreIcon,
   SupportIcon,
   WalletIcon,
+  BellIcon,
+  UsersIcon,
+  GameIconSP,
+  WithdrawalIcon,
+  AdminManagementIcon,
 } from '../icons/icons';
 import { ROUTES } from '@/app/utils';
 
@@ -26,37 +31,37 @@ export const navs = [
     name: 'Products',
   },
   {
-    icon: <CupIcon />,
+    icon: <GameIconSP />,
     path: ROUTES.GAME_ZONE,
     name: 'Game Zone',
   },
   {
-    icon: <SettingIcon />,
+    icon: <UsersIcon />,
     path: ROUTES.PLAYERS,
     name: 'Players',
   },
   {
-    icon: <SettingIcon />,
+    icon: <WalletIcon />,
     path: ROUTES.WALLET,
     name: 'Wallet',
   },
   {
-    icon: <SettingIcon />,
+    icon: <WithdrawalIcon />,
     path: ROUTES.WITHDRAWAL_REQUEST,
     name: 'Withdrawal Request',
   },
   {
-    icon: <SettingIcon />,
+    icon: <CupIcon />,
     path: ROUTES.LEADERBOARD,
     name: 'Leaderboard',
   },
   {
-    icon: <SettingIcon />,
+    icon: <AdminManagementIcon />,
     path: ROUTES.ADMIN_MANAGEMENT,
     name: 'Admin Management',
   },
   {
-    icon: <SettingIcon />,
+    icon: <BellIcon />,
     path: ROUTES.PUSH_NOTIFICATION,
     name: 'Push Notification',
   },

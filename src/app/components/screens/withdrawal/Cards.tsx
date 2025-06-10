@@ -1,117 +1,180 @@
-'use client';
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff } from 'lucide-react';
+import * as React from 'react';
 
-interface WithdrawalCardsProps {
+interface IDashboardCardsProps {
   title: string;
-  value: string;
-  color: 'blue' | 'green' | 'cyan' | 'yellow' | 'default';
+  children?: React.ReactNode;
+  value?: string;
+  bgColor: string;
+  icon: React.ReactNode;
+  bgImage?: React.ReactNode;
   showEye?: boolean;
-  smallIcon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  bigIcon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+  analytics?: {
+    percentage: number;
+    period?: string;
+  };
+
+  isValueVisible?: boolean;
+  onEyeToggle?: () => void;
 }
 
-const cardColors = {
-  default: {
-    bg: 'bg-neutral-50',
-    iconBg: 'bg-neutral-100',
-    text: 'text-neutral-900',
-    value: 'text-neutral-900',
-  },
-  blue: {
-    bg: 'bg-primary-50',
-    iconBg: 'bg-primary-100',
-    text: 'text-primary-900',
-    value: 'text-primary-900',
-  },
-  green: {
-    bg: 'bg-positive-50',
-    iconBg: 'bg-positive-100',
-    text: 'text-positive-900',
-    value: 'text-positive-900',
-  },
-  cyan: {
-    bg: 'bg-secondary-50',
-    iconBg: 'bg-secondary-200',
-    text: 'text-secondary-900',
-    value: 'text-secondary-900',
-  },
-  yellow: {
-    bg: 'bg-yellow-50',
-    iconBg: 'bg-yellow-100',
-    text: 'text-yellow-900',
-    value: 'text-yellow-900',
-  },
-};
+const WithdrawalCards: React.FunctionComponent<IDashboardCardsProps> = (
+  props,
+) => {
+  const {
+    title,
+    children,
+    value,
+    bgColor,
+    icon,
+    bgImage,
+    showEye,
+    analytics,
+    isValueVisible,
+    onEyeToggle,
+  } = props;
 
-const WithdrawalCards: React.FC<WithdrawalCardsProps> = ({
-  title,
-  value,
-  color,
-  showEye = false,
-  smallIcon: SmallIcon,
-  bigIcon: BigIcon,
-}) => {
-  const colors = cardColors[color] || cardColors.default;
-  const [hidden, setHidden] = React.useState(false);
+  const getColorClass = (bgColor: string) => {
+    switch (bgColor) {
+      case 'blue':
+        return 'text-primary-900';
+      case 'green':
+        return 'text-positive-900';
+      case 'cyan':
+        return 'text-secondary-900';
+      case 'yellow':
+        return 'text-yellow-500';
+      default:
+        return '';
+    }
+  };
+
+  const colorClass = getColorClass(bgColor);
+
+  const applyColorToIcon = (element: React.ReactNode) => {
+    return (
+      <div className={`${colorClass} [&>*]:text-current [&>svg]:text-current`}>
+        {element}
+      </div>
+    );
+  };
+
+  const formatAnalytics = () => {
+    if (!analytics) return null;
+
+    const { percentage, period = 'this week' } = analytics;
+    const isPositive = percentage >= 0;
+    const arrow = isPositive ? '↑' : '↓';
+    const sign = isPositive ? '+' : '';
+    const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+
+    return (
+      <div className={`flex items-center gap-1 text-sm ${colorClass}`}>
+        <span className="font-medium">
+          {arrow} {sign}
+          {Math.abs(percentage)}%
+        </span>
+        <span className="text-gray-500">{period}</span>
+      </div>
+    );
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={`relative flex h-[120px] w-full items-center rounded-lg p-4 lg:h-[169px] ${colors.bg}`}
+    <div
+      className={`relative flex h-[120px] w-full items-center rounded-lg p-4 lg:h-[169px] ${
+        bgColor === 'blue'
+          ? 'bg-primary-50'
+          : bgColor === 'green'
+          ? 'bg-positive-50'
+          : bgColor === 'cyan'
+          ? 'bg-secondary-50'
+          : bgColor === 'yellow'
+          ? 'bg-yellow-50'
+          : ''
+      }`}
     >
-      {BigIcon && (
+      {bgImage && (
         <div className="absolute bottom-0 right-2 z-[1]">
-          <BigIcon className="opacity-60" style={{ width: 80, height: 80 }} />
+          {applyColorToIcon(bgImage)}
         </div>
       )}
-
       <div className="relative z-[2] flex gap-2">
         <div
-          className={`flex h-12 w-12 items-center justify-center rounded-lg ${colors.iconBg}`}
+          className={`flex h-12 w-12 items-center justify-center rounded-lg ${
+            bgColor === 'blue'
+              ? 'bg-primary-100'
+              : bgColor === 'green'
+              ? 'bg-positive-100'
+              : bgColor === 'cyan'
+              ? 'bg-secondary-200'
+              : bgColor === 'yellow'
+              ? 'bg-yellow-100'
+              : ''
+          }`}
         >
-          {SmallIcon && <SmallIcon style={{ width: 24, height: 24 }} />}
+          {applyColorToIcon(icon)}
         </div>
-
-        <div>
-          <p className={`font-heading text-base font-normal ${colors.text}`}>
+        <div className="flex flex-col">
+          <p className={`font-heading text-base font-medium ${colorClass}`}>
             {title}
           </p>
           <div
-            className={`font-body flex items-center gap-4 text-2xl font-bold ${colors.value}`}
+            className={`font-body flex items-center gap-4 text-2xl font-bold ${colorClass}`}
           >
-            {hidden && showEye ? '••••••' : value}
+            {showEye && !isValueVisible ? '********' : value || children}
             {showEye && (
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="cursor-pointer"
-                role="button"
-                aria-label={hidden ? 'Show value' : 'Hide value'}
-                tabIndex={0}
-                onClick={() => setHidden(!hidden)}
-                onKeyDown={(e) => e.key === 'Enter' && setHidden(!hidden)}
+              <button
+                className="ml-2 text-current opacity-70 transition-opacity hover:opacity-100"
+                onClick={onEyeToggle}
+                aria-label={isValueVisible ? 'Hide value' : 'Show value'}
               >
-                {hidden ? (
-                  <Eye size={20} className={colors.text} />
+                {isValueVisible ? (
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m15 18-.722-3.25" />
+                    <path d="m2 2 20 20" />
+                    <path d="m9 9-.722-3.25" />
+                    <path d="M3 13a13.5 13.5 0 0 0 3-4" />
+                    <path d="M21 13a13.5 13.5 0 0 1-3-4" />
+                    <path d="M12 5c4 0 8 2.5 11 8-1.5 2.8-3.5 5.5-7 7l-1-.5" />
+                  </svg>
                 ) : (
-                  <EyeOff size={20} className={colors.text} />
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
                 )}
-              </motion.div>
+              </button>
             )}
           </div>
+
+          {analytics && <div className="mt-1">{formatAnalytics()}</div>}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
 export default WithdrawalCards;
 
-export const WithdrawalCardsLoading: React.FC = () => {
+export const WithdrawalCardsLoading: React.FunctionComponent = () => {
   return (
     <div className="h-[120px] w-full animate-pulse rounded-lg bg-neutral-300 p-4 lg:h-[169px]"></div>
   );

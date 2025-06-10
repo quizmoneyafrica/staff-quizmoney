@@ -7,12 +7,11 @@ import {
   setWithdrawalRequests,
   WithdrawalRequest,
 } from '@/app/store/withdrawalSlice';
-import RecentWithdrawTable from '../withdrawal/table';
+import RecentWithdrawTable from './table';
 import QmDrawer from '../../drawer/drawer';
-import WithdrawDetailsModal from '../withdrawal/WithdrawDrawer';
-import WithdrawalModal from '../withdrawal/withdrawalmodal';
+import WithdrawDetailsModal from './WithdrawDrawer';
 
-const RecentWithdraw: React.FunctionComponent = () => {
+const RecentWithdrawRequest: React.FunctionComponent = () => {
   const dispatch = useAppDispatch();
   const { requests } = useAppSelector((state) => state.withdraw);
   const [openViewModal, setOpenViewModal] = React.useState(false);
@@ -55,14 +54,8 @@ const RecentWithdraw: React.FunctionComponent = () => {
   }
   return (
     <div>
-      <div className="p-4">
-        <p className="font-heading text-base text-neutral-800">
-          Pending Withdrawal Request
-        </p>
-      </div>
-
       <QmDrawer
-        // open={openViewModal}
+        open={openViewModal}
         onOpenChange={setOpenViewModal}
         heightClass="h-auto lg:h-[80%]"
         trigger={
@@ -91,4 +84,4 @@ const RecentWithdraw: React.FunctionComponent = () => {
   );
 };
 
-export default RecentWithdraw;
+export default RecentWithdrawRequest;

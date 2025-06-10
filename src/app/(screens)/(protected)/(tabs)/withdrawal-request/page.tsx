@@ -11,7 +11,7 @@ import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal
 import { Search, ListFilter, MoreVertical, ChevronDown } from 'lucide-react';
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
-import { WalletCardIcon } from '@/app/icons/icons';
+// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons'; // Add WalletIconBig import
 import { setDashboardDetails } from '@/app/store/dashboardSlice';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
@@ -19,6 +19,18 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { Avatar, Table } from '@radix-ui/themes';
 import { CaretSortIcon } from '@radix-ui/react-icons';
+// Replace this import
+// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons';
+
+// With this import (assuming you save the artifact as walletIcons.tsx)
+import {
+  WalletCardIcon,
+  WalletIconBig,
+  WalletIconBigGreen,
+  WalletCardIconGreen,
+  WalletCardIconDarkYellow,
+  WalletIconBigLightestYellow,
+} from '@/app/icons/icons';
 
 function Page() {
   const user = getAuthUser();
@@ -226,6 +238,10 @@ function Page() {
   const paginatedData = sortedData.slice(startIndex, endIndex);
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
+  const [showPendingAmount, setShowPendingAmount] = useState(false);
+
+  // Remove the old showTotalAmount state and replace with showPendingAmount
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -265,10 +281,14 @@ function Page() {
         ) : (
           <WithdrawalCards
             title="All Withdrawal Request"
-            value={formatNaira(withdrawalStats.totalAmount, true)}
-            color="blue"
-            smallIcon={WalletCardIcon}
-            // bigIcon={WalletIconBig}
+            value={withdrawalStats.totalRequests.toString()} // Number of requests
+            bgColor="blue"
+            icon={<WalletCardIcon />}
+            bgImage={<WalletIconBig />}
+            analytics={{
+              percentage: 15.5, // This would come from your API or calculations
+              period: 'this week',
+            }}
           />
         )}
         {fetchingDashData ? (
@@ -276,10 +296,14 @@ function Page() {
         ) : (
           <WithdrawalCards
             title="Total Approved Request"
-            value={formatNaira(withdrawalStats.approvedAmount, true)}
-            color="green"
-            smallIcon={WalletCardIcon}
-            // bigIcon={WalletIconBig}
+            value={withdrawalStats.approvedRequests.toString()} // Number of approved requests
+            bgColor="green"
+            icon={<WalletCardIconGreen />}
+            bgImage={<WalletIconBigGreen />}
+            analytics={{
+              percentage: -5.2, // Negative percentage will show red
+              period: 'this week',
+            }}
           />
         )}
         {fetchingDashData ? (
@@ -287,22 +311,24 @@ function Page() {
         ) : (
           <WithdrawalCards
             title="Total Pending Request"
-            value={
-              showTotalAmount
-                ? formatNaira(withdrawalStats.pendingAmount, true)
-                : '********'
-            }
-            color="yellow"
+            value={withdrawalStats.pendingRequests.toString()} // Number of pending requests
+            bgColor="yellow"
             showEye={true}
-            smallIcon={WalletCardIcon}
-            // bigIcon={WalletIconBig}
+            isValueVisible={showPendingAmount} // New prop to control visibility
+            onEyeToggle={() => setShowPendingAmount(!showPendingAmount)} // Toggle function
+            icon={<WalletCardIconDarkYellow />}
+            bgImage={<WalletIconBigLightestYellow />}
+            analytics={{
+              percentage: 8.3, // Positive percentage will show green
+              period: 'this month', // You can customize the period
+            }}
           />
         )}
       </div>
 
       <div className="grid w-full grid-cols-1 gap-y-10 lg:grid-cols-3 lg:gap-4"></div>
 
-      <div className="mb-4 flex flex w-full flex-col items-start items-center justify-between justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
+      <div className="mb-4 flex w-full flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
         <p>Recent Withdrawal Request</p>
         <div className="flex items-center gap-4">
           <div className="relative w-full max-w-md">
