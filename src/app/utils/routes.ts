@@ -1,0 +1,15 @@
+export const ROUTES = {
+  HOME: '/',
+  DASHBOARD: '/dashboard',
+  SALES: '/sales',
+  PRODUCTS: '/products',
+  GAME_ZONE: '/game-zone',
+  PLAYERS: '/players',
+  WALLET: '/wallet',
+  WITHDRAWAL_REQUEST: '/withdrawal-request',
+  LEADERBOARD: '/leaderboard',
+  ADMIN_MANAGEMENT: '/admin-management',
+  PUSH_NOTIFICATION: '/push-notification',
+  SETTINGS: '/settings',
+  SUPPORT: '/support',
+};

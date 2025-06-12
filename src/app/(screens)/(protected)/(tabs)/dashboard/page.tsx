@@ -1,13 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 import DashboardApi from '@/app/api/dashboardApi';
 import { getAuthUser } from '@/app/api/userApi';
 import DashboardCards, {
   DashboardCardsLoading,
-} from '@/app/components/screens/dasboard/Cards';
-import LastGameWinners from '@/app/components/screens/dasboard/LastGameWinners';
-import NextLiveGame from '@/app/components/screens/dasboard/NextLiveGame';
-import RecentWithdraw from '@/app/components/screens/dasboard/RecentWithdraw';
+} from '@/app/components/screens/dashboard/Cards';
+import LastGameWinners from '@/app/components/screens/dashboard/LastGameWinners';
+import NextLiveGame from '@/app/components/screens/dashboard/NextLiveGame';
+import RecentWithdraw from '@/app/components/screens/dashboard/RecentWithdraw';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
 import {
   EyeIcon,
@@ -40,8 +39,7 @@ function Page() {
       const res = await DashboardApi.fetchDashboardDetails(user.objectId);
       dispatch(setDashboardDetails(res.data.result));
       setFetchingDashData(false);
-    } catch (error: any) {
-      console.log(error);
+    } catch {
       toast.error('Error loading Dashboard Details, please refresh');
       setFetchingDashData(false);
     }

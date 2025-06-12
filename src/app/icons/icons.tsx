@@ -754,3 +754,240 @@ export const WalletCardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
     ></path>
   </svg>
 );
+export const WalletIconBigGreen: React.FC<React.SVGProps<SVGSVGElement>> = (
+  props,
+) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="86"
+    height="69"
+    fill="none"
+    viewBox="0 0 86 69"
+    {...props}
+  >
+    <path
+      fill="#A4F9A0"
+      fillRule="evenodd"
+      d="M82.854 22.434c-.224.052-.467.127-.721.207l-10.047 3.123c-8.228 2.558-13.252 11.224-10.628 19.667S73.14 58.162 81.364 55.605l10.046-3.123c.255-.08.498-.155.72-.242a7.31 7.31 0 0 0 4.53-8.512c-.057-.244-.138-.502-.212-.74l-4.782-15.383a12 12 0 0 0-.245-.731 7.31 7.31 0 0 0-8.56-4.443m-5.778 22.506c2.117-.658 3.277-2.974 2.594-5.17-.683-2.197-2.952-3.446-5.068-2.788-2.121.66-3.282 2.975-2.599 5.171s2.952 3.446 5.073 2.787"
+      clipRule="evenodd"
+    ></path>
+    <path
+      fill="#A4F9A0"
+      fillRule="evenodd"
+      d="M93.258 58.452a.918.918 0 0 1 1.223.833c.085 3.08-.432 5.894-1.834 8.555-2.053 3.911-5.419 6.402-9.887 8.48-4.346 2.02-10.135 3.82-17.449 6.093l-8.403 2.612C49.595 87.3 43.802 89.1 39.081 89.9c-4.859.822-9.045.674-12.95-1.375-3.903-2.055-6.398-5.42-8.477-9.888-2.019-4.346-3.818-10.136-6.092-17.449l-.139-.445C9.15 53.43 7.35 47.636 6.547 42.91c-.821-4.858-.674-9.045 1.376-12.95 2.054-3.903 5.42-6.398 9.887-8.476 4.348-2.015 10.137-3.815 17.45-6.089l8.404-2.612C50.977 10.51 56.77 8.709 61.49 7.909c4.859-.821 9.045-.674 12.95 1.375 2.667 1.405 4.687 3.426 6.364 6.011a.916.916 0 0 1-.536 1.38l-10.042 3.122c-11.288 3.51-18.464 15.515-14.74 27.49 3.723 11.977 16.44 17.797 27.729 14.288zm-72.72-21.025a3.125 3.125 0 1 0 1.855 5.969l15.915-4.949a3.125 3.125 0 1 0-1.855-5.968z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+);
+export const WalletCardIconGreen: React.FC<React.SVGProps<SVGSVGElement>> = (
+  props,
+) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="33"
+    fill="none"
+    viewBox="0 0 32 33"
+    {...props}
+  >
+    <path
+      stroke="#2E7D32"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M24.053 18.567a2.68 2.68 0 0 0-.8 2.173c.12 1.44 1.44 2.493 2.88 2.493h2.534v1.587a5.025 5.025 0 0 1-5.014 5.013H8.347a5.025 5.025 0 0 1-5.014-5.013v-8.973a5.025 5.025 0 0 1 5.014-5.014h15.306a5.025 5.025 0 0 1 5.014 5.014v1.92h-2.694c-.746 0-1.426.293-1.92.8"
+    ></path>
+    <path
+      stroke="#2E7D32"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M3.333 17.047v-6.094c0-1.586.974-3 2.454-3.56l10.586-4c1.654-.626 3.427.6 3.427 2.374v5.066M30.078 19.127v2.747c0 .733-.586 1.333-1.333 1.36h-2.613c-1.44 0-2.76-1.054-2.88-2.494-.08-.84.24-1.626.8-2.173a2.66 2.66 0 0 1 1.92-.8h2.773a1.37 1.37 0 0 1 1.333 1.36M9.333 16.5h9.334"
+    ></path>
+  </svg>
+);
+export const WalletCardIconDarkYellow: React.FC<
+  React.SVGProps<SVGSVGElement>
+> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="32"
+    height="33"
+    fill="none"
+    viewBox="0 0 32 33"
+    {...props}
+  >
+    <path
+      stroke="#E0C24B"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M24.053 18.567a2.68 2.68 0 0 0-.8 2.173c.12 1.44 1.44 2.493 2.88 2.493h2.534v1.587a5.025 5.025 0 0 1-5.014 5.013H8.347a5.025 5.025 0 0 1-5.014-5.013v-8.973a5.025 5.025 0 0 1 5.014-5.014h15.306a5.025 5.025 0 0 1 5.014 5.014v1.92h-2.694c-.746 0-1.426.293-1.92.8"
+    ></path>
+    <path
+      stroke="#E0C24B"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M3.333 17.047v-6.094c0-1.586.974-3 2.454-3.56l10.586-4c1.654-.626 3.427.6 3.427 2.374v5.066M30.078 19.127v2.747c0 .733-.586 1.333-1.333 1.36h-2.613c-1.44 0-2.76-1.054-2.88-2.494-.08-.84.24-1.626.8-2.173a2.66 2.66 0 0 1 1.92-.8h2.773a1.37 1.37 0 0 1 1.333 1.36M9.333 16.5h9.334"
+    ></path>
+  </svg>
+);
+export const WalletIconBigLightestYellow: React.FC<
+  React.SVGProps<SVGSVGElement>
+> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="86"
+    height="69"
+    fill="none"
+    viewBox="0 0 86 69"
+    {...props}
+  >
+    <path
+      fill="#FFF176"
+      fillRule="evenodd"
+      d="M82.854 22.434c-.224.052-.467.127-.721.207l-10.047 3.123c-8.228 2.558-13.252 11.224-10.628 19.667S73.14 58.162 81.364 55.605l10.046-3.123c.255-.08.498-.155.72-.242a7.31 7.31 0 0 0 4.53-8.512c-.057-.244-.138-.502-.212-.74l-4.782-15.383a12 12 0 0 0-.245-.731 7.31 7.31 0 0 0-8.56-4.443m-5.778 22.506c2.117-.658 3.277-2.974 2.594-5.17-.683-2.197-2.952-3.446-5.068-2.788-2.121.66-3.282 2.975-2.599 5.171s2.952 3.446 5.073 2.787"
+      clipRule="evenodd"
+    ></path>
+    <path
+      fill="#FFF176"
+      fillRule="evenodd"
+      d="M93.258 58.452a.918.918 0 0 1 1.223.833c.085 3.08-.432 5.894-1.834 8.555-2.053 3.911-5.419 6.402-9.887 8.48-4.346 2.02-10.135 3.82-17.449 6.093l-8.403 2.612C49.595 87.3 43.802 89.1 39.081 89.9c-4.859.822-9.045.674-12.95-1.375-3.903-2.055-6.398-5.42-8.477-9.888-2.019-4.346-3.818-10.136-6.092-17.449l-.139-.445C9.15 53.43 7.35 47.636 6.547 42.91c-.821-4.858-.674-9.045 1.376-12.95 2.054-3.903 5.42-6.398 9.887-8.476 4.348-2.015 10.137-3.815 17.45-6.089l8.404-2.612C50.977 10.51 56.77 8.709 61.49 7.909c4.859-.821 9.045-.674 12.95 1.375 2.667 1.405 4.687 3.426 6.364 6.011a.916.916 0 0 1-.536 1.38l-10.042 3.122c-11.288 3.51-18.464 15.515-14.74 27.49 3.723 11.977 16.44 17.797 27.729 14.288zm-72.72-21.025a3.125 3.125 0 1 0 1.855 5.969l15.915-4.949a3.125 3.125 0 1 0-1.855-5.968z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+);
+export const GameIconSP: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="31"
+    height="31"
+    fill="none"
+    viewBox="0 0 31 31"
+    stroke="currentColor"
+    {...props}
+  >
+    <path
+      strokeMiterlimit="10"
+      strokeWidth="1.5"
+      d="M28.306 15.066c-1.114-5.036-2.766-8.25-5.414-9.032a5.5 5.5 0 0 0-1.58-.222c-1.628 0-2.912.97-5.812.97s-4.187-.97-5.812-.97a6 6 0 0 0-1.647.222c-2.652.783-4.29 3.999-5.417 9.032-1.15 5.14-.943 9.203 1.306 9.983 1.574.545 2.982-.582 4.315-2.24 1.514-1.89 3.378-2.47 7.255-2.47s5.668.58 7.185 2.47c1.332 1.66 2.791 2.772 4.324 2.25 2.483-.849 2.448-4.792 1.297-9.993Z"
+    />
+    <circle cx="17.68" cy="13.56" r="1.21" strokeWidth="1.5" />
+    <circle cx="20.344" cy="15.827" r="1.21" strokeWidth="1.5" />
+    <circle cx="20.344" cy="10.399" r="1.21" strokeWidth="1.5" />
+    <circle cx="23.008" cy="13.56" r="1.21" strokeWidth="1.5" />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M9.688 10.656v5.813m2.906-2.907H6.78"
+    />
+  </svg>
+);
+export const WithdrawalIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
+  props,
+) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="22"
+    height="20"
+    fill="none"
+    viewBox="0 0 22 20"
+    stroke="currentColor"
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M4 2h10l4 4v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"
+    />
+    {/* Folded corner */}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M14 2v4h4"
+    />
+
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M6 9h8M6 12h6M6 15h4"
+    />
+
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M13 14l1.5-1.5a1 1 0 0 1 1.414 0l.586.586a1 1 0 0 1 0 1.414L15 16l-2 .5.5-2z"
+    />
+
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M10 7v1m0-3v1m0 0a1 1 0 1 0 0 2"
+    />
+  </svg>
+);
+export const AdminManagementIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
+  props,
+) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="22"
+    height="20"
+    fill="none"
+    viewBox="0 0 22 20"
+    stroke="currentColor"
+    {...props}
+  >
+    <circle
+      cx="6"
+      cy="4"
+      r="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M3 13c0-1.657 1.343-3 3-3s3 1.343 3 3v3H3v-3z"
+    />
+
+    <circle
+      cx="16"
+      cy="4"
+      r="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M13 13c0-1.657 1.343-3 3-3s3 1.343 3 3v3h-6v-3z"
+    />
+
+    <circle
+      cx="11"
+      cy="6"
+      r="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.714"
+      d="M7.5 16c0-1.933 1.567-3.5 3.5-3.5s3.5 1.567 3.5 3.5v2h-7v-2z"
+    />
+  </svg>
+);

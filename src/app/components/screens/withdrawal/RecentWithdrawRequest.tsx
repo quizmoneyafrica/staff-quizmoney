@@ -7,11 +7,11 @@ import {
   setWithdrawalRequests,
   WithdrawalRequest,
 } from '@/app/store/withdrawalSlice';
-import RecentWithdrawTable from '../withdrawal/table';
+import RecentWithdrawTable from './table';
 import QmDrawer from '../../drawer/drawer';
-import WithdrawDetailsModal from '../withdrawal/WithdrawDrawer';
+import WithdrawDetailsModal from './WithdrawDrawer';
 
-const RecentWithdraw: React.FunctionComponent = () => {
+const RecentWithdrawRequest: React.FunctionComponent = () => {
   const dispatch = useAppDispatch();
   const { requests } = useAppSelector((state) => state.withdraw);
   const [openViewModal, setOpenViewModal] = React.useState(false);
@@ -23,7 +23,6 @@ const RecentWithdraw: React.FunctionComponent = () => {
     setFetching(true);
     try {
       const res = await WithdrawalApi.fetchWithdrawalRequest();
-      console.log('Request', res.data.result.withdrawalRequests);
       dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
     } catch {
       toast.error('Error fetching Withdrawal Request. Please refresh');
@@ -45,7 +44,6 @@ const RecentWithdraw: React.FunctionComponent = () => {
     setOpenViewModal(false);
   };
 
-  // console.log(selectedData);
   if (fetching) {
     return (
       <motion.div
@@ -56,19 +54,13 @@ const RecentWithdraw: React.FunctionComponent = () => {
   }
   return (
     <div>
-      <div className="p-4">
-        <p className="font-heading text-base text-neutral-800">
-          Pending Withdrawal Request
-        </p>
-      </div>
-
       <QmDrawer
         open={openViewModal}
         onOpenChange={setOpenViewModal}
         heightClass="h-auto lg:h-[80%]"
         trigger={
           <RecentWithdrawTable
-            data={requests.slice(0, 5)}
+            data={requests}
             viewDetails={handleOpenViewDetails}
           />
         }
@@ -93,4 +85,4 @@ const RecentWithdraw: React.FunctionComponent = () => {
   );
 };
 
-export default RecentWithdraw;
+export default RecentWithdrawRequest;

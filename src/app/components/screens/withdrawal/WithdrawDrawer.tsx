@@ -57,8 +57,8 @@ const WithdrawDetailsModal: React.FunctionComponent<
         data.transactionId,
         fee,
       );
+      console.log(response);
 
-      console.log('Response:', response);
       toast.success('Withdrawal approved successfully!');
       onClose();
       await fetchWithdrawalRequest();

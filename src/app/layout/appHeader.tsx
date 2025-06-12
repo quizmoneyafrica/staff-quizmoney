@@ -21,6 +21,39 @@ import { RootState } from '../store/store';
 import NotificationApi from '../api/notification';
 import Parse, { liveQueryClient } from '@/app/api/parse/parseClient';
 import { setNotifications } from '../store/notificationSlice';
+import { bottomNav, navs } from './nav';
+import { AnimatePresence, motion } from 'framer-motion';
+import Image from 'next/image';
+
+// Types
+interface ParseSubscription {
+  on: (event: string, callback: () => void) => void;
+  unsubscribe: () => void;
+}
+
+interface NotificationError {
+  message: string;
+}
+
+const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
+  <div className="flex h-6 w-6 cursor-pointer flex-col items-center justify-center">
+    <span
+      className={`block h-0.5 w-6 rounded-sm bg-gray-700 transition-all duration-300 ease-out ${
+        isOpen ? 'translate-y-1 rotate-45' : '-translate-y-0.5'
+      }`}
+    />
+    <span
+      className={`my-0.5 block h-0.5 w-6 rounded-sm bg-gray-700 transition-all duration-300 ease-out ${
+        isOpen ? 'opacity-0' : 'opacity-100'
+      }`}
+    />
+    <span
+      className={`block h-0.5 w-6 rounded-sm bg-gray-700 transition-all duration-300 ease-out ${
+        isOpen ? '-translate-y-1 -rotate-45' : 'translate-y-0.5'
+      }`}
+    />
+  </div>
+);
 
 function AppHeader() {
   const dispatch = useDispatch();
@@ -29,6 +62,7 @@ function AppHeader() {
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
   const router = useRouter();
   const [openLogout, setOpenLogout] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const unreadCount = useSelector((state: RootState) => {
     const list = state.notifications.notifications;
     return Array.isArray(list) ? list.filter((n) => !n.read).length : 0;
@@ -39,18 +73,19 @@ function AppHeader() {
     try {
       const res = await NotificationApi.fetchNotifications();
       dispatch(setNotifications(res.data.result.notifications));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.log(err.message);
+    } catch (err) {
+      const error = err as NotificationError;
+      console.error(error.message);
     }
   }, [dispatch]);
+
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let subscription: any;
+    let subscription: ParseSubscription | null = null;
+
     const NotificationLiveQuery = async () => {
       const userPointer = {
         __type: 'Pointer',
@@ -60,27 +95,122 @@ function AppHeader() {
 
       const query = new Parse.Query('Notification');
       query.equalTo('user', userPointer);
-      subscription = await liveQueryClient.subscribe(query);
+      subscription = (await liveQueryClient.subscribe(
+        query,
+      )) as ParseSubscription;
 
       subscription?.on('create', () => {
-        // console.log("this object was created: ", object);
         fetchNotifications();
       });
       subscription?.on('update', () => {
-        // console.log("this object was updated: ", object);
         fetchNotifications();
       });
       subscription?.on('delete', () => {
-        // console.log("this object was deleted: ", object);
         fetchNotifications();
       });
     };
 
-    NotificationLiveQuery();
+    if (user?.objectId) {
+      NotificationLiveQuery();
+    }
+
     return () => {
       if (subscription) subscription.unsubscribe();
     };
   }, [fetchNotifications, user?.objectId]);
+
+  const handleTabRoute = (path: string) => {
+    if (pathname !== path) {
+      router.push(path);
+      window.scrollTo(0, 0);
+    }
+
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    setOpenLogout(true);
+    setIsMobileMenuOpen(false);
+  };
+
+  const renderMobileNavItems = () => (
+    <>
+      {navs.map((nav, index) => {
+        const isActive =
+          pathname === nav.path || pathname.startsWith(nav.path + '/');
+        return (
+          <button
+            key={index}
+            onClick={() => handleTabRoute(`${nav.path}`)}
+            className={`relative w-full cursor-pointer py-4 text-sm transition ${
+              isActive
+                ? 'bg-primary-500 rounded-[8px] font-semibold text-white'
+                : 'text-primary-300 hover:text-white'
+            }`}
+          >
+            <Flex
+              align="center"
+              gap="3"
+              mx="4"
+              className={`relative z-10 ${
+                isActive ? 'font-semibold text-white' : 'text-primary-300'
+              }`}
+            >
+              {nav.icon}
+              <Text>{nav.name}</Text>
+            </Flex>
+          </button>
+        );
+      })}
+    </>
+  );
+
+  // Render bottom navigation items for mobile menu
+  const renderMobileBottomNavItems = () => (
+    <>
+      {bottomNav.map((nav, index) => {
+        const isActive = pathname === nav.path;
+        const isLogout = nav.name === 'Logout';
+        const buttonContent = (
+          <Flex
+            key={index.toString()}
+            align="center"
+            gap="3"
+            mx="4"
+            className={`relative z-10 ${
+              isActive ? 'font-semibold text-white' : 'text-primary-300'
+            } ${isLogout && 'text-white'}`}
+          >
+            {nav.icon}
+            <Text>{nav.name}</Text>
+          </Flex>
+        );
+
+        return isLogout ? (
+          <button
+            key={index.toString()}
+            onClick={handleLogout}
+            className="hover:bg-error-900 relative w-full cursor-pointer rounded-[8px] py-4 text-sm opacity-70 transition"
+          >
+            {buttonContent}
+          </button>
+        ) : (
+          <button
+            key={index}
+            onClick={() => handleTabRoute(`${nav.path}`)}
+            className={`relative w-full cursor-pointer py-4 text-sm transition ${
+              isActive
+                ? 'font-semibold text-white'
+                : 'text-primary-300 hover:text-white'
+            }`}
+          >
+            {buttonContent}
+          </button>
+        );
+      })}
+    </>
+  );
+
   if (excludedPaths.includes(pathname)) return null;
 
   const lastSegment =
@@ -91,66 +221,178 @@ function AppHeader() {
       ?.replace(/-/g, ' ')
       .replace(/\b\w/g, (char) => char.toUpperCase()) || '';
 
-  return (
-    <div className="pb-4">
-      <Flex align="center" justify="between" gap="2">
-        <Heading
-          size={{ initial: '4', lg: '5' }}
-          className="flex max-w-[200px] flex-wrap items-center overflow-hidden text-ellipsis whitespace-nowrap capitalize sm:max-w-none"
-        >
-          <div className=" flex flex-row items-center gap-2">
-            {((pathname.split('/').length > 2 &&
-              !pathname.includes('player-profile')) ||
-              pathname.includes('notification')) && (
-              <button
-                onClick={() => router?.back()}
-                className=" cursor-pointer "
-              >
-                <CircleArrowLeft />
-              </button>
-            )}
-            {!pathname.includes('player-profile') && (
-              <span className=" lg:flex">
-                {lastSegment === 'Home'
-                  ? `Welcome, ${user?.firstName} 👋`
-                  : lastSegment}
-              </span>
-            )}
-            {pathname.includes('player-profile') && (
-              <span className=" text-[#1B212D] lg:flex">User Profile</span>
-            )}
+  // Profile and Notification Component
+  const ProfileAndNotification = () => (
+    <div className="flex items-center gap-3 lg:gap-6">
+      <Link
+        href="/notification"
+        className="hover:text-primary-900 relative text-neutral-600"
+      >
+        <BellIcon />
+        {unreadCount > 0 && (
+          <div className="bg-primary-900 absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full text-xs text-white">
+            {unreadCount}
           </div>
+        )}
+      </Link>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <div className="border-primary-50 flex-none cursor-pointer rounded-full border bg-white p-1 lg:border-none lg:px-2 lg:py-1">
+            <Flex align="center" gap="2">
+              <Avatar
+                src={user?.avatar}
+                fallback={user?.firstName?.charAt(0).toUpperCase()}
+                radius="full"
+                className="bg-primary-50"
+              />
+              <p className="hidden font-medium capitalize text-[#1B212D] lg:flex">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <ArrowDownFillIcon className="hidden text-neutral-500 lg:flex" />
+            </Flex>
+          </div>
+        </DropdownMenu.Trigger>
 
-          {/* <span className="lg:hidden">{lastSegment}</span> */}
-        </Heading>
-        <Flex align="center" gap={{ initial: '3', lg: '6' }}>
-          <Link
-            href="/notification"
-            className="hover:text-primary-900 relative text-neutral-600"
-          >
-            <BellIcon />
-            {unreadCount > 0 && (
-              <div className="bg-primary-900 absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full text-xs text-white">
-                {unreadCount}
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
+            <DropdownMenu.Item
+              className="DropdownMenuItem"
+              onClick={() => router.push('/settings/profile')}
+            >
+              My Profile{' '}
+              <span className="RightSlot">
+                <PersonIcon />
+              </span>
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              className="DropdownMenuItem"
+              onClick={() => router.push('/support')}
+            >
+              Support{' '}
+              <span className="RightSlot">
+                <SupportIcon />
+              </span>
+            </DropdownMenu.Item>
+
+            <Link href="https://quizmoney.ng/how-it-works" target="_blank">
+              <DropdownMenu.Item className="DropdownMenuItem">
+                How It Works{' '}
+                <span className="RightSlot">
+                  <QuestionMarkCircledIcon />
+                </span>
+              </DropdownMenu.Item>
+            </Link>
+            <DropdownMenu.Item
+              onSelect={() => {
+                setOpenLogout(true);
+              }}
+              className="DropdownMenuItem hover:!bg-error-900"
+            >
+              Logout{' '}
+              <span className="RightSlot">
+                <LogoutIcon />
+              </span>
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+    </div>
+  );
+
+  return (
+    <>
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black bg-opacity-20 backdrop-blur-sm lg:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'tween', duration: 0.3 }}
+              className="bg-primary-900 fixed left-0 top-0 z-50 h-full w-80 overflow-y-auto lg:hidden"
+            >
+              <div className="border-primary-800 flex items-center justify-between border-b p-4">
+                <Image
+                  src="/icons/quizmoney-logo-white.svg"
+                  alt="Quiz Money"
+                  width={86}
+                  height={47.38}
+                  priority
+                  quality={100}
+                />
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 text-white focus:outline-none"
+                  aria-label="Close menu"
+                >
+                  <HamburgerIcon isOpen={true} />
+                </button>
               </div>
-            )}
-          </Link>
+
+              <Flex direction="column" px="2" className="flex-1 py-4">
+                {renderMobileNavItems()}
+              </Flex>
+
+              <Flex
+                direction="column"
+                px="2"
+                pb="4"
+                gap="2"
+                className="border-primary-800 mt-4 border-t pt-4"
+              >
+                {renderMobileBottomNavItems()}
+              </Flex>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <div className="pb-4">
+        <div
+          className={`flex w-full items-center justify-between pb-4 lg:hidden ${
+            isMobileMenuOpen ? 'hidden' : 'flex'
+          }`}
+        >
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 text-gray-700 focus:outline-none"
+            aria-label="Toggle menu"
+          >
+            <HamburgerIcon isOpen={isMobileMenuOpen} />
+          </button>
+
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
-              <Container className="border-primary-50 cursor-pointer rounded-full border bg-white p-1 lg:border-none lg:px-2 lg:py-1">
-                <Flex align="center" gap="2">
-                  <Avatar
-                    src={user?.avatar}
-                    fallback={user?.firstName?.charAt(0).toUpperCase()}
-                    radius="full"
-                    className="bg-primary-50"
-                  />
-                  <p className="hidden font-medium capitalize text-[#1B212D] lg:flex">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <ArrowDownFillIcon className="hidden text-neutral-500 lg:flex" />
-                </Flex>
-              </Container>
+              <div className="flex flex-1 justify-center">
+                <Container className="border-primary-50 max-w-xs flex-1 cursor-pointer rounded-full border bg-white px-4 py-2">
+                  <Flex
+                    align="center"
+                    justify="center"
+                    gap="2"
+                    className="w-full"
+                  >
+                    <Avatar
+                      src={user?.avatar}
+                      fallback={user?.firstName?.charAt(0).toUpperCase()}
+                      radius="full"
+                      className="bg-primary-50 h-8 w-8"
+                    />
+                    <p className="flex-1 text-center text-sm font-medium capitalize text-[#1B212D]">
+                      {user?.firstName}
+                    </p>
+                    <ArrowDownFillIcon className="h-4 w-4 text-neutral-500" />
+                  </Flex>
+                </Container>
+              </div>
             </DropdownMenu.Trigger>
 
             <DropdownMenu.Portal>
@@ -200,20 +442,75 @@ function AppHeader() {
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
-        </Flex>
-      </Flex>
-      {lastSegment === 'Home' && (
-        <>
-          {/* <Heading size={{ initial: "4", lg: "5" }} className="lg:hidden">
-						Hello <span className="capitalize">{user?.firstName}</span> 👋
-					</Heading> */}
-          <Text className="text-sm lg:text-base">
-            Let&apos;s see what you&apos;ve got
-          </Text>
-        </>
-      )}
-      <LogoutDialog open={openLogout} onOpenChange={setOpenLogout} />
-    </div>
+
+          <Link
+            href="/notification"
+            className="hover:text-primary-900 relative p-2 text-neutral-600"
+          >
+            <BellIcon />
+            {unreadCount > 0 && (
+              <div className="bg-primary-900 absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full text-xs text-white">
+                {unreadCount}
+              </div>
+            )}
+          </Link>
+        </div>
+
+        <div className={`${isMobileMenuOpen ? 'flex' : 'block'} lg:block`}>
+          <div
+            className={`flex items-center justify-between ${
+              isMobileMenuOpen ? 'lg:block' : ''
+            }`}
+          >
+            <div className="flex-1">
+              <Heading
+                size={{ initial: '4', lg: '5' }}
+                className="flex max-w-[200px] flex-wrap items-center justify-between gap-2 overflow-hidden text-ellipsis whitespace-nowrap capitalize sm:max-w-none md:hidden lg:flex"
+              >
+                <div className="flex flex-row items-center gap-2">
+                  {((pathname.split('/').length > 2 &&
+                    !pathname.includes('player-profile')) ||
+                    pathname.includes('notification')) && (
+                    <button
+                      onClick={() => router?.back()}
+                      className="cursor-pointer"
+                    >
+                      <CircleArrowLeft />
+                    </button>
+                  )}
+                  {!pathname.includes('player-profile') && (
+                    <span className="lg:flex">
+                      {lastSegment === 'Home'
+                        ? `Welcome, ${user?.firstName} 👋`
+                        : lastSegment}
+                    </span>
+                  )}
+                  {pathname.includes('player-profile') && (
+                    <span className="text-[#1B212D] lg:flex">User Profile</span>
+                  )}
+                </div>
+              </Heading>
+            </div>
+
+            <div
+              className={`${
+                isMobileMenuOpen ? 'flex lg:hidden' : 'hidden lg:flex'
+              }`}
+            >
+              <ProfileAndNotification />
+            </div>
+          </div>
+
+          {lastSegment === 'Home' && (
+            <Text className="mt-2 text-sm lg:text-base">
+              Let&apos;s see what you&apos;ve got
+            </Text>
+          )}
+        </div>
+
+        <LogoutDialog open={openLogout} onOpenChange={setOpenLogout} />
+      </div>
+    </>
   );
 }
 

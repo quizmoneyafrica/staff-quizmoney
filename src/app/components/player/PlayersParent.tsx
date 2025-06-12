@@ -13,27 +13,24 @@ import { useSelector } from 'react-redux';
 
 export default function PlayersParent() {
   const { playersData } = useSelector(selectPlayers);
-  const fetchPlayersData = async () => {
+  const fetchPlayersData = React.useCallback(async () => {
     if (!playersData)
       try {
         store.dispatch(setLoadingPlayers(true));
         const res = await PlayersApi.fetchAdminPlayers();
-        console.log('Player daata');
-
-        console.log(JSON.stringify(res?.data?.result, null, 2));
 
         if (res.data.result) {
           store?.dispatch(setPlayersData(res.data.result));
         }
       } catch (error) {
-        console.log(error, 'Sales Error');
+        console.error('error: ', error);
       } finally {
         store.dispatch(setLoadingPlayers(false));
       }
-  };
+  }, [playersData]);
   useEffect(() => {
     fetchPlayersData();
-  }, []);
+  }, [fetchPlayersData]);
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden   py-6">
       <UserStatsComponent />

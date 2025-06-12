@@ -1,4 +1,3 @@
-// next.config.js or next.config.ts
 import withPWA from 'next-pwa';
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -38,7 +37,6 @@ const baseConfig = {
   compiler: {
     removeConsole: isProd,
   },
-
   images: {
     remotePatterns: [
       {

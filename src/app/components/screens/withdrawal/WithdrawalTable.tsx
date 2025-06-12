@@ -10,21 +10,16 @@ import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
-import WithdrawalApi from '@/app/api/withdrawalApi';
 import Pagination from '../../leaderboard/Pagination';
-import { motion } from 'framer-motion';
-import WithdrawalModal from './withdrawalmodal';
 
-interface IRecentWithdrawTableProps {
+interface IWithdrawalTableTableProps {
   data: WithdrawalRequest[];
-  viewDetails?: (data: WithdrawalRequest) => void;
-  showDirectAction?: boolean;
+  viewDetails: (data: WithdrawalRequest) => void;
 }
 
-const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
+const WithdrawalTable: React.FC<IWithdrawalTableTableProps> = ({
   data,
   viewDetails,
-  showDirectAction = false,
 }) => {
   type SortableWithdrawalKeys =
     | 'id'
@@ -38,8 +33,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedWithdrawal, setSelectedWithdrawal] =
-    useState<WithdrawalRequest | null>(null);
+  console.log(isModalOpen);
 
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;
@@ -75,20 +69,6 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  };
-
-  const handleViewDetails = (item: WithdrawalRequest) => {
-    setSelectedWithdrawal(item);
-    setIsModalOpen(true);
-
-    if (viewDetails) {
-      viewDetails(item);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedWithdrawal(null);
   };
 
   return (
@@ -131,6 +111,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                         </div>
                         <div>
                           <p className="font-heading font-bold uppercase text-neutral-800">
+                            {/* {item.id} */}
                             {fullDate}
                           </p>
                           <p className="text-xs text-neutral-500">{time}</p>
@@ -172,34 +153,30 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                       </p>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
-                      {showDirectAction ? (
-                        <button
-                          onClick={() => handleViewDetails(item)}
-                          className="hover:bg-primary-50 text-primary-900 border-primary-200 cursor-pointer rounded border px-3 py-2 text-sm font-medium transition-colors"
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button>
+                            <DotsVerticalIcon />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          side="bottom"
+                          align="start"
+                          className="z-50 w-40 rounded-md border bg-white p-1 shadow-md"
                         >
-                          View Details
-                        </button>
-                      ) : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button>
-                              <DotsVerticalIcon />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            side="bottom"
-                            align="start"
-                            className="z-50 w-40 rounded-md border bg-white p-1 shadow-md"
+                          <DropdownMenuItem
+                            className="hover:bg-primary-50 text-primary-900 cursor-pointer rounded px-2 py-1 text-sm font-medium"
+                            // onClick={() => viewDetails(item)}
+                            onClick={() => {
+                              viewDetails(item);
+                              // setSelectedTransaction(transaction);
+                              setIsModalOpen(true);
+                            }}
                           >
-                            <DropdownMenuItem
-                              className="hover:bg-primary-50 text-primary-900 cursor-pointer rounded px-2 py-1 text-sm font-medium"
-                              onClick={() => handleViewDetails(item)}
-                            >
-                              View Details
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                            View Details
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </Table.Cell>
                   </Table.Row>
                 );
@@ -229,17 +206,11 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
           onPageChange={handlePageChange}
         />
       </div>
-
-      <WithdrawalModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        withdrawalData={selectedWithdrawal}
-      />
     </>
   );
 };
 
-export default RecentWithdrawTable;
+export default WithdrawalTable;
 
 interface ThProps {
   label: string;

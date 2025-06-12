@@ -44,7 +44,6 @@ const Page = () => {
   const { fullDate } = formatDateTime(
     authUser.createdAt ?? new Date().toISOString(),
   );
-  console.log('FormData:', formData);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
