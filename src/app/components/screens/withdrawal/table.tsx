@@ -10,9 +10,7 @@ import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
-import WithdrawalApi from '@/app/api/withdrawalApi';
 import Pagination from '../../leaderboard/Pagination';
-import { motion } from 'framer-motion';
 import WithdrawalModal from './withdrawalmodal';
 
 interface IRecentWithdrawTableProps {

@@ -51,7 +51,7 @@ export default function EnablePushOnIosButton() {
       setStatus('⚠️ Could not request permission');
     }
   };
-  if (!isVisible || token) return null;
+  if (!isVisible || token || status === '✅ Push already enabled!') return null;
 
   return (
     <div>
