@@ -6,7 +6,7 @@ import { InfoCircledIcon } from '@radix-ui/react-icons';
 import useFcmToken from '../hooks/useFcmToken';
 import PermissionGuide from './permissionGuide';
 
-export default function EnablePushOnIosButton() {
+export default function EnablePushOnIosButton() { 
   const [isVisible, setIsVisible] = useState(false);
   const [status, setStatus] = useState('Tap to enable push notifications');
   const { token, notificationPermissionStatus } = useFcmToken();
