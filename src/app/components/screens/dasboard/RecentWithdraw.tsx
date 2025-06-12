@@ -77,6 +77,7 @@ const RecentWithdraw: React.FunctionComponent = () => {
           <WithdrawDetailsModal
             data={selectedData}
             onClose={closeViewDetails}
+            setFetching={setFetching}
           />
         )}
       </QmDrawer>

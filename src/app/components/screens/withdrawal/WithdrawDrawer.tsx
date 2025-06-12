@@ -1,40 +1,67 @@
 import { toast } from 'sonner';
 import AppLoader from '../../loader/loader';
 import { formatDateTime, formatNaira, toastPosition } from '@/app/utils/utils';
-import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
+import {
+  setWithdrawalRequests,
+  WithdrawalRequest,
+} from '@/app/store/withdrawalSlice';
 import { useState } from 'react';
 import WithdrawalApi from '@/app/api/withdrawalApi';
 import copy from 'copy-to-clipboard';
 import { Copy } from 'lucide-react';
 import { Avatar } from '@radix-ui/themes';
+import { useAppDispatch } from '@/app/hooks/useAuth';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface IWithdrawDetailsModalProps {
   data: WithdrawalRequest;
   onClose: () => void;
+  setFetching: (fetching: boolean) => void;
 }
 
 const WithdrawDetailsModal: React.FunctionComponent<
   IWithdrawDetailsModalProps
-> = ({ data, onClose }) => {
+> = ({ data, onClose, setFetching }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useAppDispatch();
+
+  const fetchWithdrawalRequest = async () => {
+    setFetching(true);
+    try {
+      const res = await WithdrawalApi.fetchWithdrawalRequest();
+      console.log('Request', res.data.result.withdrawalRequests);
+      dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
+    } catch {
+      toast.error('Error fetching Withdrawal Request. Please refresh', {
+        position: toastPosition,
+      });
+    } finally {
+      setFetching(false);
+    }
+  };
 
   const handleReject = () => {};
 
+  console.log(data);
   const handleApproved = async () => {
-    if (!data || !data.id) {
+    if (!data || !data.transactionId) {
       toast.error('Invalid transaction data');
       return;
     }
+
     const fee = 0;
     try {
       setIsLoading(true);
-      const response = await WithdrawalApi.approveWithdrawal(data.id, fee);
+      const response = await WithdrawalApi.approveWithdrawal(
+        data.transactionId,
+        fee,
+      );
 
       console.log('Response:', response);
       toast.success('Withdrawal approved successfully!');
       onClose();
+      await fetchWithdrawalRequest();
     } catch (error: any) {
       console.error('Error approving withdrawal:', error.message);
       toast.error(`Failed to approve withdrawal: ${error.message}`);
@@ -86,7 +113,7 @@ const WithdrawDetailsModal: React.FunctionComponent<
             </div>
           </div>
           <div className="space-y-8 border-b border-dashed pb-5">
-            <LinedData title="Request ID" data={data.id} />
+            <LinedData title="Request ID" data={data.transactionId} />
             <LinedData
               title="Request Amount "
               data={`${formatNaira(Number(data.amount), true)}`}
@@ -118,15 +145,16 @@ const WithdrawDetailsModal: React.FunctionComponent<
             <div className="flex items-center justify-end space-x-4">
               <button
                 onClick={handleReject}
-                disabled={data.status !== 'pending'}
-                className="bg-error-400 inline-flex h-10 w-[120px] items-center justify-center rounded-3xl px-[18px] py-2 text-white"
+                // disabled={data.status !== 'pending'}
+                disabled
+                className="bg-error-400 inline-flex h-10 w-[120px] cursor-not-allowed items-center justify-center rounded-3xl px-[18px] py-2 text-white opacity-10"
               >
                 Reject
               </button>
               <button
                 onClick={handleApproved}
                 disabled={data.status === 'resolved'}
-                className="bg-positive-800 inline-flex h-10 w-[120px] items-center justify-center rounded-3xl px-[18px] py-2 text-white"
+                className="bg-positive-800 inline-flex h-10 w-[120px] cursor-pointer items-center justify-center rounded-3xl px-[18px] py-2 text-white disabled:cursor-not-allowed disabled:opacity-10"
               >
                 Approve
               </button>

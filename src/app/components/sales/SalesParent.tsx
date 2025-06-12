@@ -1,7 +1,7 @@
 'use client';
 
 import WalletStatCard from '@/app/components/wallet/WalletStatCard';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import WalletStatsHeader from '@/app/components/wallet/WalletStatsHeader';
 import SalesChart from '@/app/components/sales/SalesChart';
 import TotalTransactionsTable from '@/app/components/sales/TotalTransactionsTable';
@@ -45,7 +45,7 @@ function SalesParent() {
     },
   ];
 
-  const fetchSalesData = async () => {
+  const fetchSalesData = useCallback(async () => {
     if (!salesData)
       try {
         store.dispatch(setLoadingSales(true));
@@ -62,10 +62,10 @@ function SalesParent() {
       } finally {
         store.dispatch(setLoadingSales(false));
       }
-  };
+  }, [salesData]);
   useEffect(() => {
     fetchSalesData();
-  }, []);
+  }, [fetchSalesData]);
 
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden   py-6">
