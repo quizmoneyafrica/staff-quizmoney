@@ -6,8 +6,15 @@ import { bottomNav, navs } from './nav';
 import { AnimatePresence, motion } from 'framer-motion';
 import LogoutDialog from '../components/logout/logout';
 import { useState } from 'react';
+import { X } from 'lucide-react'; // Add this import for the X icon
 
-function SidebarNav() {
+function SidebarNav({
+  isOpen,
+  onClose,
+}: {
+  isOpen?: boolean;
+  onClose?: () => void;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [openLogout, setOpenLogout] = useState(false);
@@ -16,6 +23,8 @@ function SidebarNav() {
     if (pathname !== path) {
       router.push(path);
       window.scrollTo(0, 0);
+      // Close sidebar on mobile after navigation
+      if (onClose) onClose();
     }
   };
 
@@ -25,6 +34,17 @@ function SidebarNav() {
         layout
         className="bg-primary-900 relative hidden h-screen w-full overflow-y-auto lg:inline-block"
       >
+        {/* Close button for mobile - only visible on smaller screens */}
+        <div className="absolute right-4 top-4 z-20 lg:hidden">
+          <button
+            onClick={onClose}
+            className="hover:text-primary-300 p-2 text-white transition-colors"
+            aria-label="Close sidebar"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
         <div className="grid place-items-center py-4">
           <Image
             src="/icons/quizmoney-logo-white.svg"

@@ -16,7 +16,10 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
   return (
     <>
       <div className="rounded-lg bg-white p-4">
-        <div className="flex items-start justify-between lg:items-center">
+        <div
+          className="flex cursor-pointer items-start justify-between lg:items-center"
+          onClick={() => setOpened(!opened)}
+        >
           <div className="flex w-[80%] flex-col gap-2 lg:w-full lg:flex-row lg:items-start lg:gap-0">
             <p className="font-heading font-medium">
               Question {questionNumber + 1}
@@ -30,13 +33,9 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => setOpened(!opened)}
-              className="text-2xl text-neutral-600"
-            >
+            <div className="text-2xl text-neutral-600">
               {!opened ? <LucideArrowDown /> : <LucideArrowUp />}
-            </button>
+            </div>
           </div>
         </div>
 

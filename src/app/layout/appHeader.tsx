@@ -35,25 +35,35 @@ interface NotificationError {
   message: string;
 }
 
-const HamburgerIcon = ({ isOpen }: { isOpen: boolean }) => (
-  <div className="flex h-6 w-6 cursor-pointer flex-col items-center justify-center">
-    <span
-      className={`block h-0.5 w-6 rounded-sm bg-gray-700 transition-all duration-300 ease-out ${
-        isOpen ? 'translate-y-1 rotate-45' : '-translate-y-0.5'
-      }`}
-    />
-    <span
-      className={`my-0.5 block h-0.5 w-6 rounded-sm bg-gray-700 transition-all duration-300 ease-out ${
-        isOpen ? 'opacity-0' : 'opacity-100'
-      }`}
-    />
-    <span
-      className={`block h-0.5 w-6 rounded-sm bg-gray-700 transition-all duration-300 ease-out ${
-        isOpen ? '-translate-y-1 -rotate-45' : 'translate-y-0.5'
-      }`}
-    />
-  </div>
-);
+const HamburgerIcon = ({
+  isOpen,
+  isWhite = false,
+}: {
+  isOpen: boolean;
+  isWhite?: boolean;
+}) => {
+  const colorClass = isWhite ? 'bg-white' : 'bg-gray-700';
+
+  return (
+    <div className="flex h-6 w-6 cursor-pointer flex-col items-center justify-center">
+      <span
+        className={`block h-0.5 w-6 rounded-sm ${colorClass} transition-all duration-300 ease-out ${
+          isOpen ? 'translate-y-1 rotate-45' : '-translate-y-0.5'
+        }`}
+      />
+      <span
+        className={`my-0.5 block h-0.5 w-6 rounded-sm ${colorClass} transition-all duration-300 ease-out ${
+          isOpen ? 'opacity-0' : 'opacity-100'
+        }`}
+      />
+      <span
+        className={`block h-0.5 w-6 rounded-sm ${colorClass} transition-all duration-300 ease-out ${
+          isOpen ? '-translate-y-1 -rotate-45' : 'translate-y-0.5'
+        }`}
+      />
+    </div>
+  );
+};
 
 function AppHeader() {
   const dispatch = useDispatch();
@@ -309,7 +319,7 @@ function AppHeader() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black bg-opacity-20 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 backdrop-blur-[4px] lg:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             />
 
@@ -334,7 +344,7 @@ function AppHeader() {
                   className="p-2 text-white focus:outline-none"
                   aria-label="Close menu"
                 >
-                  <HamburgerIcon isOpen={true} />
+                  <HamburgerIcon isOpen={true} isWhite={true} />
                 </button>
               </div>
 

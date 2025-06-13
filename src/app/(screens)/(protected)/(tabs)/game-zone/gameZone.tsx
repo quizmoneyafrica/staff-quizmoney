@@ -36,12 +36,18 @@ function GameZone() {
   const deleteGame = async (objectId: string) => {
     setFetchingData(true);
     try {
-      GameApi.deleteGame(objectId);
-      fetchGames();
-      setFetchingData(false);
+      await GameApi.deleteGame(objectId);
+
+      const updatedGames = adminGames.filter(
+        (game) => game.objectId !== objectId,
+      );
+      dispatch(setAdminGames(updatedGames));
+
+      toast.success('Game deleted successfully');
     } catch (error: any) {
       console.error('Error deleting game:', error);
-      toast.error('Error deleting game');
+      toast.error('Error deleting game. Please try again.');
+    } finally {
       setFetchingData(false);
     }
   };

@@ -27,6 +27,7 @@ export interface Game {
   createdAt: string;
   updatedAt: string;
   questions: QuestionState[] | [];
+  gameDescription?: string;
 }
 
 export interface QuestionState {
