@@ -51,10 +51,7 @@ const WithdrawDetailsModal: React.FunctionComponent<
     const fee = 0;
     try {
       setIsLoading(true);
-      const response = await WithdrawalApi.approveWithdrawal(
-        data.transactionId,
-        fee,
-      );
+      await WithdrawalApi.approveWithdrawal(data.transactionId, fee);
 
       toast.success('Withdrawal approved successfully!');
       onClose();
