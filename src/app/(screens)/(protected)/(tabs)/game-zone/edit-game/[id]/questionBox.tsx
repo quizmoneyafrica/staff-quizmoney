@@ -5,17 +5,49 @@ import React, { useState } from 'react';
 
 interface IQuestionBoxProps {
   questionNumber: number;
-  questions: QuestionState[];
+  question: QuestionState;
+  onQuestionUpdate: (
+    questionIndex: number,
+    updatedQuestion: QuestionState,
+  ) => void;
 }
 
 const QuestionBox: React.FC<IQuestionBoxProps> = ({
   questionNumber,
-  questions,
+  question,
+  onQuestionUpdate,
 }) => {
   const [opened, setOpened] = useState(true);
 
   const toggleOpened = () => {
     setOpened(!opened);
+  };
+
+  const handleQuestionTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const updatedQuestion = {
+      ...question,
+      question: e.target.value,
+    };
+    onQuestionUpdate(questionNumber, updatedQuestion);
+  };
+
+  const handleOptionChange = (optionIndex: number, value: string) => {
+    const updatedOptions = [...question.options];
+    updatedOptions[optionIndex] = value;
+
+    const updatedQuestion = {
+      ...question,
+      options: updatedOptions,
+    };
+    onQuestionUpdate(questionNumber, updatedQuestion);
+  };
+
+  const handleCorrectAnswerChange = (selectedOption: string) => {
+    const updatedQuestion = {
+      ...question,
+      correctAnswer: selectedOption,
+    };
+    onQuestionUpdate(questionNumber, updatedQuestion);
   };
 
   return (
@@ -32,7 +64,7 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
             {!opened && (
               <div className="font-heading flex items-center gap-1">
                 <span className="hidden lg:block">:</span>{' '}
-                <span>{questions[questionNumber]?.question}</span>
+                <span className="truncate">{question.question}</span>
               </div>
             )}
           </div>
@@ -47,55 +79,59 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
         {opened && (
           <div className="pt-10 lg:pt-5">
             <div className="font-heading space-y-5">
-              {/* <CustomInput
-								full={true}
-								error={false}
-								placeholder="Enter game Question"
-								value={questions[questionNumber]?.question}
-								readOnly
-							/> */}
               <CustomTextField
+                label="Question Text"
                 placeholder="Enter game Question"
                 type="text"
-                name="name"
-                value={questions[questionNumber]?.question}
-                readOnly
+                name="question"
+                value={question.question || ''}
+                onChange={handleQuestionTextChange}
               />
 
               <div className="space-y-3">
-                {questions[questionNumber]?.options.map((option, index) => (
-                  <div className="flex items-center" key={index}>
-                    <div className="flex w-[40%] items-center">
+                <h4 className="font-medium text-gray-700">Answer Options</h4>
+                {question.options.map((option, index) => (
+                  <div className="flex items-center gap-3" key={index}>
+                    <div className="flex items-center">
                       <input
-                        id={`option-${index}`}
+                        id={`option-${questionNumber}-${index}`}
                         type="radio"
                         name={`options-${questionNumber}`}
                         value={option}
-                        // checked={index === selectedOptionIndex}
-                        checked={
-                          questions[questionNumber]?.correctAnswer !== '' &&
-                          option === questions[questionNumber]?.correctAnswer
-                        }
-                        className="text-primary-800 h-8 w-8 cursor-pointer rounded border-none bg-gray-100 focus:outline-none focus:ring-0"
-                        readOnly
+                        checked={option === question.correctAnswer}
+                        onChange={() => handleCorrectAnswerChange(option)}
+                        className="text-primary-800 h-4 w-4 cursor-pointer border-gray-300 focus:ring-blue-500"
                       />
                       <label
-                        htmlFor={`option-${index}`}
-                        className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
+                        htmlFor={`option-${questionNumber}-${index}`}
+                        className="ml-2 text-sm font-medium text-gray-700"
                       >
-                        Option {String.fromCharCode(65 + index)}:
+                        {String.fromCharCode(65 + index)}:
                       </label>
                     </div>
-                    <CustomTextField
-                      placeholder={`Enter option ${String.fromCharCode(
-                        65 + index,
-                      )}`}
-                      value={option}
-                      readOnly
-                    />
+                    <div className="flex-1">
+                      <CustomTextField
+                        placeholder={`Enter option ${String.fromCharCode(
+                          65 + index,
+                        )}`}
+                        value={option || ''}
+                        onChange={(e) =>
+                          handleOptionChange(index, e.target.value)
+                        }
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
+
+              {question.correctAnswer && (
+                <div className="mt-4 rounded-lg bg-green-50 p-3">
+                  <p className="text-sm text-green-700">
+                    <span className="font-medium">Correct Answer:</span>{' '}
+                    {question.correctAnswer}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
