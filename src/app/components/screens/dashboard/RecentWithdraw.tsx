@@ -15,7 +15,6 @@ const RecentWithdraw: React.FunctionComponent = () => {
   const dispatch = useAppDispatch();
   const { requests } = useAppSelector((state) => state.withdraw);
   const [openViewModal, setOpenViewModal] = React.useState(false);
-  console.log(openViewModal);
 
   const [selectedData, setSelectedData] = React.useState<WithdrawalRequest>();
   const [fetching, setFetching] = React.useState(false);

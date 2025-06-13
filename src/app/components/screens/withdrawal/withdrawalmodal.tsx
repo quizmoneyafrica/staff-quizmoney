@@ -5,6 +5,9 @@ import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
+import { useApproveWithdrawal, useRejectWithdrawal } from '@/app/api';
+import { toast } from 'sonner';
+import { toastPosition } from '@/app/utils/utils';
 
 interface ExtendedWithdrawalRequest
   extends Omit<WithdrawalRequest, 'bankAccount'> {
@@ -19,7 +22,7 @@ interface ExtendedWithdrawalRequest
 interface WithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  withdrawalData: ExtendedWithdrawalRequest | null;
+  withdrawalData: UnknownObject | null;
 }
 
 const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
@@ -28,6 +31,11 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
   withdrawalData,
 }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [comment, setComment] = useState('');
+
+  const { mutateAsync: approveWithdrawal, isPending } = useApproveWithdrawal();
+  const { mutateAsync: rejectWithdrawal, isPending: isRejecting } =
+    useRejectWithdrawal();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -85,6 +93,55 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
   };
 
   const { time, fullDate } = getFormattedDateTime();
+
+  const handleApproveWithdrawal = async () => {
+    try {
+      const response = await approveWithdrawal({
+        transactionId: withdrawalData?.transactionId,
+        fee: '0',
+      });
+      if (response) {
+        toast.success(response?.result?.message, {
+          position: toastPosition,
+        });
+        onClose();
+      }
+    } catch (error: { error?: string } | unknown) {
+      if (error && typeof error === 'object' && 'error' in error) {
+        toast.error(error.error as string, {
+          position: toastPosition,
+        });
+      }
+    }
+  };
+
+  const handleRejectWithdrawal = async () => {
+    if (comment.trim() === '') {
+      toast.error('Please add a comment or reason for rejection.', {
+        position: toastPosition,
+      });
+      return;
+    }
+
+    try {
+      const response = await rejectWithdrawal({
+        transactionId: withdrawalData?.transactionId,
+        reason: comment,
+      });
+      if (response) {
+        toast.success(response?.result?.message, {
+          position: toastPosition,
+        });
+        onClose();
+      }
+    } catch (error: { error?: string } | unknown) {
+      if (error && typeof error === 'object' && 'error' in error) {
+        toast.error(error.error as string, {
+          position: toastPosition,
+        });
+      }
+    }
+  };
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
@@ -292,6 +349,8 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                             Comments/Notes
                           </label>
                           <textarea
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
                             placeholder="Add comments or notes about this withdrawal request..."
                             className="focus:ring-primary-500 min-h-[100px] w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2"
                           />
@@ -303,12 +362,16 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         >
                           <button
                             type="button"
+                            onClick={handleRejectWithdrawal}
+                            disabled={isRejecting}
                             className="rounded-md bg-red-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                           >
                             Reject
                           </button>
                           <button
                             type="button"
+                            onClick={handleApproveWithdrawal}
+                            disabled={isPending}
                             className="rounded-md bg-green-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                           >
                             Accept

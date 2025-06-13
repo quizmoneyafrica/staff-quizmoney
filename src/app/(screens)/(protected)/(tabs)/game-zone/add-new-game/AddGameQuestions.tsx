@@ -4,7 +4,7 @@ import React from 'react';
 
 function AddGameQuestions() {
   const user = getAuthUser();
-  console.log(user);
+  console.log('user: ', user);
 
   //   const dispatch = useAppDispatch();
   //   const game = useAppSelector((state) => state.game.createGame);

@@ -30,7 +30,6 @@ const WithdrawDetailsModal: React.FunctionComponent<
     setFetching(true);
     try {
       const res = await WithdrawalApi.fetchWithdrawalRequest();
-      console.log('Request', res.data.result.withdrawalRequests);
       dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
     } catch {
       toast.error('Error fetching Withdrawal Request. Please refresh', {
@@ -43,7 +42,6 @@ const WithdrawDetailsModal: React.FunctionComponent<
 
   const handleReject = () => {};
 
-  console.log(data);
   const handleApproved = async () => {
     if (!data || !data.transactionId) {
       toast.error('Invalid transaction data');
@@ -57,7 +55,6 @@ const WithdrawDetailsModal: React.FunctionComponent<
         data.transactionId,
         fee,
       );
-      console.log(response);
 
       toast.success('Withdrawal approved successfully!');
       onClose();

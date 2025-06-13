@@ -1,26 +1,19 @@
 'use client';
-import WithdrawalApi from '@/app/api/withdrawalApi';
+
 import WithdrawalCards, {
   WithdrawalCardsLoading,
 } from '@/app/components/screens/withdrawal/Cards';
-
 import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal';
-
 import { Search, ListFilter, ChevronDown } from 'lucide-react';
-
 import { useAppDispatch } from '@/app/hooks/useAuth';
-// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons'; // Add WalletIconBig import
 import { setDashboardDetails } from '@/app/store/dashboardSlice';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Avatar, Table } from '@radix-ui/themes';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-// Replace this import
-// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons';
-
-// With this import (assuming you save the artifact as walletIcons.tsx)
+import { useGetWithdrawalRequests } from '@/app/api';
 import {
   WalletCardIcon,
   WalletIconBig,
@@ -29,27 +22,44 @@ import {
   WalletCardIconDarkYellow,
   WalletIconBigLightestYellow,
 } from '@/app/icons/icons';
+// Replace this import
+// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons'; // Add WalletIconBig import
+// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons';
+// With this import (assuming you save the artifact as walletIcons.tsx)
 
 function Page() {
   const dispatch = useAppDispatch();
 
-  const [fetchingDashData, setFetchingDashData] = useState(false);
-  const [withdrawalData, setWithdrawalData] = useState<WithdrawalRequest[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedWithdrawal, setSelectedWithdrawal] =
-    useState<WithdrawalRequest | null>(null);
-
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<
+    UnknownObject | WithdrawalRequest | null
+  >(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [sortBy, setSortBy] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const itemsPerPage = 10;
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  const filterOptions = ['All', 'Resolved', 'Pending', 'Rejected'];
+  const filterOptions = ['All', 'Approved', 'Pending', 'Rejected'];
+
+  const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
+    currentPage,
+    itemsPerPage,
+    selectedFilter?.toLowerCase(),
+  );
+
+  const withdrawalData = useMemo(() => {
+    if (data?.result) {
+      dispatch(setDashboardDetails(data?.result));
+
+      return data?.result?.withdrawalRequests ?? [];
+    }
+
+    return [];
+  }, [data]);
 
   // Calculate withdrawal statistics
   const withdrawalStats = React.useMemo(() => {
@@ -95,37 +105,6 @@ function Page() {
     };
   }, [withdrawalData]);
 
-  const fetchDashboardData = useCallback(async () => {
-    setFetchingDashData(true);
-    try {
-      const res = await WithdrawalApi.fetchWithdrawalRequest();
-      console.log('API Response:', res);
-
-      const dashboardData = res.data.result;
-      console.log('Dashboard Data:', dashboardData);
-
-      dispatch(setDashboardDetails(dashboardData));
-
-      const withdrawalRequests =
-        dashboardData.recentWithdrawalRequests ||
-        dashboardData.withdrawalRequests ||
-        dashboardData.withdrawals ||
-        [];
-
-      console.log('Withdrawal Requests:', withdrawalRequests);
-      setWithdrawalData(withdrawalRequests);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast.error('Error loading Dashboard Details, please refresh');
-    } finally {
-      setFetchingDashData(false);
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -142,8 +121,7 @@ function Page() {
     };
   }, []);
 
-  const handleViewDetails = (withdrawalRequest: WithdrawalRequest) => {
-    console.log('Viewing details for:', withdrawalRequest);
+  const handleViewDetails = (withdrawalRequest: UnknownObject) => {
     setSelectedWithdrawal(withdrawalRequest);
     setIsModalOpen(true);
   };
@@ -175,7 +153,7 @@ function Page() {
       return withdrawalData;
     }
 
-    return withdrawalData.filter((item) => {
+    return withdrawalData?.filter((item: UnknownObject) => {
       const status = (item.status || 'pending') as string;
       const statusLower = status.toLowerCase();
       const filterStatus = selectedFilter.toLowerCase();
@@ -202,38 +180,9 @@ function Page() {
     });
   }, [withdrawalData, selectedFilter]);
 
-  const sortedData = React.useMemo(() => {
-    if (!filteredData || filteredData.length === 0) return [];
-
-    if (sortBy) {
-      return filteredData.slice().sort((a, b) => {
-        const order = sortOrder === 'asc' ? 1 : -1;
-        const aValue = a[sortBy as keyof WithdrawalRequest] as
-          | string
-          | number
-          | Date;
-        const bValue = b[sortBy as keyof WithdrawalRequest] as
-          | string
-          | number
-          | Date;
-
-        if (aValue < bValue) return -1 * order;
-        if (aValue > bValue) return 1 * order;
-        return 0;
-      });
-    }
-    return filteredData;
-  }, [filteredData, sortBy, sortOrder]);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = sortedData.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-
   const [showPendingAmount, setShowPendingAmount] = useState(false);
 
   // Remove the old showTotalAmount state and replace with showPendingAmount
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -255,15 +204,6 @@ function Page() {
       </div>
     </Table.Cell>
   );
-
-  console.log('Current state:', {
-    fetchingDashData,
-    withdrawalDataLength: withdrawalData?.length,
-    filteredDataLength: filteredData?.length,
-    selectedFilter,
-    withdrawalData: withdrawalData?.slice(0, 2),
-    paginatedDataLength: paginatedData?.length,
-  });
 
   return (
     <div className="space-y-10">
@@ -399,8 +339,8 @@ function Page() {
                     Loading withdrawal requests...
                   </Table.Cell>
                 </Table.Row>
-              ) : paginatedData.length > 0 ? (
-                paginatedData.map((item, index) => {
+              ) : withdrawalData.length > 0 ? (
+                withdrawalData.map((item: UnknownObject, index: number) => {
                   const { time, fullDate } = formatDateTime(
                     item.createdAt?.iso || new Date().toISOString(),
                   );
@@ -498,12 +438,11 @@ function Page() {
           </Table.Root>
         </div>
 
-        {!fetchingDashData && paginatedData.length > 0 && (
+        {!fetchingDashData && withdrawalData.length > 0 && (
           <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
             <div className="text-sm text-gray-500">
-              Showing data {startIndex + 1} to{' '}
-              {Math.min(endIndex, sortedData.length)} of {sortedData.length}{' '}
-              entries{' '}
+              Showing data {currentPage} to {itemsPerPage} of{' '}
+              {data?.result?.totalCount} entries{' '}
               {selectedFilter !== 'All' && `(filtered by ${selectedFilter})`}
             </div>
             <div className="flex items-center gap-2">
@@ -515,13 +454,15 @@ function Page() {
                 Previous
               </button>
               <span className="px-3 py-1">
-                Page {currentPage} of {totalPages}
+                Page {currentPage} of {data?.result?.totalPages}
               </span>
               <button
                 onClick={() =>
-                  handlePageChange(Math.min(totalPages, currentPage + 1))
+                  handlePageChange(
+                    Math.min(data?.result?.totalPages, currentPage + 1),
+                  )
                 }
-                disabled={currentPage === totalPages}
+                disabled={currentPage === data?.result?.totalPages}
                 className="rounded border px-3 py-1 disabled:opacity-50"
               >
                 Next

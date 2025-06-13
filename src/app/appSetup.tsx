@@ -9,8 +9,9 @@ import { setRehydrated } from './store/authSlice';
 import { Toaster } from './components/toaster/sonner';
 import EnablePushOnIosButton from './pwa/iosNotificationRequest';
 import PermissionGuide from './pwa/permissionGuide';
-import { disableConsoleInProduction, isIosPwaInstalled } from './utils/utils'; 
+import { disableConsoleInProduction, isIosPwaInstalled } from './utils/utils';
 import useFcmToken from './hooks/useFcmToken';
+import QueryProvider from '@/app/components/query-provider';
 
 function RootHydrationWatcher() {
   const dispatch = useAppDispatch();
@@ -25,6 +26,7 @@ function RootHydrationWatcher() {
 type Props = {
   children: React.ReactNode;
 };
+
 function AppSetup({ children }: Props) {
   const { token, notificationPermissionStatus } = useFcmToken();
 
@@ -39,15 +41,17 @@ function AppSetup({ children }: Props) {
 
   return (
     <Theme appearance="light" className="!font-text">
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          {isVisible && !token && !isIosPwaInstalled() && <PermissionGuide />}
-          <RootHydrationWatcher />
-          <Toaster appearance="light" />
-          <EnablePushOnIosButton />
-          {children}
-        </PersistGate>
-      </Provider>
+      <QueryProvider>
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            {isVisible && !token && !isIosPwaInstalled() && <PermissionGuide />}
+            <RootHydrationWatcher />
+            <Toaster appearance="light" />
+            <EnablePushOnIosButton />
+            {children}
+          </PersistGate>
+        </Provider>
+      </QueryProvider>
     </Theme>
   );
 }
