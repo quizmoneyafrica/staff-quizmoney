@@ -11,7 +11,7 @@ import EnablePushOnIosButton from './pwa/iosNotificationRequest';
 import PermissionGuide from './pwa/permissionGuide';
 import { disableConsoleInProduction, isIosPwaInstalled } from './utils/utils'; 
 import useFcmToken from './hooks/useFcmToken';
-import QueryProvider from '@/app/components/query-provider';
+import QueryProvider from '@/app/components/query-provider'; 
 
 function RootHydrationWatcher() {
   const dispatch = useAppDispatch();
