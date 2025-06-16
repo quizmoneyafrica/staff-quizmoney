@@ -98,7 +98,7 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
     try {
       const response = await approveWithdrawal({
         transactionId: withdrawalData?.transactionId,
-        fee: '0',
+        fee: 0,
       });
       if (response) {
         toast.success(response?.result?.message, {
