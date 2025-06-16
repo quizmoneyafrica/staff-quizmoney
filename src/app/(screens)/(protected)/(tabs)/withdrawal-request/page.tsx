@@ -10,7 +10,6 @@ import { setDashboardDetails } from '@/app/store/dashboardSlice';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { toast } from 'sonner';
 import { Avatar, Table } from '@radix-ui/themes';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { useGetWithdrawalRequests } from '@/app/api';

@@ -1,5 +1,3 @@
-import * as React from 'react';
-import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +10,8 @@ import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import Pagination from '../../leaderboard/Pagination';
 import WithdrawalModal from './withdrawalmodal';
+import { useGetWithdrawalRequests } from '@/app/api';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 
 interface IRecentWithdrawTableProps {
   data: WithdrawalRequest[];
@@ -34,13 +34,26 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
 
   const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | ''>('');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] =
     useState<WithdrawalRequest | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [selectedFilter] = useState<string>('pending');
 
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const itemsPerPage = 10;
+  //   const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
+  //     currentPage,
+  //     itemsPerPage,
+  //     selectedFilter?.toLowerCase(),
+  //   );
+  //
+  //   const withdrawalData = useMemo(() => {
+  //     if (data?.result) {
+  //       return data?.result?.withdrawalRequests ?? [];
+  //     }
+  //
+  //     return [];
+  //   }, [data]);
 
   const handleSort = (key: SortableWithdrawalKeys) => {
     if (sortBy === key) {
