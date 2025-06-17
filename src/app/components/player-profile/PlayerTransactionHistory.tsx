@@ -53,35 +53,38 @@ export default function PlayerTransactionHistory() {
   return (
     <div className="w-full" data-aos="fade-up" data-aos-duration="800">
       <div
-        className="mb-4 flex items-center gap-2 rounded-md bg-white px-5 py-5 md:gap-5"
+        className="mb-4 flex items-center justify-between rounded-md bg-white px-5 py-5"
         data-aos="fade-up"
         data-aos-delay="100"
       >
-        <div className="relative w-full rounded-md border border-[#F5F5F5] focus:border-[#F5F5F5] md:w-fit">
-          <input
-            type="text"
-            placeholder="Search"
-            className="focus:ring-primary-900 w-full rounded-md border-none py-2 pl-10 pr-4 outline-none focus:ring-0"
-          />
-          <svg
-            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        <h2 className="font-bold">Transaction History</h2>
+        <div className="flex items-center gap-2 md:gap-5">
+          <div className="relative w-full rounded-md border border-[#F5F5F5] focus:border-[#F5F5F5] md:w-fit">
+            <input
+              type="text"
+              placeholder="Search"
+              className=" focus:ring-primary-900 w-full rounded-md border-none py-2 pl-10 pr-4 outline-none focus:ring-0"
             />
-          </svg>
+            <svg
+              className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#F5F5F5] px-4 py-2 outline-none">
+            <ListFilter className="size-5 text-[#1B212D]" />
+            <span className="hidden md:block">Filter by</span>
+          </button>
         </div>
-        <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#F5F5F5] px-4 py-2 outline-none">
-          <ListFilter className="size-5 text-[#1B212D]" />
-          <span className="hidden md:block">Filter by</span>
-        </button>
       </div>
       <div className="w-full overflow-x-auto rounded-lg">
         <div className="min-w-[900px]">

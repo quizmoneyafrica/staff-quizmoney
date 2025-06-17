@@ -2,13 +2,23 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { Search, ListFilter, ChevronDown } from 'lucide-react';
+import { CaretSortIcon } from '@radix-ui/react-icons';
+import { Avatar, Table } from '@radix-ui/themes';
 import classNames from 'classnames';
 import Link from 'next/link';
 import Pagination from '../leaderboard/Pagination';
-import { motion } from 'framer-motion';
+
 import CustomImage from '@/app/components/CustomImage';
 import { useSelector } from 'react-redux';
 import { Player, selectPlayers } from '@/app/store/playersSlice';
+
+type SortField =
+  | 'objectId'
+  | 'firstName'
+  | 'email'
+  | 'accountType'
+  | 'createdAt';
+type SortDirection = 'asc' | 'desc';
 
 const PlayersTable = () => {
   const { playersData } = useSelector(selectPlayers);
@@ -19,10 +29,12 @@ const PlayersTable = () => {
   );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const itemsPerPage = 7;
 
-  const filteredPlayers = useMemo(() => {
-    return players.filter((player) => {
+  const filteredAndSortedPlayers = useMemo(() => {
+    let filtered = players.filter((player) => {
       const matchesSearch =
         searchQuery === '' ||
         player.objectId.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,12 +47,54 @@ const PlayersTable = () => {
 
       return matchesSearch && matchesAccountType;
     });
-  }, [players, searchQuery, selectedAccountType]);
 
-  const totalPages = Math.ceil(filteredPlayers.length / itemsPerPage);
+    if (sortField) {
+      filtered = [...filtered].sort((a, b) => {
+        let aValue: string | number | Date;
+        let bValue: string | number | Date;
+
+        switch (sortField) {
+          case 'objectId':
+            aValue = a.objectId.toLowerCase();
+            bValue = b.objectId.toLowerCase();
+            break;
+          case 'firstName':
+            aValue = a.firstName.toLowerCase();
+            bValue = b.firstName.toLowerCase();
+            break;
+          case 'email':
+            aValue = a.email.toLowerCase();
+            bValue = b.email.toLowerCase();
+            break;
+          case 'accountType':
+            aValue = a.accountType.toLowerCase();
+            bValue = b.accountType.toLowerCase();
+            break;
+          case 'createdAt':
+            aValue = new Date(a.createdAt.iso);
+            bValue = new Date(b.createdAt.iso);
+            break;
+          default:
+            return 0;
+        }
+
+        if (aValue < bValue) {
+          return sortDirection === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortDirection === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [players, searchQuery, selectedAccountType, sortField, sortDirection]);
+
+  const totalPages = Math.ceil(filteredAndSortedPlayers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentData = filteredPlayers.slice(startIndex, endIndex);
+  const currentData = filteredAndSortedPlayers.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -59,17 +113,14 @@ const PlayersTable = () => {
     setCurrentPage(1);
   };
 
-  const rowVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    hover: { scale: 1.01, y: -2 },
-  };
-
-  const rowTransition = {
-    duration: 0.5,
-    hover: {
-      duration: 0.2,
-    },
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
   };
 
   return (
@@ -138,103 +189,131 @@ const PlayersTable = () => {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg bg-white">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  User ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Username
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Email address
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Account Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Date of Registration
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {currentData.map((player) => (
-                <motion.tr
-                  key={player.objectId}
-                  variants={rowVariants}
-                  initial="initial"
-                  animate="animate"
-                  whileHover="hover"
-                  transition={rowTransition}
-                  className="cursor-pointer"
-                >
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {player.objectId}
+      <div className="overflow-x-auto">
+        <Table.Root
+          variant="ghost"
+          className="min-w-full border-collapse text-sm"
+        >
+          <Table.Header className="bg-primary-50">
+            <Table.Row>
+              <Th
+                label="User ID"
+                sortField="objectId"
+                currentSortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <Th
+                label="Username"
+                sortField="firstName"
+                currentSortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <Th
+                label="Email address"
+                sortField="email"
+                currentSortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <Th
+                label="Account Type"
+                sortField="accountType"
+                currentSortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <Th
+                label="Date of Registration"
+                sortField="createdAt"
+                currentSortField={sortField}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {currentData.length > 0 ? (
+              currentData.map((player, index) => (
+                <Table.Row key={player.objectId} className="cursor-pointer">
+                  <Table.Cell className="whitespace-nowrap px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
+                        {startIndex + index + 1}
+                      </div>
+                      <div>
+                        <p className="font-heading font-bold uppercase text-neutral-800">
+                          {player.objectId}
+                        </p>
+                        <p className="text-xs text-neutral-500">
+                          {new Date(player.createdAt.iso).toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(player.createdAt.iso).toLocaleString()}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <CustomImage
-                          className="h-10 w-10 rounded-full"
-                          src="/default-avatar.png"
-                          alt={`${player.firstName}'s avatar`}
-                          width={40}
-                          height={40}
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                        <Avatar
+                          src=""
+                          fallback={player.firstName?.charAt(0).toUpperCase()}
+                          radius="full"
+                          className="bg-primary-50"
                         />
                       </div>
-                      <div className="ml-4">
-                        <div className="text-primary-900 text-sm font-medium">
-                          {player.firstName}
-                        </div>
-                      </div>
+                      <p className="text-primary-800 capitalize">
+                        {player.firstName}
+                      </p>
                     </div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4">
                     <div className="text-sm text-gray-900">{player.email}</div>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4">
-                    <span
-                      className={classNames(
-                        'inline-flex rounded-full px-2 text-xs font-semibold leading-5 text-[#3B3B3B]',
-                      )}
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4">
+                    <p
+                      className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
+                        player.accountType === 'admin'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
+                      }`}
                     >
                       {player.accountType}
-                    </span>
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                    </p>
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4 text-sm text-gray-500">
                     {new Date(player.createdAt.iso).toLocaleDateString()}
-                  </td>
-                  <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4 text-sm font-medium">
                     <Link
                       href={`/players/player-profile/${player.objectId}`}
                       className="text-blue-900"
                     >
                       View Details
                     </Link>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            ) : (
+              <Table.Row>
+                <Table.Cell
+                  colSpan={6}
+                  className="text-error-500 py-12 text-center font-bold"
+                >
+                  No Players Found
+                </Table.Cell>
+              </Table.Row>
+            )}
+          </Table.Body>
+        </Table.Root>
       </div>
 
       <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
         <div className="text-sm text-gray-500">
           Showing data {startIndex + 1} to{' '}
-          {Math.min(endIndex, filteredPlayers.length)} of{' '}
-          {filteredPlayers.length} entries
+          {Math.min(endIndex, filteredAndSortedPlayers.length)} of{' '}
+          {filteredAndSortedPlayers.length} entries
         </div>
         <Pagination
           currentPage={currentPage}
@@ -247,3 +326,29 @@ const PlayersTable = () => {
 };
 
 export default PlayersTable;
+
+interface ThProps {
+  label: string;
+  sortField: SortField;
+  currentSortField: SortField | null;
+  sortDirection: SortDirection;
+  onSort: (field: SortField) => void;
+}
+
+const Th: React.FC<ThProps> = ({
+  label,
+  sortField,
+  currentSortField,
+  sortDirection,
+  onSort,
+}) => (
+  <Table.Cell className="px-4 py-2 text-left">
+    <div
+      className="flex cursor-pointer items-center gap-1"
+      onClick={() => onSort(sortField)}
+    >
+      <span>{label}</span>
+      <CaretSortIcon />
+    </div>
+  </Table.Cell>
+);

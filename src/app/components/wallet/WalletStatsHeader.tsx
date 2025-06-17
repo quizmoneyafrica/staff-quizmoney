@@ -3,10 +3,23 @@
 import React, { useState } from 'react';
 import TimeRangeDropdown from '../common/TimeRangeDropdown';
 
-const options = ['This week', 'Last week', 'This month', 'Last month'];
+const options = ['This week', 'Last 30 days', 'Custom'];
 
 const WalletStatsHeader = () => {
   const [selected, setSelected] = useState(options[0]);
+  const [customDateRange, setCustomDateRange] = useState(null);
+
+  const handleSelect = (option) => {
+    setSelected(option);
+
+    if (option !== 'Custom') {
+      setCustomDateRange(null);
+    }
+  };
+
+  const handleCustomDateChange = (dateRange) => {
+    setCustomDateRange(dateRange);
+  };
 
   return (
     <div className="flex items-center justify-between ">
@@ -14,7 +27,9 @@ const WalletStatsHeader = () => {
       <TimeRangeDropdown
         options={options}
         selected={selected}
-        onSelect={setSelected}
+        onSelect={handleSelect}
+        customDateRange={customDateRange}
+        onCustomDateChange={handleCustomDateChange}
       />
     </div>
   );

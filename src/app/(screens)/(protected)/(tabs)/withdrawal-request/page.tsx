@@ -4,6 +4,7 @@ import WithdrawalCards, {
   WithdrawalCardsLoading,
 } from '@/app/components/screens/withdrawal/Cards';
 import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal';
+import Pagination from '@/app/components/leaderboard/Pagination';
 import { Search, ListFilter, ChevronDown } from 'lucide-react';
 import { useAppDispatch } from '@/app/hooks/useAuth';
 import { setDashboardDetails } from '@/app/store/dashboardSlice';
@@ -21,10 +22,6 @@ import {
   WalletCardIconDarkYellow,
   WalletIconBigLightestYellow,
 } from '@/app/icons/icons';
-// Replace this import
-// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons'; // Add WalletIconBig import
-// import { WalletCardIcon, WalletIconBig } from '@/app/icons/icons';
-// With this import (assuming you save the artifact as walletIcons.tsx)
 
 function Page() {
   const dispatch = useAppDispatch();
@@ -60,7 +57,6 @@ function Page() {
     return [];
   }, [data]);
 
-  // Calculate withdrawal statistics
   const withdrawalStats = React.useMemo(() => {
     if (!withdrawalData || withdrawalData.length === 0) {
       return {
@@ -148,40 +144,83 @@ function Page() {
   const filteredData = React.useMemo(() => {
     if (!withdrawalData || withdrawalData.length === 0) return [];
 
-    if (selectedFilter === 'All') {
-      return withdrawalData;
+    let filtered = withdrawalData;
+
+    if (selectedFilter !== 'All') {
+      filtered = withdrawalData?.filter((item: UnknownObject) => {
+        const status = (item.status || 'pending') as string;
+        const statusLower = status.toLowerCase();
+        const filterStatus = selectedFilter.toLowerCase();
+
+        if (filterStatus === 'approved') {
+          return (
+            statusLower === 'resolved' ||
+            statusLower === 'approved' ||
+            statusLower === 'completed'
+          );
+        }
+        if (filterStatus === 'pending') {
+          return statusLower === 'pending' || statusLower === 'processing';
+        }
+        if (filterStatus === 'rejected') {
+          return (
+            statusLower === 'rejected' ||
+            statusLower === 'failed' ||
+            statusLower === 'declined'
+          );
+        }
+
+        return statusLower === filterStatus;
+      });
     }
 
-    return withdrawalData?.filter((item: UnknownObject) => {
-      const status = (item.status || 'pending') as string;
-      const statusLower = status.toLowerCase();
-      const filterStatus = selectedFilter.toLowerCase();
+    if (sortBy) {
+      filtered = [...filtered].sort((a: UnknownObject, b: UnknownObject) => {
+        let aValue: string | number | Date;
+        let bValue: string | number | Date;
 
-      if (filterStatus === 'resolved') {
-        return (
-          statusLower === 'resolved' ||
-          statusLower === 'approved' ||
-          statusLower === 'completed'
-        );
-      }
-      if (filterStatus === 'pending') {
-        return statusLower === 'pending' || statusLower === 'processing';
-      }
-      if (filterStatus === 'rejected') {
-        return (
-          statusLower === 'rejected' ||
-          statusLower === 'failed' ||
-          statusLower === 'declined'
-        );
-      }
+        switch (sortBy) {
+          case 'id':
+            aValue = (a.id || '').toString().toLowerCase();
+            bValue = (b.id || '').toString().toLowerCase();
+            break;
+          case 'firstName':
+            aValue = (a.firstName || '').toString().toLowerCase();
+            bValue = (b.firstName || '').toString().toLowerCase();
+            break;
+          case 'balance':
+            aValue = Number(a.balance || 0);
+            bValue = Number(b.balance || 0);
+            break;
+          case 'amount':
+            aValue = Number(a.amount || 0);
+            bValue = Number(b.amount || 0);
+            break;
+          case 'status':
+            aValue = (a.status || 'pending').toString().toLowerCase();
+            bValue = (b.status || 'pending').toString().toLowerCase();
+            break;
+          case 'createdAt':
+            aValue = new Date(a.createdAt?.iso || a.createdAt || 0);
+            bValue = new Date(b.createdAt?.iso || b.createdAt || 0);
+            break;
+          default:
+            return 0;
+        }
 
-      return statusLower === filterStatus;
-    });
-  }, [withdrawalData, selectedFilter]);
+        if (sortOrder === 'asc') {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        } else {
+          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        }
+      });
+    }
+
+    return filtered;
+  }, [withdrawalData, selectedFilter, sortBy, sortOrder]);
 
   const [showPendingAmount, setShowPendingAmount] = useState(false);
 
-  // Remove the old showTotalAmount state and replace with showPendingAmount
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -212,12 +251,12 @@ function Page() {
         ) : (
           <WithdrawalCards
             title="All Withdrawal Request"
-            value={withdrawalStats.totalRequests.toString()} // Number of requests
+            value={withdrawalStats.totalRequests.toString()}
             bgColor="blue"
             icon={<WalletCardIcon />}
             bgImage={<WalletIconBig />}
             analytics={{
-              percentage: 15.5, // This would come from your API or calculations
+              percentage: 15.5,
               period: 'this week',
             }}
           />
@@ -227,12 +266,12 @@ function Page() {
         ) : (
           <WithdrawalCards
             title="Total Approved Request"
-            value={withdrawalStats.approvedRequests.toString()} // Number of approved requests
+            value={withdrawalStats.approvedRequests.toString()}
             bgColor="green"
             icon={<WalletCardIconGreen />}
             bgImage={<WalletIconBigGreen />}
             analytics={{
-              percentage: -5.2, // Negative percentage will show red
+              percentage: -5.2,
               period: 'this week',
             }}
           />
@@ -242,22 +281,20 @@ function Page() {
         ) : (
           <WithdrawalCards
             title="Total Pending Request"
-            value={withdrawalStats.pendingRequests.toString()} // Number of pending requests
+            value={withdrawalStats.pendingRequests.toString()}
             bgColor="yellow"
             showEye={true}
-            isValueVisible={showPendingAmount} // New prop to control visibility
-            onEyeToggle={() => setShowPendingAmount(!showPendingAmount)} // Toggle function
+            isValueVisible={showPendingAmount}
+            onEyeToggle={() => setShowPendingAmount(!showPendingAmount)}
             icon={<WalletCardIconDarkYellow />}
             bgImage={<WalletIconBigLightestYellow />}
             analytics={{
-              percentage: 8.3, // Positive percentage will show green
-              period: 'this month', // You can customize the period
+              percentage: 8.3,
+              period: 'this month',
             }}
           />
         )}
       </div>
-
-      <div className="grid w-full grid-cols-1 gap-y-10 lg:grid-cols-3 lg:gap-4"></div>
 
       <div className="mb-4 flex w-full flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
         <p>Recent Withdrawal Request</p>
@@ -302,7 +339,7 @@ function Page() {
                       >
                         {option}
                       </button>
-                      {/* Thin separator line */}
+
                       {index < filterOptions.length - 1 && (
                         <div className="mx-2 border-b border-gray-200"></div>
                       )}
@@ -338,8 +375,8 @@ function Page() {
                     Loading withdrawal requests...
                   </Table.Cell>
                 </Table.Row>
-              ) : withdrawalData.length > 0 ? (
-                withdrawalData.map((item: UnknownObject, index: number) => {
+              ) : filteredData.length > 0 ? (
+                filteredData.map((item: UnknownObject, index: number) => {
                   const { time, fullDate } = formatDateTime(
                     item.createdAt?.iso || new Date().toISOString(),
                   );
@@ -437,36 +474,18 @@ function Page() {
           </Table.Root>
         </div>
 
-        {!fetchingDashData && withdrawalData.length > 0 && (
+        {!fetchingDashData && filteredData.length > 0 && (
           <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
             <div className="text-sm text-gray-500">
               Showing data {currentPage} to {itemsPerPage} of{' '}
               {data?.result?.totalCount} entries{' '}
               {selectedFilter !== 'All' && `(filtered by ${selectedFilter})`}
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="rounded border px-3 py-1 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <span className="px-3 py-1">
-                Page {currentPage} of {data?.result?.totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  handlePageChange(
-                    Math.min(data?.result?.totalPages, currentPage + 1),
-                  )
-                }
-                disabled={currentPage === data?.result?.totalPages}
-                className="rounded border px-3 py-1 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={data?.result?.totalPages || 1}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>
