@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import CustomImage from '../CustomImage';
 import * as Dialog from '@radix-ui/react-dialog';
 import GameHistoryModal from './GameHistoryModal';
@@ -55,9 +57,68 @@ const gameHistoryData: GameHistoryItem[] = [
     incorrectScore: 2,
     totalTime: '00:45 minutes',
   },
+
+  {
+    id: 'ID1234568',
+    date: '22/02/2024 10:30',
+    reward: {
+      type: 'money',
+      value: '₦25,000',
+    },
+    status: 'Won',
+    correctScore: 18,
+    incorrectScore: 2,
+    totalTime: '01:05 minutes',
+  },
+  {
+    id: 'ID1234569',
+    date: '23/02/2024 14:15',
+    reward: {
+      type: 'item',
+      value: 'soap',
+      itemCount: 1,
+    },
+    status: 'Loss',
+    correctScore: 12,
+    incorrectScore: 8,
+    totalTime: '01:20 minutes',
+  },
+  {
+    id: 'ID1234570',
+    date: '24/02/2024 16:45',
+    reward: {
+      type: 'money',
+      value: '₦75,000',
+    },
+    status: 'Won',
+    correctScore: 22,
+    incorrectScore: 1,
+    totalTime: '00:42 minutes',
+  },
 ];
 
+const ITEMS_PER_PAGE = 5;
+
 export default function PlayerGameHistorySection() {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(gameHistoryData.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentData = gameHistoryData.slice(startIndex, endIndex);
+
+  const generatePageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <div
       className="rounded-xl bg-white p-6"
@@ -96,7 +157,7 @@ export default function PlayerGameHistorySection() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                    className="whitespace-nowrap px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                     data-aos="fade-up"
                     data-aos-delay="400"
                   >
@@ -113,7 +174,7 @@ export default function PlayerGameHistorySection() {
                 </tr>
               </thead>
               <tbody className="bg-white">
-                {gameHistoryData.map((game, index) => (
+                {currentData.map((game, index) => (
                   <tr
                     key={`${game.id}-${index}`}
                     data-aos="fade-up"
@@ -167,6 +228,55 @@ export default function PlayerGameHistorySection() {
             </table>
           </div>
         </div>
+      </div>
+
+      <div className="mt-6 flex items-center justify-center">
+        <nav className="flex items-center space-x-2" aria-label="Pagination">
+          <button
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
+              currentPage === 1
+                ? 'cursor-not-allowed border-gray-200 text-gray-400'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            &#8249;
+          </button>
+
+          {generatePageNumbers().map((pageNumber) => (
+            <button
+              key={pageNumber}
+              onClick={() => handlePageChange(pageNumber)}
+              className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
+                currentPage === pageNumber
+                  ? 'bg-blue-900 text-white'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {pageNumber}
+            </button>
+          ))}
+
+          <button
+            onClick={() =>
+              handlePageChange(Math.min(totalPages, currentPage + 1))
+            }
+            disabled={currentPage === totalPages}
+            className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
+              currentPage === totalPages
+                ? 'cursor-not-allowed border-gray-200 text-gray-400'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            &#8250;
+          </button>
+        </nav>
+      </div>
+
+      <div className="mt-4 text-center text-sm text-gray-500">
+        Showing {startIndex + 1} to {Math.min(endIndex, gameHistoryData.length)}{' '}
+        of {gameHistoryData.length} entries
       </div>
     </div>
   );

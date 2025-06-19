@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { ListFilter } from 'lucide-react';
+import { ListFilter, ChevronLeft, ChevronRight } from 'lucide-react';
 import CustomImage from '../CustomImage';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
 
@@ -13,6 +13,103 @@ interface Transaction {
   action: string;
   type: string;
 }
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
+  onPageChange,
+}) => {
+  const generatePageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(
+          1,
+          '...',
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages,
+        );
+      } else {
+        pages.push(
+          1,
+          '...',
+          currentPage - 1,
+          currentPage,
+          currentPage + 1,
+          '...',
+          totalPages,
+        );
+      }
+    }
+
+    return pages;
+  };
+
+  return (
+    <div className="mt-6 flex items-center justify-center gap-2 md:justify-end">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className={`rounded-lg p-2 ${
+          currentPage === 1
+            ? 'cursor-not-allowed bg-gray-100 text-gray-400'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        }`}
+      >
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+
+      <div className="flex gap-2">
+        {generatePageNumbers().map((page, index) => (
+          <React.Fragment key={index}>
+            {page === '...' ? (
+              <span className="px-3 py-2 text-gray-500">...</span>
+            ) : (
+              <button
+                onClick={() => onPageChange(page as number)}
+                className={`rounded-lg px-4 py-2 font-medium ${
+                  currentPage === page
+                    ? 'bg-primary-900 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {page}
+              </button>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className={`rounded-lg p-2 ${
+          currentPage === totalPages
+            ? 'cursor-not-allowed bg-gray-100 text-gray-400'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+        }`}
+      >
+        <ChevronRight className="h-5 w-5" />
+      </button>
+    </div>
+  );
+};
 
 export default function PlayerTransactionHistory() {
   const exampleData: Transaction[] = [
@@ -39,6 +136,17 @@ export default function PlayerTransactionHistory() {
   const [showDetailsPopup, setShowDetailsPopup] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(exampleData.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = exampleData.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const handleViewDetails = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
@@ -129,7 +237,7 @@ export default function PlayerTransactionHistory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {exampleData.map((row, index) => (
+              {currentItems.map((row, index) => (
                 <tr
                   key={row.id}
                   data-aos="fade-up"
@@ -180,6 +288,12 @@ export default function PlayerTransactionHistory() {
           </table>
         </div>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
 
       {/* Transaction Details Popup */}
       <TransactionDetailsModal
