@@ -8,6 +8,7 @@ import {
 import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import React, { useState } from 'react';
+import { Search, ListFilter, MoreVertical } from 'lucide-react';
 
 import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
@@ -96,8 +97,20 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const [selectedTransaction, setSelectedTransaction] =
     useState<StaticTransactionData | null>(null);
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<
+    'All' | 'Successful' | 'Pending' | 'Failed'
+  >('All');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const itemsPerPage = 10;
+
+  const handleFilterSelect = (
+    status: 'All' | 'Successful' | 'Pending' | 'Failed',
+  ) => {
+    setStatusFilter(status);
+    setIsFilterOpen(false);
+  };
 
   const handleSort = (key: SortableTransactionKeys) => {
     if (sortBy === key) {
@@ -114,8 +127,30 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   };
 
   const sortedData = React.useMemo(() => {
+    let filtered = tableData;
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (item) =>
+          item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.transactionType
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          item.transactionAmount
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()),
+      );
+    }
+
+    if (statusFilter !== 'All') {
+      filtered = filtered.filter(
+        (item) => item.transactionStatus === statusFilter,
+      );
+    }
+
     if (sortBy) {
-      return tableData.slice().sort((a, b) => {
+      return filtered.slice().sort((a, b) => {
         const order = sortOrder === 'asc' ? 1 : -1;
         const aValue = a[sortBy] as string;
         const bValue = b[sortBy] as string;
@@ -125,8 +160,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         return 0;
       });
     }
-    return tableData;
-  }, [tableData, sortBy, sortOrder]);
+    return filtered;
+  }, [tableData, sortBy, sortOrder, searchTerm, statusFilter]);
 
   const totalPages = Math.ceil(sortedData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -138,6 +173,27 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       setCurrentPage(page);
     }
   };
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (isFilterOpen && !target.closest('.relative')) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    if (isFilterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFilterOpen]);
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -155,6 +211,67 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   return (
     <>
       <div className="overflow-x-auto">
+        <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
+          <div className="flex items-center gap-4 ">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0 "
+              />
+            </div>
+            <div className="relative">
+              <button
+                className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4  py-2 outline-none"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+              >
+                <ListFilter className=" size-5 text-[#1B212D]" />
+                <span className=" hidden md:block  ">Filter by</span>
+              </button>
+              {isFilterOpen && (
+                <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
+                  <div className="py-1">
+                    <button
+                      onClick={() => handleFilterSelect('All')}
+                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                        statusFilter === 'All' ? 'bg-gray-50' : ''
+                      }`}
+                    >
+                      All Status
+                    </button>
+                    <button
+                      onClick={() => handleFilterSelect('Successful')}
+                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                        statusFilter === 'Successful' ? 'bg-gray-50' : ''
+                      }`}
+                    >
+                      Successful
+                    </button>
+                    <button
+                      onClick={() => handleFilterSelect('Pending')}
+                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                        statusFilter === 'Pending' ? 'bg-gray-50' : ''
+                      }`}
+                    >
+                      Pending
+                    </button>
+                    <button
+                      onClick={() => handleFilterSelect('Failed')}
+                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                        statusFilter === 'Failed' ? 'bg-gray-50' : ''
+                      }`}
+                    >
+                      Failed
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
         <Table.Root
           variant="ghost"
           className="min-w-full border-collapse text-sm"

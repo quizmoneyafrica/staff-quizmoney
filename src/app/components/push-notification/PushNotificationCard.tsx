@@ -35,7 +35,7 @@ const LoadingStatCard: React.FC = () => {
 
   return (
     <motion.div
-      className="relative w-1/2 overflow-hidden rounded-xl bg-[#E4F1FA] px-6 py-14"
+      className="relative w-full overflow-hidden rounded-xl bg-[#E4F1FA] px-6 py-14 md:w-1/2"
       variants={cardVariants}
       initial="hidden"
       animate="visible"
@@ -125,7 +125,7 @@ const StatCard: React.FC<StatCardProps> = ({ stat }) => {
 
   return (
     <motion.div
-      className="relative w-1/2 overflow-hidden rounded-xl bg-[#E4F1FA] px-6 py-14"
+      className="relative w-full overflow-hidden rounded-xl bg-[#E4F1FA] px-6 py-14 md:w-1/2"
       variants={cardVariants}
       initial="hidden"
       animate="visible"
