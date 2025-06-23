@@ -8,10 +8,10 @@ export const useGetWithdrawalRequests = (page, limit, filter) => {
     queryKey: ['get_withdrawal_requests', page, limit, filter],
     queryFn: () =>
       request
-        .post(`/getWithdrawalRequests`, {
+        .post(`/getWithdrawalRequestsV2`, {
           page,
           limit,
-          filter: filter === 'all' ? undefined : filter,
+          status: filter === 'all' ? undefined : filter,
         })
         .then((res) => res.data)
         .catch((error) => {

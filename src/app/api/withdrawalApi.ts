@@ -5,7 +5,7 @@ import { BASE_URL, getSessionTokenHeaders } from './userApi';
 const WithdrawalApi = {
   fetchWithdrawalRequest(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
-      `${BASE_URL}/getWithdrawalRequests`,
+      `${BASE_URL}/getWithdrawalRequestsV2`,
       {},
       { headers: getSessionTokenHeaders() },
     );
