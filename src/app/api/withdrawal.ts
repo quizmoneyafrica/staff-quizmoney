@@ -70,25 +70,6 @@ export const useGetWithdrawalRequests = (
   });
 };
 
-// export const useApproveWithdrawal = () => {
-//   const request = useRequestInstance();
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: (values: any) =>
-//       request
-//         .post(`/approveWithdrawal`, values)
-//         .then((res) => res.data)
-//         .catch((error) => {
-//           throw error.response?.data || error;
-//         }),
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ['get_withdrawal_requests'] });
-//       queryClient.invalidateQueries({ queryKey: ['get_withdrawal_stats'] });
-//     },
-//   });
-// };
-
 export const useApproveWithdrawal = () => {
   const request = useRequestInstance();
   const queryClient = useQueryClient();
@@ -107,25 +88,6 @@ export const useApproveWithdrawal = () => {
     },
   });
 };
-
-// export const useRejectWithdrawal = () => {
-//   const request = useRequestInstance();
-//   const queryClient = useQueryClient();
-
-//   return useMutation({
-//     mutationFn: (values: any) =>
-//       request
-//         .post(`/rejectWithdrawal`, values)
-//         .then((res) => res.data)
-//         .catch((error) => {
-//           throw error.response?.data || error;
-//         }),
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ['get_withdrawal_requests'] });
-//       queryClient.invalidateQueries({ queryKey: ['get_withdrawal_stats'] });
-//     },
-//   });
-// };
 
 export const useRejectWithdrawal = () => {
   const request = useRequestInstance();
