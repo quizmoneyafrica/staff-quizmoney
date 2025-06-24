@@ -7,11 +7,31 @@ import {
 } from '@radix-ui/react-dropdown-menu';
 import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
-import React, { useState } from 'react';
-import { Search, ListFilter, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, ListFilter, Loader2 } from 'lucide-react';
 
 import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
+import { useGetAllTransactionsWithStats } from '@/app/hooks/useTransaction';
+
+interface TransactionStats {
+  totalWalletBalance: number;
+  totalSuccessfulTransactions: number;
+  totalFailedTransactions: number;
+  totalPendingTransactions: number;
+}
+
+interface RawTransaction {
+  id: string;
+  createdAt: { iso: string } | string;
+  user?: {
+    name?: string;
+    avatar?: string;
+  };
+  type?: string;
+  amount: number | string;
+  status: string;
+}
 
 interface StaticTransactionData {
   id: string;
@@ -23,65 +43,68 @@ interface StaticTransactionData {
   transactionStatus: 'Pending' | 'Successful' | 'Failed';
 }
 
+interface PaginationData {
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  itemsPerPage: number;
+}
+
+interface ApiResponse {
+  transactions: RawTransaction[];
+  stats: TransactionStats;
+  pagination: PaginationData;
+}
+
 interface TransactionTableProps {
   data?: StaticTransactionData[];
   viewDetails: (data: StaticTransactionData) => void;
+  onStatsUpdate?: (stats: TransactionStats) => void;
 }
+
+const formatStatus = (status: string): 'Pending' | 'Successful' | 'Failed' => {
+  switch (status?.toLowerCase()) {
+    case 'completed':
+    case 'successful':
+      return 'Successful';
+    case 'pending':
+      return 'Pending';
+    case 'failed':
+    default:
+      return 'Failed';
+  }
+};
+
+const transformTransaction = (tx: RawTransaction): StaticTransactionData => ({
+  id: tx.id,
+  date: new Date(
+    typeof tx.createdAt === 'string' ? tx.createdAt : tx.createdAt.iso,
+  ).toLocaleDateString(),
+  username: tx.user?.name || 'Unknown',
+  avatarUrl: tx.user?.avatar || '',
+  transactionType: tx.type || 'N/A',
+  transactionAmount: `₦${Number(tx.amount).toLocaleString()}`,
+  transactionStatus: formatStatus(tx.status),
+});
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   data,
   viewDetails,
+  onStatsUpdate,
 }) => {
-  // Static data
-  const exampleData: StaticTransactionData[] = [
-    {
-      id: 'ID1234567',
-      date: '21/02/2024 09:00',
-      username: 'Joemicky',
-      avatarUrl: 'https://github.com/shadcn.png',
-      transactionType: 'Withdrawal',
-      transactionAmount: '₦50,000',
-      transactionStatus: 'Successful',
-    },
-    {
-      id: 'ID1234568',
-      date: '21/02/2024 09:00',
-      username: 'Inioluwa',
-      avatarUrl: 'https://github.com/shadcn.png',
-      transactionType: 'Deposit',
-      transactionAmount: '₦50,000',
-      transactionStatus: 'Failed',
-    },
-    {
-      id: 'ID1234569',
-      date: '21/02/2024 09:00',
-      username: 'Hanax',
-      avatarUrl: 'https://github.com/shadcn.png',
-      transactionType: 'Deposit',
-      transactionAmount: '₦50,000',
-      transactionStatus: 'Successful',
-    },
-    {
-      id: 'ID1234570',
-      date: '21/02/2024 09:00',
-      username: 'Joemicky',
-      avatarUrl: 'https://github.com/shadcn.png',
-      transactionType: 'Withdrawal',
-      transactionAmount: '₦50,000',
-      transactionStatus: 'Pending',
-    },
-    {
-      id: 'ID1234571',
-      date: '21/02/2024 09:00',
-      username: 'Joemicky',
-      avatarUrl: 'https://github.com/shadcn.png',
-      transactionType: 'Withdrawal',
-      transactionAmount: '₦50,000',
-      transactionStatus: 'Successful',
-    },
-  ];
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<StaticTransactionData | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<
+    'All' | 'Successful' | 'Pending' | 'Failed'
+  >('All');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<SortableTransactionKeys | ''>('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  const tableData = data || exampleData;
+  const itemsPerPage = 10;
 
   type SortableTransactionKeys =
     | 'id'
@@ -91,25 +114,48 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     | 'transactionStatus'
     | 'date';
 
-  const [sortBy, setSortBy] = React.useState<SortableTransactionKeys | ''>('');
-  const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<StaticTransactionData | null>(null);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<
-    'All' | 'Successful' | 'Pending' | 'Failed'
-  >('All');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const {
+    data: apiResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllTransactionsWithStats(
+    currentPage,
+    itemsPerPage,
+    undefined,
+    searchTerm || undefined,
+    statusFilter !== 'All' ? statusFilter : undefined,
+    undefined,
+    undefined,
+  ) as {
+    data: ApiResponse | undefined;
+    isLoading: boolean;
+    error: Error | null;
+    refetch: () => void;
+  };
 
-  const itemsPerPage = 10;
+  const transactions =
+    apiResponse?.transactions?.map(transformTransaction) || [];
+  const stats = apiResponse?.stats || null;
+
+  const pagination = apiResponse?.pagination;
+  const totalCount = pagination?.totalItems || 0;
+  const totalPages = pagination?.totalPages || 1;
+
+  useEffect(() => {
+    if (stats && onStatsUpdate) {
+      onStatsUpdate(stats);
+    }
+  }, [stats, onStatsUpdate]);
+
+  const tableData = data || transactions;
 
   const handleFilterSelect = (
     status: 'All' | 'Successful' | 'Pending' | 'Failed',
   ) => {
     setStatusFilter(status);
     setIsFilterOpen(false);
+    setCurrentPage(1);
   };
 
   const handleSort = (key: SortableTransactionKeys) => {
@@ -126,59 +172,32 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     setIsModalOpen(true);
   };
 
-  const sortedData = React.useMemo(() => {
-    let filtered = tableData;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (item) =>
-          item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.transactionType
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          item.transactionAmount
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()),
-      );
-    }
-
-    if (statusFilter !== 'All') {
-      filtered = filtered.filter(
-        (item) => item.transactionStatus === statusFilter,
-      );
-    }
-
-    if (sortBy) {
-      return filtered.slice().sort((a, b) => {
-        const order = sortOrder === 'asc' ? 1 : -1;
-        const aValue = a[sortBy] as string;
-        const bValue = b[sortBy] as string;
-
-        if (aValue < bValue) return -1 * order;
-        if (aValue > bValue) return 1 * order;
-        return 0;
-      });
-    }
-    return filtered;
-  }, [tableData, sortBy, sortOrder, searchTerm, statusFilter]);
-
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = sortedData.slice(startIndex, endIndex);
-
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
 
-  React.useEffect(() => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  };
 
-  React.useEffect(() => {
+  const sortedData = React.useMemo(() => {
+    if (!sortBy || !tableData) return tableData;
+
+    return [...tableData].sort((a, b) => {
+      const order = sortOrder === 'asc' ? 1 : -1;
+      const aValue = a[sortBy] as string;
+      const bValue = b[sortBy] as string;
+
+      if (aValue < bValue) return -1 * order;
+      if (aValue > bValue) return 1 * order;
+      return 0;
+    });
+  }, [tableData, sortBy, sortOrder]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       if (isFilterOpen && !target.closest('.relative')) {
@@ -208,6 +227,29 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <span className="ml-2 text-gray-600">Loading transactions...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-12 text-center">
+        <p className="mb-4 text-red-600">Failed to load transactions</p>
+        <button
+          onClick={() => refetch()}
+          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="overflow-x-auto">
@@ -219,7 +261,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 type="text"
                 placeholder="Search"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearchChange}
                 className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0 "
               />
             </div>
@@ -234,38 +276,21 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               {isFilterOpen && (
                 <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
                   <div className="py-1">
-                    <button
-                      onClick={() => handleFilterSelect('All')}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                        statusFilter === 'All' ? 'bg-gray-50' : ''
-                      }`}
-                    >
-                      All Status
-                    </button>
-                    <button
-                      onClick={() => handleFilterSelect('Successful')}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                        statusFilter === 'Successful' ? 'bg-gray-50' : ''
-                      }`}
-                    >
-                      Successful
-                    </button>
-                    <button
-                      onClick={() => handleFilterSelect('Pending')}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                        statusFilter === 'Pending' ? 'bg-gray-50' : ''
-                      }`}
-                    >
-                      Pending
-                    </button>
-                    <button
-                      onClick={() => handleFilterSelect('Failed')}
-                      className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                        statusFilter === 'Failed' ? 'bg-gray-50' : ''
-                      }`}
-                    >
-                      Failed
-                    </button>
+                    {['All', 'Successful', 'Pending', 'Failed'].map(
+                      (status) => (
+                        <button
+                          key={status}
+                          onClick={() =>
+                            handleFilterSelect(status as typeof statusFilter)
+                          }
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                            statusFilter === status ? 'bg-gray-50' : ''
+                          }`}
+                        >
+                          {status} Status
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
               )}
@@ -292,68 +317,61 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 label="Transaction Status"
                 onClick={() => handleSort('transactionStatus')}
               />
-              {/* <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell> */}
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {paginatedData.length > 0 ? (
-              paginatedData.map((item, index) => {
-                return (
-                  <Table.Row
-                    key={item.id}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                    onClick={() => handleRowClick(item)}
-                  >
-                    <Table.Cell className="whitespace-nowrap px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                          {startIndex + index + 1}
-                        </div>
-                        <div>
-                          <p className="font-heading font-bold uppercase text-neutral-800">
-                            {item.id}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {item.date}
-                          </p>
-                        </div>
+            {sortedData && sortedData.length > 0 ? (
+              sortedData.map((item, index) => (
+                <Table.Row
+                  key={item.id}
+                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+                  onClick={() => handleRowClick(item)}
+                >
+                  <Table.Cell className="whitespace-nowrap px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
                       </div>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
-                          <Avatar
-                            src={item.avatarUrl}
-                            fallback={item.username?.charAt(0).toUpperCase()}
-                            radius="full"
-                            className="bg-primary-50"
-                          />
-                        </div>
-                        <p className="text-primary-800 capitalize">
-                          {item.username}
+                      <div>
+                        <p className="font-heading font-bold uppercase text-neutral-800">
+                          {item.id}
                         </p>
+                        <p className="text-xs text-neutral-500">{item.date}</p>
                       </div>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <span className="capitalize">{item.transactionType}</span>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <span className="font-semibold">
-                        {item.transactionAmount}
-                      </span>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <p
-                        className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusClass(
-                          item.transactionStatus,
-                        )}`}
-                      >
-                        {item.transactionStatus}
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                        <Avatar
+                          src={item.avatarUrl}
+                          fallback={item.username?.charAt(0).toUpperCase()}
+                          radius="full"
+                          className="bg-primary-50"
+                        />
+                      </div>
+                      <p className="text-primary-800 capitalize">
+                        {item.username}
                       </p>
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4 capitalize">
+                    {item.transactionType}
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4 font-semibold">
+                    {item.transactionAmount}
+                  </Table.Cell>
+                  <Table.Cell className="px-4 py-4">
+                    <p
+                      className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusClass(
+                        item.transactionStatus,
+                      )}`}
+                    >
+                      {item.transactionStatus}
+                    </p>
+                  </Table.Cell>
+                </Table.Row>
+              ))
             ) : (
               <Table.Row>
                 <Table.Cell
@@ -370,8 +388,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
       <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
         <div className="text-sm text-gray-500">
-          Showing data {startIndex + 1} to{' '}
-          {Math.min(endIndex, sortedData.length)} of {sortedData.length} entries
+          Showing data {(currentPage - 1) * itemsPerPage + 1} to{' '}
+          {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
+          entries
         </div>
         <Pagination
           currentPage={currentPage}

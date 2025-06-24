@@ -18,7 +18,6 @@ import Pagination from '../leaderboard/Pagination';
 import CreateNotificationModal from './PushNotificationModal';
 import SendNotificationModal from './SendNotificationModal';
 
-// Static data type definition
 interface StaticPushNotificationData {
   id: string;
   date: string;
@@ -31,7 +30,6 @@ type SortField = 'id' | 'Subject' | 'notificationBody' | 'date';
 type SortDirection = 'asc' | 'desc';
 
 const PushNotificationTable = () => {
-  // Static example data
   const [notifications, setNotifications] = useState<
     StaticPushNotificationData[]
   >([
@@ -194,16 +192,6 @@ const PushNotificationTable = () => {
     setOpenDropdown(openDropdown === notificationId ? null : notificationId);
   };
 
-  const handleActionClick = (action: string, notificationId: string) => {
-    console.log(`${action} clicked for notification:`, notificationId);
-    setOpenDropdown(null);
-
-    if (action === 'Send') {
-      setSelectedNotificationId(notificationId);
-      setIsSendModalOpen(true);
-    }
-  };
-
   const handleCreateNotification = (data: {
     subject: string;
     body: string;
@@ -261,6 +249,33 @@ const PushNotificationTable = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [openDropdown]);
+
+  const [selectedNotificationData, setSelectedNotificationData] = useState<{
+    title: string;
+    body: string;
+  } | null>(null);
+
+  const handleActionClick = (action: string, notificationId: string) => {
+    console.log(`${action} clicked for notification:`, notificationId);
+    setOpenDropdown(null);
+
+    if (action === 'Send') {
+      // Find the notification data
+      const notification = notifications.find((n) => n.id === notificationId);
+      if (notification) {
+        setSelectedNotificationData({
+          title: notification.Subject,
+          body: notification.notificationBody,
+        });
+        setIsSendModalOpen(true);
+      }
+    }
+  };
+
+  const handleCloseSendModal = () => {
+    setIsSendModalOpen(false);
+    setSelectedNotificationData(null);
+  };
 
   return (
     <div className="">
@@ -443,10 +458,15 @@ const PushNotificationTable = () => {
       {/* Send Notification Modal */}
       <SendNotificationModal
         isOpen={isSendModalOpen}
+        onClose={handleCloseSendModal}
+        notificationData={selectedNotificationData}
+      />
+      {/* <SendNotificationModal
+        isOpen={isSendModalOpen}
         onClose={() => setIsSendModalOpen(false)}
         onSelectUsers={handleSelectUsers}
         onSendToAll={handleSendToAll}
-      />
+      /> */}
     </div>
   );
 };

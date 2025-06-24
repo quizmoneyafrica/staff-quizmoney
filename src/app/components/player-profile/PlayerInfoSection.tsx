@@ -24,22 +24,57 @@ const itemVariants = {
   },
 };
 
-const profileDetails = [
-  { label: 'First name', value: 'Joseph' },
-  { label: 'Last name', value: 'Micheal' },
-  { label: 'Email Address', value: 'Sample@gmail.com', breakAll: true },
-  { label: 'Date of Birth', value: '01 January 2000' },
-  { label: 'Gender', value: 'Male' },
-  {
-    label: 'Country',
-    value: 'Nigeria',
-    icon: '🇳🇬',
-    hasIcon: true,
-  },
-  { label: 'Referred By', value: 'Null' },
-];
+interface ProfileData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dateOfBirth?: string;
+  gender?: string;
+  country?: string;
+  countryFlag?: string;
+  referredBy?: string;
+  avatar?: string;
+}
 
-export default function PlayerInfoSection() {
+interface PlayerInfoSectionProps {
+  profileData: ProfileData;
+}
+
+export default function PlayerInfoSection({
+  profileData,
+}: PlayerInfoSectionProps) {
+  // Map API data to display format
+  const profileDetails = [
+    { label: 'First name', value: profileData.firstName || 'N/A' },
+    { label: 'Last name', value: profileData.lastName || 'N/A' },
+    {
+      label: 'Email Address',
+      value: profileData.email || 'N/A',
+      breakAll: true,
+    },
+    {
+      label: 'Date of Birth',
+      value: profileData.dateOfBirth
+        ? new Date(profileData.dateOfBirth).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })
+        : 'N/A',
+    },
+    { label: 'Gender', value: profileData.gender || 'N/A' },
+    {
+      label: 'Country',
+      value: profileData.country || 'N/A',
+      icon: profileData.countryFlag || '🌍',
+      hasIcon: true,
+    },
+    { label: 'Referred By', value: profileData.referredBy || 'N/A' },
+  ];
+
+  const avatarUrl = profileData.avatar || 'https://github.com/shadcn.png';
+
   return (
     <motion.div
       className="rounded-xl bg-white"
@@ -53,9 +88,11 @@ export default function PlayerInfoSection() {
           variants={itemVariants}
         >
           <h2 className="text-2xl font-bold text-black">Profile Details</h2>
-          <div className="text-right ">
+          <div className="text-right">
             <div className="text-base font-medium text-gray-800">User ID</div>
-            <div className="text-lg font-bold text-gray-900">ID1234567</div>
+            <div className="text-lg font-bold text-gray-900">
+              {profileData.id}
+            </div>
           </div>
 
           {/* Avatar */}
@@ -65,9 +102,9 @@ export default function PlayerInfoSection() {
           >
             <div className="size-24 rounded-full bg-[#BCDDF4] p-6">
               <CustomImage
-                src={'https://github.com/shadcn.png'}
+                src={avatarUrl}
                 className="rounded-full"
-                alt=""
+                alt={`${profileData.firstName} ${profileData.lastName}`}
               />
             </div>
           </motion.div>
@@ -86,7 +123,7 @@ export default function PlayerInfoSection() {
             variants={itemVariants}
             className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4"
           >
-            <div className=" font-semibold text-black">{detail.label}</div>
+            <div className="font-semibold text-black">{detail.label}</div>
             <div
               className={`text-sm text-gray-900 sm:text-base ${
                 detail.breakAll ? 'break-all' : ''

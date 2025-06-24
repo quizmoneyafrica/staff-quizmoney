@@ -11,12 +11,16 @@ import { toast } from 'sonner';
 import QuestionBox from './questionBox';
 import { NoQuestions } from '../../noQuestion';
 
+import { useUpdateGame } from '@/app/hooks/useUpdateGame';
+
 function Page() {
   const params = useParams();
   const [fetchedData, setFetchedData] = useState<Game>(initialGame);
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
   const [fetchingData, setFetchingData] = useState(true);
+
+  const updateGameMutation = useUpdateGame();
 
   const toStringValue = (value: string | number | undefined): string => {
     if (value === undefined || value === null) return '';
@@ -115,9 +119,33 @@ function Page() {
 
   const handleSave = async () => {
     try {
-      // Add save logic here
+      if (!params.id || !fetchedData) {
+        toast.error('Game ID or data is missing');
+        return;
+      }
 
-      toast.success('Game updated successfully!');
+      // Transform questions to match API format
+      const transformedQuestions = fetchedData.questions.map(
+        (question, index) => ({
+          number: index + 1,
+          question: question.question,
+          options: question.options,
+          correctAnswer: question.correctAnswer,
+        }),
+      );
+
+      const payload = {
+        objectId: String(params.id),
+        name: fetchedData.name,
+        description: '', // Fixed: removed reference to fetchedData.description
+        questions: transformedQuestions,
+        gamePrize: fetchedData.gamePrize,
+        numOfShare: fetchedData.numOfShare,
+        entryFee: String(fetchedData.entryFee),
+        startDate: dateInput,
+      };
+
+      updateGameMutation.mutate(payload);
     } catch (error: any) {
       console.error('Save error:', error);
       toast.error('Failed to save game. Please try again.');
@@ -136,9 +164,10 @@ function Page() {
             <h3 className="font-heading text-xl font-medium">Game Details</h3>
             <button
               onClick={handleSave}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
+              disabled={updateGameMutation.isPending}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
             >
-              Save Changes
+              {updateGameMutation.isPending ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
 

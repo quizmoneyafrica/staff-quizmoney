@@ -2,6 +2,22 @@ import axios, { AxiosResponse } from 'axios';
 import { BASE_URL, getSessionTokenHeaders } from './userApi';
 import { ApiResponse } from './interface';
 
+interface GetAllTransactionsWithStatsRequest {
+  page: number;
+  limit: number;
+  transactionType?: string;
+  search?: string;
+  status?: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  dateRangeStats?: {
+    start: string;
+    end: string;
+  };
+}
+
 const WalletApi = {
   fetchCustomerWallet(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
@@ -20,6 +36,17 @@ const WalletApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
+
+  getAllTransactionsWithStats(
+    data: GetAllTransactionsWithStatsRequest,
+  ): Promise<AxiosResponse<ApiResponse>> {
+    return axios.post(
+      `${BASE_URL}/getAllTransactionsWithStats`,
+      { ...data },
+      { headers: getSessionTokenHeaders() },
+    );
+  },
+
   getCheckoutLink(data: {
     amount: string;
   }): Promise<AxiosResponse<ApiResponse>> {
@@ -115,3 +142,4 @@ const WalletApi = {
 };
 
 export default WalletApi;
+export type { GetAllTransactionsWithStatsRequest };

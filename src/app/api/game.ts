@@ -8,7 +8,39 @@ import {
 import { ApiResponse } from './interface';
 import CryptoJS from 'crypto-js';
 
+import { CreateGamePayload, CreateGameResponse } from './typesGame';
+
+export interface UpdateGamePayload {
+  objectId: string;
+  name?: string;
+  description?: string;
+  questions?: Array<{
+    number: number;
+    question: string;
+    options: string[];
+    correctAnswer: string;
+  }>;
+  gamePrize?: number;
+  numOfShare?: number;
+  entryFee?: string | number;
+  startDate?: string;
+}
+
 const GameApi = {
+  createGame(
+    payload: CreateGamePayload,
+  ): Promise<AxiosResponse<CreateGameResponse>> {
+    return axios.post(`${BASE_URL}/createGame`, payload, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  updateGame(payload: UpdateGamePayload): Promise<AxiosResponse<ApiResponse>> {
+    return axios.post(`${BASE_URL}/updateGame`, payload, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
   fetchNextGame(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(`${BASE_URL}/errorLoad`, {}, { headers: appHeaders });
   },
@@ -63,7 +95,6 @@ const GameApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
-
   updateErasers(erasersUsed: number) {
     return axios.post(
       `${BASE_URL}/updateErasers`,
@@ -97,6 +128,7 @@ export function decryptGameData(encrypted: string) {
   const decrypted = bytes.toString(CryptoJS.enc.Utf8);
   return JSON.parse(decrypted);
 }
+
 export function encryptGameData(data: object): string {
   const stringified = JSON.stringify(data);
   const encrypted = CryptoJS.AES.encrypt(stringified, SECRET_KEY).toString();

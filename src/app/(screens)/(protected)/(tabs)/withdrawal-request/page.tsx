@@ -13,7 +13,7 @@ import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { useGetWithdrawalRequests } from '@/app/api';
+import { useGetWithdrawalRequests, useGetWithdrawalStats } from '@/app/api';
 import {
   WalletCardIcon,
   WalletIconBig,
@@ -22,6 +22,8 @@ import {
   WalletCardIconDarkYellow,
   WalletIconBigLightestYellow,
 } from '@/app/icons/icons';
+import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
+// import WithdrawalStatsTest from '@/app/components/screens/withdrawal/WithdrawalStatsTest';
 
 function Page() {
   const dispatch = useAppDispatch();
@@ -36,36 +38,77 @@ function Page() {
   const [itemsPerPage] = useState(10);
   const [sortBy, setSortBy] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showPendingAmount, setShowPendingAmount] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   const filterOptions = ['All', 'Approved', 'Pending', 'Rejected'];
 
+  const [selected, setSelected] = useState('This week');
+  const [customDateRange, setCustomDateRange] = useState(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const formatDateRange = (dateRange) => {
+    if (!dateRange || !dateRange.startDate || !dateRange.endDate) return null;
+
+    const formatDate = (date) => {
+      if (typeof date === 'string') return date;
+      return date.toISOString().split('T')[0];
+    };
+
+    return {
+      start: formatDate(dateRange.startDate),
+      end: formatDate(dateRange.endDate),
+    };
+  };
+
   const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
-    currentPage,
-    itemsPerPage,
+    1,
+    1000,
     selectedFilter?.toLowerCase(),
+    debouncedSearchTerm,
+    formatDateRange(customDateRange),
   );
 
+  const { data: statsData, isPending: fetchingStats } = useGetWithdrawalStats();
+
   const withdrawalData = useMemo(() => {
-    if (data?.result) {
-      dispatch(setDashboardDetails(data?.result));
-
-      return data?.result?.withdrawalRequests ?? [];
+    console.log('API Data:', data);
+    if (data) {
+      return data?.withdrawalRequests ?? data?.results ?? data ?? [];
     }
-
     return [];
   }, [data]);
 
   const withdrawalStats = React.useMemo(() => {
+    if (statsData?.result) {
+      return {
+        totalRequests: statsData.result.totalThisWeek,
+        totalChangePercent: statsData.result.totalChangePercent,
+        approvedRequests: statsData.result.approvedThisWeek,
+        approvedChangePercent: statsData.result.approvedChangePercent,
+        pendingRequests: statsData.result.pendingThisWeek,
+        pendingChangePercent: statsData.result.pendingChangePercent,
+      };
+    }
+
     if (!withdrawalData || withdrawalData.length === 0) {
       return {
         totalRequests: 0,
-        totalAmount: 0,
+        totalChangePercent: 0,
         approvedRequests: 0,
-        approvedAmount: 0,
+        approvedChangePercent: 0,
         pendingRequests: 0,
-        pendingAmount: 0,
+        pendingChangePercent: 0,
       };
     }
 
@@ -83,22 +126,13 @@ function Page() {
 
     return {
       totalRequests: withdrawalData.length,
-      totalAmount: withdrawalData.reduce(
-        (sum, item) => sum + Number(item.amount || 0),
-        0,
-      ),
+      totalChangePercent: 0,
       approvedRequests: approved.length,
-      approvedAmount: approved.reduce(
-        (sum, item) => sum + Number(item.amount || 0),
-        0,
-      ),
+      approvedChangePercent: 0,
       pendingRequests: pending.length,
-      pendingAmount: pending.reduce(
-        (sum, item) => sum + Number(item.amount || 0),
-        0,
-      ),
+      pendingChangePercent: 0,
     };
-  }, [withdrawalData]);
+  }, [statsData, withdrawalData]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -141,41 +175,13 @@ function Page() {
     }
   };
 
-  const filteredData = React.useMemo(() => {
+  const sortedData = React.useMemo(() => {
     if (!withdrawalData || withdrawalData.length === 0) return [];
 
-    let filtered = withdrawalData;
-
-    if (selectedFilter !== 'All') {
-      filtered = withdrawalData?.filter((item: UnknownObject) => {
-        const status = (item.status || 'pending') as string;
-        const statusLower = status.toLowerCase();
-        const filterStatus = selectedFilter.toLowerCase();
-
-        if (filterStatus === 'approved') {
-          return (
-            statusLower === 'resolved' ||
-            statusLower === 'approved' ||
-            statusLower === 'completed'
-          );
-        }
-        if (filterStatus === 'pending') {
-          return statusLower === 'pending' || statusLower === 'processing';
-        }
-        if (filterStatus === 'rejected') {
-          return (
-            statusLower === 'rejected' ||
-            statusLower === 'failed' ||
-            statusLower === 'declined'
-          );
-        }
-
-        return statusLower === filterStatus;
-      });
-    }
+    let sorted = [...withdrawalData];
 
     if (sortBy) {
-      filtered = [...filtered].sort((a: UnknownObject, b: UnknownObject) => {
+      sorted = sorted.sort((a: UnknownObject, b: UnknownObject) => {
         let aValue: string | number | Date;
         let bValue: string | number | Date;
 
@@ -216,13 +222,38 @@ function Page() {
       });
     }
 
-    return filtered;
-  }, [withdrawalData, selectedFilter, sortBy, sortOrder]);
+    return sorted;
+  }, [withdrawalData, sortBy, sortOrder]);
 
-  const [showPendingAmount, setShowPendingAmount] = useState(false);
+  const paginatedData = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedData.slice(startIndex, endIndex);
+  }, [sortedData, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const options = ['This week', 'Last 30 days', 'Custom'];
+
+  const handleSelect = (option) => {
+    setSelected(option);
+
+    if (option !== 'Custom') {
+      setCustomDateRange(null);
+    }
+  };
+
+  const handleCustomDateChange = (dateRange) => {
+    setCustomDateRange(dateRange);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
   const TableHeader = ({
@@ -246,7 +277,7 @@ function Page() {
   return (
     <div className="space-y-10">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {fetchingDashData ? (
+        {fetchingStats || fetchingDashData ? (
           <WithdrawalCardsLoading />
         ) : (
           <WithdrawalCards
@@ -256,12 +287,13 @@ function Page() {
             icon={<WalletCardIcon />}
             bgImage={<WalletIconBig />}
             analytics={{
-              percentage: 15.5,
+              percentage: withdrawalStats.totalChangePercent,
               period: 'this week',
             }}
           />
         )}
-        {fetchingDashData ? (
+
+        {fetchingStats || fetchingDashData ? (
           <WithdrawalCardsLoading />
         ) : (
           <WithdrawalCards
@@ -271,12 +303,13 @@ function Page() {
             icon={<WalletCardIconGreen />}
             bgImage={<WalletIconBigGreen />}
             analytics={{
-              percentage: -5.2,
+              percentage: withdrawalStats.approvedChangePercent,
               period: 'this week',
             }}
           />
         )}
-        {fetchingDashData ? (
+
+        {fetchingStats || fetchingDashData ? (
           <WithdrawalCardsLoading />
         ) : (
           <WithdrawalCards
@@ -289,8 +322,8 @@ function Page() {
             icon={<WalletCardIconDarkYellow />}
             bgImage={<WalletIconBigLightestYellow />}
             analytics={{
-              percentage: 8.3,
-              period: 'this month',
+              percentage: withdrawalStats.pendingChangePercent,
+              period: 'this week',
             }}
           />
         )}
@@ -298,15 +331,26 @@ function Page() {
 
       <div className="mb-4 flex w-full flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
         <p>Recent Withdrawal Request</p>
+
         <div className="flex items-center gap-4">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
             <input
               type="text"
               placeholder="Search"
+              value={searchTerm}
+              onChange={handleSearchChange}
               className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
             />
           </div>
+
+          <TimeRangeDropdown
+            options={options}
+            selected={selected}
+            onSelect={handleSelect}
+            customDateRange={customDateRange}
+            onCustomDateChange={handleCustomDateChange}
+          />
 
           <div className="relative" ref={filterDropdownRef}>
             <button
@@ -375,22 +419,25 @@ function Page() {
                     Loading withdrawal requests...
                   </Table.Cell>
                 </Table.Row>
-              ) : filteredData.length > 0 ? (
-                filteredData.map((item: UnknownObject, index: number) => {
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((item: UnknownObject, index: number) => {
                   const { time, fullDate } = formatDateTime(
                     item.createdAt?.iso || new Date().toISOString(),
                   );
+
+                  const actualIndex =
+                    (currentPage - 1) * itemsPerPage + index + 1;
 
                   return (
                     <Table.Row key={item.id || index}>
                       <Table.Cell className="whitespace-nowrap px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                            {index + 1}
+                            {actualIndex}
                           </div>
                           <div>
                             <p className="font-heading font-bold uppercase text-neutral-800">
-                              {item.id || `REQ-${index + 1}`}
+                              {item.id || `REQ-${actualIndex}`}
                             </p>
                             <p className="text-xs text-neutral-500">
                               {fullDate} • {time}
@@ -474,16 +521,18 @@ function Page() {
           </Table.Root>
         </div>
 
-        {!fetchingDashData && filteredData.length > 0 && (
+        {!fetchingDashData && paginatedData.length > 0 && (
           <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
             <div className="text-sm text-gray-500">
-              Showing data {currentPage} to {itemsPerPage} of{' '}
-              {data?.result?.totalCount} entries{' '}
-              {selectedFilter !== 'All' && `(filtered by ${selectedFilter})`}
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+              {Math.min(currentPage * itemsPerPage, sortedData.length)} of{' '}
+              {sortedData.length} entries
+              {selectedFilter !== 'All' && ` (filtered by ${selectedFilter})`}
+              {debouncedSearchTerm && ` (search: "${debouncedSearchTerm}")`}
             </div>
             <Pagination
               currentPage={currentPage}
-              totalPages={data?.result?.totalPages || 1}
+              totalPages={totalPages}
               onPageChange={handlePageChange}
             />
           </div>

@@ -1,4 +1,5 @@
 'use client';
+
 import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
 import { Game, setCreateGameField } from '@/app/store/gameSlice';
 import CustomButton from '@/app/utils/CustomBtn';
@@ -6,6 +7,8 @@ import CustomTextField from '@/app/utils/CustomTextField';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import QuestionsSection from './questionsection';
+import { useCreateGame } from '@/app/hooks/useGameCreate';
+import { transformGameDataForAPI } from '@/app/utils/gameTransformers';
 
 interface Option {
   id: string;
@@ -20,17 +23,20 @@ interface Question {
   isExpanded: boolean;
 }
 
-interface GameCreationData {
-  gameDetails: Game;
-  questions: Question[];
-}
-
 function Page() {
   const dispatch = useAppDispatch();
   const game = useAppSelector((state) => state.game.createGame);
   const [datetimeInput, setDatetimeInput] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const createGameMutation = useCreateGame({
+    onSuccess: (data) => {
+      console.log('Game created successfully:', data);
+    },
+    onError: (error) => {
+      console.error('Failed to create game:', error);
+    },
+  });
 
   React.useEffect(() => {
     if (datetimeInput) {
@@ -92,7 +98,7 @@ function Page() {
 
       dispatch(
         setCreateGameField({
-          field: 'videoAds',
+          field: type,
           value: {
             name: file.name,
             url: base64,
@@ -162,35 +168,27 @@ function Page() {
   };
 
   const handleSubmitGame = async (submittedQuestions: Question[]) => {
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-
     try {
       const questionsToValidate = submittedQuestions || questions;
-
       setQuestions(questionsToValidate);
 
       if (!validateGameData()) {
         return;
       }
 
-      const combinedData: GameCreationData = {
-        gameDetails: game,
-        questions: questionsToValidate,
-      };
+      // 🔁 Map local `Question[]` to `QuestionState[]`
+      const mappedQuestions = questionsToValidate.map((q, index) => ({
+        number: (index + 1).toString(),
+        question: q.question,
+        options: q.options.map((o) => o.text),
+        correctAnswer: q.options[q.correctOptionIndex]?.text || '',
+      }));
 
-      console.log('Creating game with data:', combinedData);
+      const apiPayload = transformGameDataForAPI(game, mappedQuestions);
 
-      // make an API call to create the game
-      // await createGameAPI(combinedData);
-
-      toast.success('Game created successfully!');
+      await createGameMutation.mutateAsync(apiPayload);
     } catch (error) {
       console.error('Error creating game:', error);
-      toast.error('Failed to create game. Please try again.');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -299,11 +297,10 @@ function Page() {
         </div>
       </div>
 
-      {/* Questions Section */}
       <QuestionsSection
         onQuestionsChange={handleQuestionsChange}
         onSubmit={handleSubmitGame}
-        isSubmitting={isSubmitting}
+        isSubmitting={createGameMutation.isPending}
         questionsLimit={10}
       />
     </>

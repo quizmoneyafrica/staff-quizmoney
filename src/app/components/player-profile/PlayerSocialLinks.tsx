@@ -1,8 +1,18 @@
 'use client';
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import CustomImage from '../CustomImage';
+
+interface SocialData {
+  twitter?: string;
+  facebook?: string;
+  instagram?: string;
+}
+
+interface PlayerSocialLinksProps {
+  socialData?: SocialData;
+  userName?: string;
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -25,27 +35,31 @@ const itemVariants = {
   },
 };
 
-const socials = [
-  {
-    label: 'Facebook',
-    icon: '/icons/face.svg',
-    handle: '@baddestplayer_A49',
-  },
-  {
-    label: 'Instagram',
-    icon: '/icons/insta.svg',
+export default function PlayerSocialLinks({
+  socialData,
+  userName = 'Player',
+}: PlayerSocialLinksProps) {
+  const socials = [
+    {
+      label: 'Facebook',
+      icon: '/icons/face.svg',
+      handle: socialData?.facebook || 'Not connected',
+      connected: !!socialData?.facebook,
+    },
+    {
+      label: 'Instagram',
+      icon: '/icons/insta.svg',
+      handle: socialData?.instagram || 'Not connected',
+      connected: !!socialData?.instagram,
+    },
+    {
+      label: 'Twitter',
+      icon: '/icons/x.svg',
+      handle: socialData?.twitter || 'Not connected',
+      connected: !!socialData?.twitter,
+    },
+  ];
 
-    handle: '@baddestplayer_A49',
-  },
-  {
-    label: 'Twitter',
-    icon: '/icons/x.svg',
-
-    handle: '@baddestplayer_A49',
-  },
-];
-
-export default function PlayerSocialLinks() {
   return (
     <motion.div
       className="w-full rounded-xl bg-white p-4 sm:p-6"
@@ -70,7 +84,7 @@ export default function PlayerSocialLinks() {
             >
               <div className="flex items-center gap-2 text-black sm:gap-3">
                 <CustomImage
-                  alt=""
+                  alt={social.label}
                   src={social.icon}
                   className="h-4 w-4 sm:h-5 sm:w-5"
                 />
@@ -78,13 +92,28 @@ export default function PlayerSocialLinks() {
                   {social.label}
                 </span>
               </div>
-              <span className="text-muted-foreground text-xs sm:text-sm">
+              <span
+                className={`text-xs sm:text-sm ${
+                  social.connected ? 'text-gray-700' : 'italic text-gray-400'
+                }`}
+              >
                 {social.handle}
               </span>
             </motion.div>
           );
         })}
       </div>
+
+      {!socialData?.facebook &&
+        !socialData?.instagram &&
+        !socialData?.twitter && (
+          <motion.div
+            className="mt-4 text-center text-xs text-gray-500 sm:text-sm"
+            variants={itemVariants}
+          >
+            No social media accounts connected
+          </motion.div>
+        )}
     </motion.div>
   );
 }

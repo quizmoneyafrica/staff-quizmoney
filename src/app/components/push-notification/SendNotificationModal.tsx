@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
+import { useQuery } from '@tanstack/react-query';
 import {
   X,
   Users,
@@ -10,28 +11,52 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  Loader2,
+  CheckCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import {
+  useSendNotificationToAll,
+  useSendNotificationToUsers,
+} from '@/app/hooks/useMutation';
+import PlayersApi from '@/app/api/playersApi';
+
 interface User {
-  id: string;
-  name: string;
+  objectId: string;
+  firstName: string;
   email: string;
-  avatarUrl: string;
+  accountType: string;
+  avatar: string;
+  status: string;
+  createdAt: {
+    __type: string;
+    iso: string;
+  };
+}
+
+interface ApiResponse {
+  result: {
+    totalNoOfUsers: number;
+    totalActiveUsers: number;
+    totalInactiveUsers: number;
+    data: User[];
+  };
 }
 
 interface SendNotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectUsers: () => void;
-  onSendToAll: () => void;
+  notificationData?: {
+    title: string;
+    body: string;
+  };
 }
 
 const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   isOpen,
   onClose,
-  onSelectUsers,
-  onSendToAll,
+  notificationData,
 }) => {
   const [showUserSelection, setShowUserSelection] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,106 +64,36 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
 
-  const users: User[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
+  const sendToAllMutation = useSendNotificationToAll();
+  const sendToUsersMutation = useSendNotificationToUsers();
+
+  const {
+    data: playersData,
+    isLoading: isLoadingUsers,
+    error: usersError,
+    refetch: refetchUsers,
+  } = useQuery({
+    queryKey: ['adminPlayers'],
+    queryFn: async () => {
+      const response = await PlayersApi.fetchAdminPlayers();
+      return response.data as ApiResponse;
     },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      email: 'mike.johnson@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '4',
-      name: 'Sarah Wilson',
-      email: 'sarah.wilson@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '5',
-      name: 'David Brown',
-      email: 'david.brown@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '6',
-      name: 'Emma Davis',
-      email: 'emma.davis@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '7',
-      name: 'Alex Miller',
-      email: 'alex.miller@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '8',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '9',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '10',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '11',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '12',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '13',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '14',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: '15',
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-  ];
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const users = playersData?.result?.data || [];
+  const totalUsers = playersData?.result?.totalNoOfUsers || 0;
+  const activeUsers = playersData?.result?.totalActiveUsers || 0;
 
   const filteredUsers = useMemo(() => {
     return users.filter(
       (user) =>
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery]);
+  }, [users, searchQuery]);
 
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
   const startIndex = (currentPage - 1) * usersPerPage;
@@ -174,13 +129,13 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   const handleSelectAll = () => {
     if (
       selectedUsers.length === currentUsers.length &&
-      currentUsers.every((user) => selectedUsers.includes(user.id))
+      currentUsers.every((user) => selectedUsers.includes(user.objectId))
     ) {
       setSelectedUsers((prev) =>
-        prev.filter((id) => !currentUsers.map((u) => u.id).includes(id)),
+        prev.filter((id) => !currentUsers.map((u) => u.objectId).includes(id)),
       );
     } else {
-      const currentUserIds = currentUsers.map((user) => user.id);
+      const currentUserIds = currentUsers.map((user) => user.objectId);
       setSelectedUsers((prev) => {
         const newSelected = [...prev];
         currentUserIds.forEach((id) => {
@@ -193,9 +148,43 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     }
   };
 
-  const handleSendToSelected = () => {
-    console.log('Sending to selected users:', selectedUsers);
-    handleClose();
+  const handleSendToAll = async () => {
+    if (!notificationData) {
+      console.error('No notification data provided');
+      return;
+    }
+
+    try {
+      await sendToAllMutation.mutateAsync({
+        title: notificationData.title,
+        body: notificationData.body,
+      });
+      handleClose();
+    } catch (error) {
+      console.error('Failed to send notification to all users:', error);
+    }
+  };
+
+  const handleSendToSelected = async () => {
+    if (!notificationData || selectedUsers.length === 0) {
+      console.error('No notification data or selected users');
+      return;
+    }
+
+    const selectedUserEmails = users
+      .filter((user) => selectedUsers.includes(user.objectId))
+      .map((user) => user.email);
+
+    try {
+      await sendToUsersMutation.mutateAsync({
+        userEmails: selectedUserEmails,
+        title: notificationData.title,
+        body: notificationData.body,
+      });
+      handleClose();
+    } catch (error) {
+      console.error('Failed to send notification to selected users:', error);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -203,6 +192,13 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
       setCurrentPage(page);
     }
   };
+
+  const isLoading =
+    sendToAllMutation.isPending || sendToUsersMutation.isPending;
+  const isSuccess =
+    sendToAllMutation.isSuccess || sendToUsersMutation.isSuccess;
+  const error =
+    sendToAllMutation.error || sendToUsersMutation.error || usersError;
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={handleClose}>
@@ -227,18 +223,81 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                     {showUserSelection && (
                       <button
                         onClick={handleBackClick}
-                        className="rounded-full p-2 transition-colors hover:bg-gray-100"
+                        disabled={isLoading}
+                        className="rounded-full p-2 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <ArrowLeft className="h-5 w-5 text-gray-600" />
                       </button>
                     )}
                     <Dialog.Title className="flex-1 text-xl font-bold text-gray-900">
-                      {showUserSelection
-                        ? 'Send Push Notification'
-                        : 'Send Push Notification'}
+                      Send Push Notification
                     </Dialog.Title>
                   </div>
                 </motion.div>
+
+                {playersData && (
+                  <div className="mb-4 flex items-center gap-4 rounded-md bg-blue-50 p-3">
+                    <Users className="h-5 w-5 text-blue-600" />
+                    <div className="text-sm text-blue-800">
+                      <span className="font-medium">
+                        {totalUsers.toLocaleString()}
+                      </span>{' '}
+                      total users
+                      {' • '}
+                      <span className="font-medium">
+                        {activeUsers.toLocaleString()}
+                      </span>{' '}
+                      active
+                    </div>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="mb-4 flex items-center gap-2 rounded-md bg-red-50 p-3">
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    <div className="flex-1">
+                      <p className="text-sm text-red-600">
+                        {error.message || 'Failed to send notification'}
+                      </p>
+                      {usersError && (
+                        <button
+                          onClick={() => refetchUsers()}
+                          className="mt-1 text-xs text-red-500 underline hover:text-red-700"
+                        >
+                          Retry loading users
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {isSuccess && (
+                  <div className="mb-4 flex items-center gap-2 rounded-md bg-green-50 p-3">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <p className="text-sm text-green-600">
+                      Notification sent successfully!
+                    </p>
+                  </div>
+                )}
+
+                {/* Notification Preview */}
+                {notificationData && (
+                  <div className="mb-6 rounded-md bg-gray-50 p-4">
+                    <h4 className="mb-2 font-medium text-gray-900">
+                      Notification Preview:
+                    </h4>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-gray-700">
+                        <span className="text-gray-500">Title:</span>{' '}
+                        {notificationData.title}
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        <span className="text-gray-500">Body:</span>{' '}
+                        {notificationData.body}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <AnimatePresence mode="wait">
                   {!showUserSelection ? (
@@ -259,19 +318,41 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                           <button
                             type="button"
                             onClick={handleSelectUsersClick}
-                            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                            disabled={isLoading || isLoadingUsers}
+                            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            <span>Select User(s)</span>
-                            <UserPlus className="h-4 w-4" />
+                            {isLoadingUsers ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Loading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Select User(s)</span>
+                                <UserPlus className="h-4 w-4" />
+                              </>
+                            )}
                           </button>
 
                           <button
                             type="button"
-                            onClick={onSendToAll}
-                            className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-blue-800 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2"
+                            onClick={handleSendToAll}
+                            disabled={
+                              isLoading || !notificationData || isLoadingUsers
+                            }
+                            className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-blue-800 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            <span>Send Notification to all users</span>
-                            <Send className="h-4 w-4" />
+                            {isLoading && sendToAllMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Sending...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Send to all users</span>
+                                <Send className="h-4 w-4" />
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -305,138 +386,195 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                           <input
                             type="text"
-                            placeholder="Enter username"
+                            placeholder="Enter username or email"
                             value={searchQuery}
                             onChange={(e) => {
                               setSearchQuery(e.target.value);
                               setCurrentPage(1);
                             }}
-                            className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-800 focus:ring-1 focus:ring-blue-800"
+                            disabled={isLoading || isLoadingUsers}
+                            className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-800 focus:ring-1 focus:ring-blue-800 disabled:cursor-not-allowed disabled:bg-gray-50"
                           />
                         </div>
                       </div>
+
+                      {isLoadingUsers && (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                          <span className="ml-2 text-sm text-gray-500">
+                            Loading users...
+                          </span>
+                        </div>
+                      )}
 
                       {/* User List */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
-                          <input
-                            type="checkbox"
-                            id="select-all"
-                            checked={
-                              currentUsers.length > 0 &&
-                              currentUsers.every((user) =>
-                                selectedUsers.includes(user.id),
-                              )
-                            }
-                            onChange={handleSelectAll}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-800 focus:ring-blue-800"
-                          />
-                          <label
-                            htmlFor="select-all"
-                            className="text-sm font-medium text-gray-900"
-                          >
-                            Select All Users ({currentUsers.length})
-                          </label>
-                        </div>
-
-                        {/* User Items */}
-                        <div className="max-h-60 space-y-2 overflow-y-auto">
-                          {currentUsers.map((user) => (
-                            <div
-                              key={user.id}
-                              className="flex items-center gap-3 rounded-md p-2 hover:bg-gray-50"
+                      {!isLoadingUsers && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
+                            <input
+                              type="checkbox"
+                              id="select-all"
+                              checked={
+                                currentUsers.length > 0 &&
+                                currentUsers.every((user) =>
+                                  selectedUsers.includes(user.objectId),
+                                )
+                              }
+                              onChange={handleSelectAll}
+                              disabled={isLoading}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-800 focus:ring-blue-800 disabled:cursor-not-allowed"
+                            />
+                            <label
+                              htmlFor="select-all"
+                              className="text-sm font-medium text-gray-900"
                             >
-                              <input
-                                type="checkbox"
-                                id={`user-${user.id}`}
-                                checked={selectedUsers.includes(user.id)}
-                                onChange={() => handleUserToggle(user.id)}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-800 focus:ring-blue-800"
-                              />
-                              <div className="flex flex-1 items-center gap-3">
-                                <img
-                                  src={user.avatarUrl}
-                                  alt={user.name}
-                                  className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                              Select All Users ({currentUsers.length})
+                            </label>
+                          </div>
+
+                          <div className="max-h-60 space-y-2 overflow-y-auto">
+                            {currentUsers.map((user) => (
+                              <div
+                                key={user.objectId}
+                                className="flex items-center gap-3 rounded-md p-2 hover:bg-gray-50"
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`user-${user.objectId}`}
+                                  checked={selectedUsers.includes(
+                                    user.objectId,
+                                  )}
+                                  onChange={() =>
+                                    handleUserToggle(user.objectId)
+                                  }
+                                  disabled={isLoading}
+                                  className="h-4 w-4 rounded border-gray-300 text-blue-800 focus:ring-blue-800 disabled:cursor-not-allowed"
                                 />
-                                <div className="grid min-w-0 flex-1 grid-cols-2 gap-8">
-                                  <p className="truncate text-sm font-medium text-gray-900">
-                                    {user.name}
-                                  </p>
-                                  <p className="truncate text-sm text-gray-500">
-                                    {user.email}
-                                  </p>
+                                <div className="flex flex-1 items-center gap-3">
+                                  <img
+                                    src={user.avatar}
+                                    alt={user.firstName}
+                                    className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                                    onError={(e) => {
+                                      // Fallback for broken images
+                                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                        user.firstName,
+                                      )}&background=3b82f6&color=fff`;
+                                    }}
+                                  />
+                                  <div className="grid min-w-0 flex-1 grid-cols-2 gap-8">
+                                    <div className="flex flex-col">
+                                      <p className="truncate text-sm font-medium text-gray-900">
+                                        {user.firstName}
+                                      </p>
+                                      <p className="truncate text-xs text-gray-500">
+                                        {user.status === 'active'
+                                          ? '🟢 Active'
+                                          : '🔴 Inactive'}
+                                      </p>
+                                    </div>
+                                    <p className="truncate text-sm text-gray-500">
+                                      {user.email}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {currentUsers.length === 0 && (
-                          <div className="py-8 text-center text-gray-500">
-                            No users found matching your search.
+                            ))}
                           </div>
-                        )}
 
-                        {totalPages > 1 && (
-                          <div className="flex items-center justify-between border-t border-gray-200 pt-3">
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() =>
-                                  handlePageChange(currentPage - 1)
-                                }
-                                disabled={currentPage === 1}
-                                className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                <ChevronLeft className="h-4 w-4" />
-                              </button>
+                          {currentUsers.length === 0 && !isLoadingUsers && (
+                            <div className="py-8 text-center text-gray-500">
+                              {searchQuery
+                                ? 'No users found matching your search.'
+                                : 'No users available.'}
+                            </div>
+                          )}
 
-                              {Array.from(
-                                { length: totalPages },
-                                (_, i) => i + 1,
-                              ).map((page) => (
+                          {totalPages > 1 && (
+                            <div className="flex items-center justify-between border-t border-gray-200 pt-3">
+                              <div className="flex items-center gap-1">
                                 <button
-                                  key={page}
-                                  onClick={() => handlePageChange(page)}
-                                  className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
-                                    currentPage === page
-                                      ? 'bg-blue-800 text-white'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                  }`}
+                                  onClick={() =>
+                                    handlePageChange(currentPage - 1)
+                                  }
+                                  disabled={currentPage === 1 || isLoading}
+                                  className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                  {page}
+                                  <ChevronLeft className="h-4 w-4" />
                                 </button>
-                              ))}
 
-                              <button
-                                onClick={() =>
-                                  handlePageChange(currentPage + 1)
-                                }
-                                disabled={currentPage === totalPages}
-                                className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                <ChevronRight className="h-4 w-4" />
-                              </button>
-                            </div>
+                                {Array.from(
+                                  { length: Math.min(totalPages, 5) },
+                                  (_, i) => {
+                                    const page =
+                                      currentPage <= 3
+                                        ? i + 1
+                                        : currentPage >= totalPages - 2
+                                        ? totalPages - 4 + i
+                                        : currentPage - 2 + i;
+                                    return page;
+                                  },
+                                ).map((page) => (
+                                  <button
+                                    key={page}
+                                    onClick={() => handlePageChange(page)}
+                                    disabled={isLoading}
+                                    className={`rounded-md px-3 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                                      currentPage === page
+                                        ? 'bg-blue-800 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {page}
+                                  </button>
+                                ))}
 
-                            <div className="text-xs text-gray-500">
-                              Showing {startIndex + 1} to{' '}
-                              {Math.min(endIndex, filteredUsers.length)} of{' '}
-                              {filteredUsers.length} users
+                                <button
+                                  onClick={() =>
+                                    handlePageChange(currentPage + 1)
+                                  }
+                                  disabled={
+                                    currentPage === totalPages || isLoading
+                                  }
+                                  className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  <ChevronRight className="h-4 w-4" />
+                                </button>
+                              </div>
+
+                              <div className="text-xs text-gray-500">
+                                Showing {startIndex + 1} to{' '}
+                                {Math.min(endIndex, filteredUsers.length)} of{' '}
+                                {filteredUsers.length} users
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="flex justify-end">
                         <button
                           type="button"
                           onClick={handleSendToSelected}
-                          disabled={selectedUsers.length === 0}
+                          disabled={
+                            selectedUsers.length === 0 ||
+                            isLoading ||
+                            !notificationData ||
+                            isLoadingUsers
+                          }
                           className="flex items-center gap-2 rounded-md bg-blue-800 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <span>Send Message</span>
-                          <Send className="h-4 w-4" />
+                          {isLoading && sendToUsersMutation.isPending ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span>Sending...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Send Message ({selectedUsers.length})</span>
+                              <Send className="h-4 w-4" />
+                            </>
+                          )}
                         </button>
                       </div>
 
@@ -461,6 +599,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                     className="absolute right-4 top-4 rounded-full p-2 transition-colors hover:bg-gray-100 focus:outline-none"
+                    disabled={isLoading}
                   >
                     <X className="h-5 w-5 text-black" />
                   </motion.button>
