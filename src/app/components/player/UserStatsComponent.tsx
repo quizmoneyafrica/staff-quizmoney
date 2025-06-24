@@ -62,7 +62,7 @@ const UserStatsComponent: React.FC = () => {
   const stats: Stat[] = [
     {
       title: 'Total No of Users',
-      value: `${totalNoOfUsers ?? 0}`,
+      value: `${totalNoOfUsers?.toLocaleString() ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}

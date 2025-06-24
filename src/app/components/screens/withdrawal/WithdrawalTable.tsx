@@ -33,7 +33,6 @@ const WithdrawalTable: React.FC<IWithdrawalTableTableProps> = ({
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  console.log(isModalOpen);
 
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;

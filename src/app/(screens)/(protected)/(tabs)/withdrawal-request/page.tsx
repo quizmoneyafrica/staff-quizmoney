@@ -82,7 +82,6 @@ function Page() {
   const { data: statsData, isPending: fetchingStats } = useGetWithdrawalStats();
 
   const withdrawalData = useMemo(() => {
-    console.log('API Data:', data);
     if (data) {
       return data?.withdrawalRequests ?? data?.results ?? data ?? [];
     }
