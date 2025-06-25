@@ -58,7 +58,6 @@ export const useGetWithdrawalRequests = (
       request
         .post(`/getWithdrawalRequestsV2`, buildPayload())
         .then((res) => {
-          console.log('API Response:', res.data);
           return res.data.result;
         })
         .catch((error) => {
