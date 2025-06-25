@@ -1,6 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import {
   Search,
   ListFilter,
@@ -9,6 +15,7 @@ import {
   Send,
   Edit,
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
@@ -17,6 +24,10 @@ import Link from 'next/link';
 import Pagination from '../leaderboard/Pagination';
 import CreateNotificationModal from './PushNotificationModal';
 import SendNotificationModal from './SendNotificationModal';
+import {
+  notificationService,
+  PushNotificationFromAPI,
+} from '@/app/api/pushNotification';
 
 interface StaticPushNotificationData {
   id: string;
@@ -24,6 +35,8 @@ interface StaticPushNotificationData {
   Subject: string;
   notificationBody: string;
   avatarUrl: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 type SortField = 'id' | 'Subject' | 'notificationBody' | 'date';
@@ -32,74 +45,30 @@ type SortDirection = 'asc' | 'desc';
 const PushNotificationTable = () => {
   const [notifications, setNotifications] = useState<
     StaticPushNotificationData[]
-  >([
-    {
-      id: 'ID1234567',
-      date: '21/02/2024 09:00',
-      Subject: 'Update on the app',
-      notificationBody:
-        'Quiz money app has been updated. Download version 2.0.1',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 'ID1234568',
-      date: '21/02/2024 10:30',
-      Subject: 'New Quiz Available',
-      notificationBody:
-        'A new quiz has been added to your favorite category. Play now!',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 'ID1234569',
-      date: '20/02/2024 14:15',
-      Subject: 'Weekly Leaderboard',
-      notificationBody:
-        "Check out this week's top performers and see where you rank!",
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 'ID1234570',
-      date: '19/02/2024 16:45',
-      Subject: 'Maintenance Notice',
-      notificationBody:
-        'Scheduled maintenance will occur tonight from 2-4 AM. Sorry for any inconvenience.',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 'ID1234571',
-      date: '18/02/2024 11:20',
-      Subject: 'Prize Alert',
-      notificationBody:
-        "Congratulations! You've won a prize in yesterday's tournament.",
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 'ID1234572',
-      date: '17/02/2024 08:30',
-      Subject: 'Feature Update',
-      notificationBody:
-        'New features added: Dark mode and offline quiz capability.',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 'ID1234573',
-      date: '16/02/2024 13:00',
-      Subject: 'Daily Challenge',
-      notificationBody:
-        'Your daily challenge is ready. Complete it before midnight!',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 'ID1234574',
-      date: '15/02/2024 19:15',
-      Subject: 'Community Update',
-      notificationBody:
-        'Join our community forum to discuss strategies and tips with other players.',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-  ]);
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createSuccess, setCreateSuccess] = useState(false);
+
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingNotification, setEditingNotification] = useState<{
+    id: string;
+    subject: string;
+    body: string;
+    image?: string;
+  } | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -111,6 +80,156 @@ const PushNotificationTable = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const itemsPerPage = 7;
+
+  const transformApiData = (
+    apiNotifications: PushNotificationFromAPI[],
+  ): StaticPushNotificationData[] => {
+    return apiNotifications.map((notification) => ({
+      id: notification.objectId,
+      date: formatDate(notification.createdAt),
+      Subject: notification.subject,
+      notificationBody: notification.message,
+      avatarUrl: notification.image || 'https://github.com/shadcn.png',
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+    }));
+  };
+
+  const formatDate = (isoDate: string): string => {
+    const date = new Date(isoDate);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
+  useEffect(() => {
+    if (createSuccess) {
+      const timer = setTimeout(() => {
+        setCreateSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [createSuccess]);
+
+  useEffect(() => {
+    if (createError) {
+      const timer = setTimeout(() => {
+        setCreateError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [createError]);
+
+  useEffect(() => {
+    if (deleteSuccess) {
+      const timer = setTimeout(() => {
+        setDeleteSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [deleteSuccess]);
+
+  useEffect(() => {
+    if (deleteError) {
+      const timer = setTimeout(() => {
+        setDeleteError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [deleteError]);
+
+  useEffect(() => {
+    if (editSuccess) {
+      const timer = setTimeout(() => {
+        setEditSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [editSuccess]);
+
+  useEffect(() => {
+    if (editError) {
+      const timer = setTimeout(() => {
+        setEditError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [editError]);
+
+  const fetchNotifications = useCallback(
+    async (page: number = 1, searchTerm: string = '') => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 6);
+
+        const response = await notificationService.getPushNotifications({
+          page,
+          limit: itemsPerPage,
+          dateRange: {
+            start: startDate.toISOString().split('T')[0],
+            end: endDate.toISOString().split('T')[0],
+          },
+        });
+
+        if (response.result?.pushNotifications) {
+          const transformedData = transformApiData(
+            response.result.pushNotifications,
+          );
+
+          const filteredData = searchTerm
+            ? transformedData.filter(
+                (notification) =>
+                  notification.id
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                  notification.Subject.toLowerCase().includes(
+                    searchTerm.toLowerCase(),
+                  ) ||
+                  notification.notificationBody
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()),
+              )
+            : transformedData;
+
+          setNotifications(filteredData);
+          setTotalCount(response.result.totalCount || filteredData.length);
+        } else {
+          setNotifications([]);
+          setTotalCount(0);
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch notifications',
+        );
+        setNotifications([]);
+        setTotalCount(0);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [itemsPerPage],
+  );
+
+  useEffect(() => {
+    fetchNotifications(1, searchQuery);
+  }, [fetchNotifications]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setCurrentPage(1);
+      fetchNotifications(1, searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, fetchNotifications]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -135,22 +254,8 @@ const PushNotificationTable = () => {
     );
   };
 
-  const filteredNotifications = useMemo(() => {
-    const filtered = notifications.filter((notification) => {
-      const matchesSearch =
-        searchQuery === '' ||
-        notification.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        notification.Subject.toLowerCase().includes(
-          searchQuery.toLowerCase(),
-        ) ||
-        notification.notificationBody
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-
-      return matchesSearch;
-    });
-
-    filtered.sort((a, b) => {
+  const sortedNotifications = useMemo(() => {
+    const sorted = [...notifications].sort((a, b) => {
       let aValue: string | Date;
       let bValue: string | Date;
 
@@ -169,49 +274,114 @@ const PushNotificationTable = () => {
       }
     });
 
-    return filtered;
-  }, [notifications, searchQuery, sortField, sortDirection]);
+    return sorted;
+  }, [notifications, sortField, sortDirection]);
 
-  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentData = filteredNotifications.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+      fetchNotifications(page, searchQuery);
     }
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1);
   };
 
   const toggleDropdown = (notificationId: string) => {
     setOpenDropdown(openDropdown === notificationId ? null : notificationId);
   };
 
-  const handleCreateNotification = (data: {
+  const handleCreateNotification = async (data: {
     subject: string;
     body: string;
+    image?: string;
   }) => {
-    const newNotification: StaticPushNotificationData = {
-      id: `ID${Date.now()}`,
-      date: new Date().toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      Subject: data.subject,
-      notificationBody: data.body,
-      avatarUrl: 'https://github.com/shadcn.png',
-    };
+    try {
+      setCreateLoading(true);
+      setCreateError(null);
 
-    setNotifications((prev) => [newNotification, ...prev]);
-    console.log('New notification created:', newNotification);
+      await notificationService.createPushNotification({
+        subject: data.subject,
+        message: data.body,
+        image: data.image,
+      });
+
+      setCreateSuccess(true);
+      setIsCreateModalOpen(false);
+
+      await fetchNotifications(currentPage, searchQuery);
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      setCreateError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create notification',
+      );
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  const handleUpdateNotification = async (data: {
+    notificationId: string;
+    subject: string;
+    body: string;
+    image?: string;
+  }) => {
+    try {
+      setEditLoading(true);
+      setEditError(null);
+
+      await notificationService.updatePushNotification({
+        notificationId: data.notificationId,
+        subject: data.subject,
+        message: data.body,
+        image: data.image,
+      });
+
+      setEditSuccess(true);
+      setIsCreateModalOpen(false);
+      setIsEditMode(false);
+      setEditingNotification(null);
+
+      await fetchNotifications(currentPage, searchQuery);
+    } catch (error) {
+      console.error('Error updating notification:', error);
+      setEditError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update notification',
+      );
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId: string) => {
+    try {
+      setDeleteLoading(notificationId);
+      setDeleteError(null);
+
+      await notificationService.deletePushNotification({
+        notificationId: notificationId,
+      });
+
+      setDeleteSuccess(true);
+
+      await fetchNotifications(currentPage, searchQuery);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to delete notification',
+      );
+    } finally {
+      setDeleteLoading(null);
+    }
   };
 
   const handleSelectUsers = () => {
@@ -260,7 +430,6 @@ const PushNotificationTable = () => {
     setOpenDropdown(null);
 
     if (action === 'Send') {
-      // Find the notification data
       const notification = notifications.find((n) => n.id === notificationId);
       if (notification) {
         setSelectedNotificationData({
@@ -268,6 +437,23 @@ const PushNotificationTable = () => {
           body: notification.notificationBody,
         });
         setIsSendModalOpen(true);
+      }
+    } else if (action === 'Delete') {
+      handleDeleteNotification(notificationId);
+    } else if (action === 'Edit') {
+      const notification = notifications.find((n) => n.id === notificationId);
+      if (notification) {
+        setEditingNotification({
+          id: notification.id,
+          subject: notification.Subject,
+          body: notification.notificationBody,
+          image:
+            notification.avatarUrl !== 'https://github.com/shadcn.png'
+              ? notification.avatarUrl
+              : undefined,
+        });
+        setIsEditMode(true);
+        setIsCreateModalOpen(true);
       }
     }
   };
@@ -277,8 +463,99 @@ const PushNotificationTable = () => {
     setSelectedNotificationData(null);
   };
 
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setCreateError(null);
+    setCreateSuccess(false);
+    setEditError(null);
+    setEditSuccess(false);
+    setIsEditMode(false);
+    setEditingNotification(null);
+  };
+
+  if (loading && notifications.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading notifications...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && notifications.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4 text-red-600">Error: {error}</p>
+          <button
+            onClick={() => fetchNotifications(currentPage, searchQuery)}
+            className="rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="">
+      {createSuccess && (
+        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
+          <div className="flex">
+            <div className="text-sm text-green-800">
+              Push notification created successfully!
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editSuccess && (
+        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
+          <div className="flex">
+            <div className="text-sm text-green-800">
+              Push notification updated successfully!
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteSuccess && (
+        <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
+          <div className="flex">
+            <div className="text-sm text-green-800">
+              Push notification deleted successfully!
+            </div>
+          </div>
+        </div>
+      )}
+
+      {createError && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+          <div className="flex">
+            <div className="text-sm text-red-800">Error: {createError}</div>
+          </div>
+        </div>
+      )}
+
+      {editError && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+          <div className="flex">
+            <div className="text-sm text-red-800">Error: {editError}</div>
+          </div>
+        </div>
+      )}
+
+      {deleteError && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+          <div className="flex">
+            <div className="text-sm text-red-800">Error: {deleteError}</div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
         <div className="flex items-center gap-4 ">
           <div className="relative flex-grow">
@@ -295,9 +572,17 @@ const PushNotificationTable = () => {
         <div className="flex-shrink-0">
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="cursor-pointer whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50"
+            disabled={createLoading}
+            className="cursor-pointer whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Create New Notification
+            {createLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating...
+              </div>
+            ) : (
+              'Create New Notification'
+            )}
           </button>
         </div>
       </div>
@@ -337,8 +622,8 @@ const PushNotificationTable = () => {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {currentData.length > 0 ? (
-              currentData.map((notification, index) => (
+            {sortedNotifications.length > 0 ? (
+              sortedNotifications.map((notification, index) => (
                 <Table.Row key={notification.id}>
                   <Table.Cell className="whitespace-nowrap px-4 py-4">
                     <div className="flex items-center gap-3">
@@ -380,8 +665,13 @@ const PushNotificationTable = () => {
                       <button
                         onClick={() => toggleDropdown(notification.id)}
                         className="cursor-pointer rounded-full p-2 transition-colors hover:bg-gray-100"
+                        disabled={deleteLoading === notification.id}
                       >
-                        <MoreVertical className="h-4 w-4 text-gray-600" />
+                        {deleteLoading === notification.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+                        ) : (
+                          <MoreVertical className="h-4 w-4 text-gray-600" />
+                        )}
                       </button>
 
                       {openDropdown === notification.id && (
@@ -409,7 +699,8 @@ const PushNotificationTable = () => {
                               onClick={() =>
                                 handleActionClick('Delete', notification.id)
                               }
-                              className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                              disabled={deleteLoading === notification.id}
+                              className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <Trash2 className="h-3 w-3" />
                               Delete
@@ -427,7 +718,14 @@ const PushNotificationTable = () => {
                   colSpan={4}
                   className="text-error-500 py-12 text-center font-bold"
                 >
-                  No Push Notifications Found
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading...
+                    </div>
+                  ) : (
+                    'No Push Notifications Found'
+                  )}
                 </Table.Cell>
               </Table.Row>
             )}
@@ -437,9 +735,10 @@ const PushNotificationTable = () => {
 
       <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
         <div className="text-sm text-gray-500">
-          Showing data {startIndex + 1} to{' '}
-          {Math.min(endIndex, filteredNotifications.length)} of{' '}
-          {filteredNotifications.length} entries
+          Showing data{' '}
+          {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} to{' '}
+          {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
+          entries
         </div>
         <Pagination
           currentPage={currentPage}
@@ -448,11 +747,15 @@ const PushNotificationTable = () => {
         />
       </div>
 
-      {/* Create Notification Modal */}
+      {/* Create/Edit Notification Modal */}
       <CreateNotificationModal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={handleCloseCreateModal}
         onSubmit={handleCreateNotification}
+        onUpdate={handleUpdateNotification}
+        loading={createLoading || editLoading}
+        mode={isEditMode ? 'edit' : 'create'}
+        editData={editingNotification}
       />
 
       {/* Send Notification Modal */}
@@ -461,12 +764,6 @@ const PushNotificationTable = () => {
         onClose={handleCloseSendModal}
         notificationData={selectedNotificationData}
       />
-      {/* <SendNotificationModal
-        isOpen={isSendModalOpen}
-        onClose={() => setIsSendModalOpen(false)}
-        onSelectUsers={handleSelectUsers}
-        onSendToAll={handleSendToAll}
-      /> */}
     </div>
   );
 };

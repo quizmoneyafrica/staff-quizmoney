@@ -2,6 +2,7 @@ import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { formatNaira } from '@/app/utils/utils';
 
 interface Transaction {
   id: number;
@@ -63,11 +64,9 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
 
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-600">Amount</span>
+
                   <span className="text-[22px] font-bold text-gray-900">
-                    ₦
-                    {transactionData.amount
-                      .replace(/[₦,]/g, '')
-                      .replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    {formatNaira(transactionData.amount)}
                   </span>
                 </div>
 

@@ -1,4 +1,3 @@
-// SocialAndRankSection.tsx
 'use client';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -29,8 +28,8 @@ const SocialAndRankSection = ({
 }: SocialAndRankSectionProps) => {
   const {
     data: playerProfileData,
-    isLoading,
-    error,
+    isLoading: isProfileLoading,
+    error: profileError,
   } = useQuery({
     queryKey: ['playerProfile', userId],
     queryFn: async () => {
@@ -43,12 +42,32 @@ const SocialAndRankSection = ({
       });
       return response.data.result;
     },
-    enabled: !!userId && (!socialData || !gameStats),
+    enabled: !!userId && !socialData,
+  });
+
+  const {
+    data: gameStatsData,
+    isLoading: isStatsLoading,
+    error: statsError,
+  } = useQuery({
+    queryKey: ['playerGameStats', userId],
+    queryFn: async () => {
+      const response = await PlayerApi.getPlayerGameStats({
+        userId,
+        page: 1,
+        limit: 10,
+      });
+      return response.data.result;
+    },
+    enabled: !!userId && !gameStats,
   });
 
   const socials = socialData || playerProfileData?.socials;
-  const stats = gameStats || playerProfileData?.gameStats;
+  const stats = gameStats || gameStatsData?.gameStats;
   const userDetails = playerProfileData?.userDetails;
+
+  const isLoading = isProfileLoading || isStatsLoading;
+  const error = profileError || statsError;
 
   if (isLoading) {
     return (
@@ -99,6 +118,7 @@ const SocialAndRankSection = ({
       <PlayerRank
         gameStats={stats}
         userName={userDetails?.firstName || 'Player'}
+        playerRank={1} // will determine this leaderboard logic
       />
     </div>
   );

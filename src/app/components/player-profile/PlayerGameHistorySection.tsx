@@ -50,26 +50,23 @@ export default function PlayerGameHistorySection({
   const [currentPage, setCurrentPage] = useState(1);
 
   const {
-    data: playerProfileData,
+    data: gameStatsData,
     isLoading,
     error,
     isError,
   } = useQuery({
-    queryKey: ['playerProfile', userId, currentPage],
+    queryKey: ['playerGameStats', userId, currentPage],
     queryFn: () =>
-      PlayerApi.viewPlayerProfile({
+      PlayerApi.getPlayerGameStats({
         userId,
-        gameHistoryPage: currentPage,
-        gameHistoryLimit: ITEMS_PER_PAGE,
-        transactionPage: 1,
-        transactionLimit: 10,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
       }),
     enabled: !!userId,
   });
 
-  const gameHistoryData =
-    playerProfileData?.data?.result?.gameHistory?.data || [];
-  const pagination = playerProfileData?.data?.result?.gameHistory?.pagination;
+  const gameHistoryData = gameStatsData?.data?.result?.gameHistory?.data || [];
+  const pagination = gameStatsData?.data?.result?.gameHistory?.pagination;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -212,14 +209,14 @@ export default function PlayerGameHistorySection({
                   >
                     Game ID
                   </th>
-                  <th
+                  {/* <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                     data-aos="fade-up"
                     data-aos-delay="300"
                   >
                     Game Name
-                  </th>
+                  </th> */}
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
@@ -263,11 +260,11 @@ export default function PlayerGameHistorySection({
                           {transformedGame.date}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4">
+                      {/* <td className="whitespace-nowrap px-6 py-4">
                         <div className="text-sm font-medium text-gray-900">
                           {transformedGame.gameName}
                         </div>
-                      </td>
+                      </td> */}
                       <td className="whitespace-nowrap px-6 py-4">
                         <span className="text-primary-900 inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5">
                           {transformedGame.reward.type === 'money' ? (

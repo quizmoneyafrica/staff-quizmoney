@@ -48,8 +48,17 @@ export const useGetAllTransactionsWithStats = (
       payload.search = search.trim();
     }
 
+    // if (status && status !== 'All') {
+    //   payload.status = status.toLowerCase();
+    // }
+
     if (status && status !== 'All') {
-      payload.status = status.toLowerCase();
+      const statusMapping: Record<string, string> = {
+        Successful: 'completed',
+        Pending: 'pending',
+        Failed: 'failed',
+      };
+      payload.status = statusMapping[status] || status.toLowerCase();
     }
 
     if (dateRange?.start && dateRange.end) {

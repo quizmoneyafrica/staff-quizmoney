@@ -3,11 +3,9 @@
 'use client';
 import React, { useState } from 'react';
 import { ListFilter, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { usePlayerTransactions } from '@/app/hooks/usePlayerProfile';
 import CustomImage from '../CustomImage';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
-
-import PlayerApi from '@/app/api/PlayerProfileApi';
 
 interface Transaction {
   id: number;
@@ -18,7 +16,6 @@ interface Transaction {
   action: string;
   type: string;
   status?: string;
-
   date?: string;
   description?: string;
   [key: string]: unknown;
@@ -144,42 +141,30 @@ export default function PlayerTransactionHistory({
     useState<Transaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType] = useState<string>('');
-  const [filterStatus] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<string>('completed');
 
   const transactionLimit = 10;
 
   const {
-    data: playerProfileData,
+    data: transactionResponse,
     isLoading,
     error,
     refetch,
-  } = useQuery({
-    queryKey: [
-      'playerProfile',
-      userId,
-      currentPage,
-      searchTerm,
-      filterType,
-      filterStatus,
-      transactionLimit,
-    ],
-    queryFn: async () => {
-      const response = await PlayerApi.viewPlayerProfile({
-        userId,
-        gameHistoryPage: 1,
-        gameHistoryLimit: 10,
-        transactionPage: currentPage,
-        transactionLimit,
-        transactionType: filterType || undefined,
-        transactionStatus: filterStatus || undefined,
-      });
-      return response.data.result;
-    },
-    enabled: !!userId,
+  } = usePlayerTransactions(userId, {
+    page: currentPage,
+    limit: transactionLimit,
+    type: filterType || undefined,
+    status: filterStatus || undefined,
+
+    // dateRange: {
+    //   start: '2025-05-13',
+    //   end: '2025-06-09'
+    // }
   });
 
-  const transactions = transactionData || playerProfileData?.transactions;
+  // Use the response from the new hook or fallback to prop data
+  const transactions = transactionData || transactionResponse?.transactions;
   const currentItems = transactions?.data || [];
   const totalPages = transactions?.pagination?.totalPages || 1;
   const currentPageFromAPI = transactions?.pagination?.currentPage || 1;
@@ -198,7 +183,7 @@ export default function PlayerTransactionHistory({
     setSelectedTransaction(null);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
     setCurrentPage(1);
     refetch();
@@ -286,15 +271,13 @@ export default function PlayerTransactionHistory({
       >
         <h2 className="font-bold">Transaction History</h2>
         <div className="flex items-center gap-2 md:gap-5">
-          <form
-            onSubmit={handleSearch}
-            className="relative w-full rounded-md border border-[#F5F5F5] focus:border-[#F5F5F5] md:w-fit"
-          >
+          <div className="relative w-full rounded-md border border-[#F5F5F5] focus:border-[#F5F5F5] md:w-fit">
             <input
               type="text"
               placeholder="Search transactions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
               className="focus:ring-primary-900 w-full rounded-md border-none py-2 pl-10 pr-4 outline-none focus:ring-0"
             />
             <svg
@@ -311,7 +294,8 @@ export default function PlayerTransactionHistory({
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-          </form>
+          </div>
+
           {/* <div className="flex gap-2">
             <select
               value={filterType}
@@ -342,6 +326,7 @@ export default function PlayerTransactionHistory({
               <option value="cancelled">Cancelled</option>
             </select>
           </div> */}
+
           <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#F5F5F5] px-4 py-2 outline-none">
             <ListFilter className="size-5 text-[#1B212D]" />
             <span className="hidden md:block">Filter by</span>

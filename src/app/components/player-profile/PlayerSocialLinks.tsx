@@ -35,30 +35,45 @@ const itemVariants = {
   },
 };
 
+const sanitize = (value?: string): string => {
+  if (
+    !value ||
+    value.trim().toLowerCase() === 'undefined' ||
+    value.trim().toLowerCase() === 'null'
+  ) {
+    return 'N/A';
+  }
+  return value;
+};
+
 export default function PlayerSocialLinks({
-  socialData,
+  socialData = {},
   userName = 'Player',
 }: PlayerSocialLinksProps) {
   const socials = [
     {
       label: 'Facebook',
       icon: '/icons/face.svg',
-      handle: socialData?.facebook || 'Not connected',
-      connected: !!socialData?.facebook,
+      handle: sanitize(socialData.facebook),
+      connected:
+        !!socialData.facebook && sanitize(socialData.facebook) !== 'N/A',
     },
     {
       label: 'Instagram',
       icon: '/icons/insta.svg',
-      handle: socialData?.instagram || 'Not connected',
-      connected: !!socialData?.instagram,
+      handle: sanitize(socialData.instagram),
+      connected:
+        !!socialData.instagram && sanitize(socialData.instagram) !== 'N/A',
     },
     {
       label: 'Twitter',
       icon: '/icons/x.svg',
-      handle: socialData?.twitter || 'Not connected',
-      connected: !!socialData?.twitter,
+      handle: sanitize(socialData.twitter),
+      connected: !!socialData.twitter && sanitize(socialData.twitter) !== 'N/A',
     },
   ];
+
+  const allDisconnected = socials.every((s) => !s.connected);
 
   return (
     <motion.div
@@ -75,45 +90,41 @@ export default function PlayerSocialLinks({
       </motion.h2>
 
       <div className="space-y-3 sm:space-y-4">
-        {socials.map((social) => {
-          return (
-            <motion.div
-              key={social.label}
-              className="flex flex-wrap items-center justify-between gap-2"
-              variants={itemVariants}
-            >
-              <div className="flex items-center gap-2 text-black sm:gap-3">
-                <CustomImage
-                  alt={social.label}
-                  src={social.icon}
-                  className="h-4 w-4 sm:h-5 sm:w-5"
-                />
-                <span className="text-xs font-medium sm:text-sm">
-                  {social.label}
-                </span>
-              </div>
-              <span
-                className={`text-xs sm:text-sm ${
-                  social.connected ? 'text-gray-700' : 'italic text-gray-400'
-                }`}
-              >
-                {social.handle}
-              </span>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {!socialData?.facebook &&
-        !socialData?.instagram &&
-        !socialData?.twitter && (
+        {socials.map((social) => (
           <motion.div
-            className="mt-4 text-center text-xs text-gray-500 sm:text-sm"
+            key={social.label}
+            className="flex flex-wrap items-center justify-between gap-2"
             variants={itemVariants}
           >
-            No social media accounts connected
+            <div className="flex items-center gap-2 text-black sm:gap-3">
+              <CustomImage
+                alt={social.label}
+                src={social.icon}
+                className="h-4 w-4 sm:h-5 sm:w-5"
+              />
+              <span className="text-xs font-medium sm:text-sm">
+                {social.label}
+              </span>
+            </div>
+            <span
+              className={`text-xs sm:text-sm ${
+                social.connected ? 'text-gray-700' : 'italic text-gray-400'
+              }`}
+            >
+              {social.handle}
+            </span>
           </motion.div>
-        )}
+        ))}
+      </div>
+
+      {allDisconnected && (
+        <motion.div
+          className="mt-4 text-center text-xs text-gray-500 sm:text-sm"
+          variants={itemVariants}
+        >
+          No social media accounts connected
+        </motion.div>
+      )}
     </motion.div>
   );
 }
