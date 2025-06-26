@@ -34,13 +34,8 @@ export const usePlayerProfile = (
   return useQuery({
     queryKey: ['playerProfile', userId, requestParams],
     queryFn: async (): Promise<PlayerProfileData> => {
-      console.log('Debug - Making API call with params:', requestParams);
-
       try {
         const response = await PlayerApi.viewPlayerProfile(requestParams);
-        console.log('Debug - API Response:', response);
-        console.log('Debug - Response Data:', response.data);
-
         if (response.data.result) {
           return response.data.result;
         } else {
@@ -71,15 +66,8 @@ export const usePlayerTransactions = (
   return useQuery({
     queryKey: ['playerTransactions', userId, requestParams],
     queryFn: async (): Promise<PlayerTransactionsResponse['result']> => {
-      console.log(
-        'Debug - Making transactions API call with params:',
-        requestParams,
-      );
-
       try {
         const response = await PlayerApi.getPlayerTransactions(requestParams);
-        console.log('Debug - Transactions API Response:', response);
-        console.log('Debug - Transactions Response Data:', response.data);
 
         if (response.data.result) {
           return response.data.result;

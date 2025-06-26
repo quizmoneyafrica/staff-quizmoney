@@ -130,7 +130,7 @@ function Page() {
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
       <div className="flex items-center justify-between ">
-        <h2 className="text-2xl font-semibold">Wallet Statistic</h2>
+        <h2 className="text-2xl font-semibold">Wallet Statistics</h2>
         <TimeRangeDropdown
           options={options}
           selected={selected}

@@ -199,7 +199,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const options = ['This week', 'Last 30 days', 'Custom'];
 
   const handleSelect = (option) => {
-    console.log('Time range selected:', option);
     setSelected(option);
     setCurrentPage(1);
 
@@ -209,7 +208,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   };
 
   const handleCustomDateChange = (dateRange) => {
-    console.log('Custom date range changed:', dateRange);
     setCustomDateRange(dateRange);
     setCurrentPage(1);
   };

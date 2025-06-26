@@ -10,7 +10,7 @@ import {
 import { store } from '@/app/store/store';
 import PlayersApi from '@/app/api/playersApi';
 import { useSelector } from 'react-redux';
-import PlayersHeader from './PlayersHeader';
+// import PlayersHeader from './PlayersHeader';
 
 export default function PlayersParent() {
   const { playersData } = useSelector(selectPlayers);
@@ -29,14 +29,16 @@ export default function PlayersParent() {
         store.dispatch(setLoadingPlayers(false));
       }
   }, [playersData]);
+
   useEffect(() => {
     fetchPlayersData();
   }, [fetchPlayersData]);
+
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden   py-6">
-      <div className="flex justify-end">
+      {/* <div className="flex justify-end">
         <PlayersHeader />
-      </div>
+      </div> */}
       <UserStatsComponent />
       <PlayersTable />
     </div>

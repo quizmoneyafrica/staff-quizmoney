@@ -366,18 +366,10 @@ const PushNotificationTable = () => {
   };
 
   const handleSelectUsers = () => {
-    console.log(
-      'Select users clicked for notification:',
-      selectedNotificationId,
-    );
     setIsSendModalOpen(false);
   };
 
   const handleSendToAll = () => {
-    console.log(
-      'Send to all users clicked for notification:',
-      selectedNotificationId,
-    );
     setIsSendModalOpen(false);
   };
 

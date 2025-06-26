@@ -59,6 +59,7 @@ const UserStatsComponent: React.FC = () => {
   const { playersData, isLoading: isStatLoading } = useSelector(selectPlayers);
   const { totalActiveUsers, totalInactiveUsers, totalNoOfUsers } =
     playersData ?? {};
+
   const stats: Stat[] = [
     {
       title: 'Total No of Users',
@@ -74,7 +75,7 @@ const UserStatsComponent: React.FC = () => {
     },
     {
       title: 'Total active Users',
-      value: `${totalActiveUsers ?? 0}`,
+      value: `${totalActiveUsers?.toLocaleString() ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -82,12 +83,11 @@ const UserStatsComponent: React.FC = () => {
           alt="user profile"
         />
       ),
-
       iconBg: 'bg-[#BCDDF4]',
     },
     {
       title: 'Total No of inactive Users',
-      value: `${totalInactiveUsers ?? 0}`,
+      value: `${totalInactiveUsers?.toLocaleString() ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -95,7 +95,6 @@ const UserStatsComponent: React.FC = () => {
           alt="user profile"
         />
       ),
-
       iconBg: 'bg-[#BCDDF4]',
     },
   ];
