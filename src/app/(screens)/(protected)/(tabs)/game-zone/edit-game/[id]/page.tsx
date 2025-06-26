@@ -34,8 +34,7 @@ function Page() {
     ...initialGame,
     questions: [],
   });
-  const [dateInput, setDateInput] = useState('');
-  const [timeInput, setTimeInput] = useState('');
+  const [datetimeInput, setDatetimeInput] = useState('');
   const [fetchingData, setFetchingData] = useState(true);
 
   const updateGameMutation = useUpdateGame();
@@ -67,25 +66,19 @@ function Page() {
         dispatch(setCurrentGame(result));
 
         const isoString = result?.startDate?.iso;
-        const dateObj = isoString ? new Date(isoString) : null;
+        if (isoString) {
+          const dateObj = new Date(isoString);
 
-        if (dateObj) {
-          const formattedDate = new Intl.DateTimeFormat('en-CA', {
-            timeZone: 'Africa/Lagos',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-          }).format(dateObj);
+          const nigerianDate = new Date(dateObj.getTime() + 60 * 60 * 1000);
 
-          const formattedTime = new Intl.DateTimeFormat('en-GB', {
-            timeZone: 'Africa/Lagos',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          }).format(dateObj);
+          const year = nigerianDate.getFullYear();
+          const month = String(nigerianDate.getMonth() + 1).padStart(2, '0');
+          const day = String(nigerianDate.getDate()).padStart(2, '0');
+          const hours = String(nigerianDate.getHours()).padStart(2, '0');
+          const minutes = String(nigerianDate.getMinutes()).padStart(2, '0');
 
-          setDateInput(formattedDate);
-          setTimeInput(formattedTime);
+          const datetimeLocalValue = `${year}-${month}-${day}T${hours}:${minutes}`;
+          setDatetimeInput(datetimeLocalValue);
         }
 
         setFetchingData(false);
@@ -99,22 +92,10 @@ function Page() {
     fetchGames();
   }, [params.id, dispatch]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    if (name === 'fullDate') {
-      setDateInput(value);
-    } else if (name === 'time') {
-      setTimeInput(value);
-    }
-
-    const selectedDate = name === 'fullDate' ? value : dateInput;
-    const selectedTime = name === 'time' ? value : timeInput;
-
-    if (selectedDate && selectedTime) {
-      const nigerianTimeString = `${selectedDate}T${selectedTime}:00`;
-      const nigerianDate = new Date(nigerianTimeString);
-      const utcDate = new Date(nigerianDate.getTime() - 1 * 60 * 60 * 1000);
+  React.useEffect(() => {
+    if (datetimeInput) {
+      const localDate = new Date(datetimeInput);
+      const utcDate = new Date(localDate.getTime() - 60 * 60 * 1000);
 
       setFetchedData((prev) => ({
         ...prev,
@@ -122,6 +103,15 @@ function Page() {
           iso: utcDate.toISOString(),
         },
       }));
+    }
+  }, [datetimeInput]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    if (name === 'startDateTime') {
+      setDatetimeInput(value);
+      return;
     }
 
     if (['name', 'entryFee', 'gamePrize', 'numOfShare'].includes(name)) {
@@ -191,6 +181,26 @@ function Page() {
         return;
       }
 
+      if (!datetimeInput) {
+        toast.error('Please select a game date and time');
+        const dateTimeField = document.querySelector(
+          'input[name="startDateTime"]',
+        ) as HTMLInputElement;
+        dateTimeField?.focus();
+        return;
+      }
+
+      const selectedDate = new Date(datetimeInput);
+      const now = new Date();
+      if (selectedDate <= now) {
+        toast.error('Game date and time must be in the future');
+        const dateTimeField = document.querySelector(
+          'input[name="startDateTime"]',
+        ) as HTMLInputElement;
+        dateTimeField?.focus();
+        return;
+      }
+
       const transformedQuestions = fetchedData.questions.map(
         (question, index) => ({
           number: index + 1,
@@ -208,7 +218,7 @@ function Page() {
         gamePrize: fetchedData.gamePrize,
         numOfShare: fetchedData.numOfShare,
         entryFee: String(fetchedData.entryFee),
-        startDate: dateInput,
+        startDate: datetimeInput,
       };
 
       updateGameMutation.mutate(payload);
@@ -270,18 +280,10 @@ function Page() {
             />
 
             <CustomTextField
-              label="Start Date"
-              type="date"
-              name="fullDate"
-              value={dateInput}
-              onChange={handleChange}
-            />
-
-            <CustomTextField
-              label="Game Time"
-              type="time"
-              name="time"
-              value={timeInput}
+              label="Game Date & Time"
+              type="datetime-local"
+              name="startDateTime"
+              value={datetimeInput}
               onChange={handleChange}
             />
 

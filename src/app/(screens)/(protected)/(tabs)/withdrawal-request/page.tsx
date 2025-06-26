@@ -163,18 +163,8 @@ function Page() {
   const shouldShowPagination = useMemo(() => {
     if (fetchingDashData) return false;
 
-    return (
-      paginationInfo.totalPages > 1 ||
-      currentPage > 1 ||
-      withdrawalData.length === itemsPerPage
-    );
-  }, [
-    fetchingDashData,
-    paginationInfo.totalPages,
-    currentPage,
-    withdrawalData.length,
-    itemsPerPage,
-  ]);
+    return withdrawalData.length > 0 || currentPage > 1;
+  }, [fetchingDashData, withdrawalData.length, currentPage]);
 
   const withdrawalStats = React.useMemo(() => {
     if (statsData?.result) {

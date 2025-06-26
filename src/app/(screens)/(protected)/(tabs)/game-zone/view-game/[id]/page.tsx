@@ -58,22 +58,11 @@ function Page() {
 
   const isoString = fetchedData?.startDate?.iso;
   const dateObj = isoString ? new Date(isoString) : null;
-  const options = { timeZone: 'Africa/Lagos', hour12: false };
 
-  const formattedDate = dateObj
-    ? new Intl.DateTimeFormat('en-CA', {
-        ...options,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      }).format(dateObj)
-    : '';
-  const formattedTime = dateObj
-    ? new Intl.DateTimeFormat('en-GB', {
-        ...options,
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(dateObj)
+  const formattedDateTime = dateObj
+    ? new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16)
     : '';
 
   return (
@@ -110,20 +99,15 @@ function Page() {
               value={formatNaira(Number(fetchedData?.gamePrize))}
               readOnly
             />
+
             <CustomTextField
-              label="Start Date"
-              type="date"
-              name="fullDate"
-              value={formattedDate}
+              label="Game Date & Time"
+              type="datetime-local"
+              name="startDateTime"
+              value={formattedDateTime}
               readOnly
             />
-            <CustomTextField
-              label="Game Time"
-              type="time"
-              name="time"
-              value={formattedTime}
-              readOnly
-            />
+
             <CustomTextField
               label="Share Prize Between"
               name="numOfShare"

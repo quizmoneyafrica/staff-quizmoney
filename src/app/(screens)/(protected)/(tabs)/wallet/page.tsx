@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import React, { useState } from 'react';
@@ -29,6 +28,8 @@ interface StaticTransactionData {
 
 function Page() {
   const [showTotalBalance, setShowTotalBalance] = useState(false);
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [transactionStats, setTransactionStats] = useState<any>(null);
 
   const {
@@ -59,7 +60,9 @@ function Page() {
         bgColor: 'lightCyan',
         icon: <WalletCardIconLightCyan />,
         bgImage: <WalletIconBigLightCyan />,
-        showEye: false,
+        showEye: true,
+        isValueVisible: showDeposit,
+        onEyeToggle: () => setShowDeposit(!showDeposit),
       },
       {
         title: 'Total Withdrawal',
@@ -67,7 +70,9 @@ function Page() {
         bgColor: 'lightGreen',
         icon: <WalletCardIconLightGreen />,
         bgImage: <WalletIconBigGreen />,
-        showEye: false,
+        showEye: true,
+        isValueVisible: showWithdrawal,
+        onEyeToggle: () => setShowWithdrawal(!showWithdrawal),
       },
     ];
 
