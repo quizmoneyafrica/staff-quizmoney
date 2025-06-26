@@ -4,7 +4,6 @@
 import React, { useState } from 'react';
 import WalletStatCard from '@/app/components/wallet/WalletStatCard';
 import TransactionTable from '@/app/components/wallet/TransactionTable';
-import WalletStatsHeader from '@/app/components/wallet/WalletStatsHeader';
 import {
   WalletIconBig,
   WalletIconBigGreen,
@@ -13,8 +12,10 @@ import {
   WalletIconBigLightCyan,
   WalletCardIconLightGreen,
 } from '@/app/icons/icons';
-import { Loader2 } from 'lucide-react';
-import { useGetWalletStats } from '@/app/hooks/useTransaction';
+import { useGetAllTransactionsWithStats } from '@/app/hooks/useTransaction';
+import { formatNaira } from '@/app/utils/utils';
+import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
+import { calculateDateRange } from '@/app/utils/date-range';
 
 interface StaticTransactionData {
   id: string;
@@ -32,11 +33,40 @@ function Page() {
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [transactionStats, setTransactionStats] = useState<any>(null);
 
+  const options = ['This week', 'Last 30 days', 'Custom'];
+
+  const [selected, setSelected] = useState(options[0]);
+  const [customDateRange, setCustomDateRange] = useState(null);
+
+  const handleSelect = (option) => {
+    setSelected(option);
+
+    if (option !== 'Custom') {
+      setCustomDateRange(null);
+    }
+  };
+
+  const handleCustomDateChange = (dateRange) => {
+    setCustomDateRange(dateRange);
+  };
+
   const {
-    data: walletData,
+    data: wallet,
     isLoading: walletLoading,
     error: walletError,
-  } = useGetWalletStats();
+  } = useGetAllTransactionsWithStats(
+    1,
+    10,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    calculateDateRange(selected, customDateRange),
+  );
+  console.log(
+    'calculateDateRange(selected, customDateRange): ',
+    calculateDateRange(selected, customDateRange),
+  );
 
   const handleStatsUpdate = (stats: any) => {
     setTransactionStats(stats);
@@ -76,20 +106,20 @@ function Page() {
       },
     ];
 
-    if (walletData?.result) {
-      const walletInfo = walletData.result;
-      defaultStats[0].value = `₦${
-        walletInfo.balance?.toLocaleString() || '0.00'
-      }`;
-    }
-
-    if (transactionStats) {
-      if (transactionStats.totalDeposits !== undefined) {
-        defaultStats[1].value = `₦${transactionStats.totalDeposits.toLocaleString()}`;
-      }
-      if (transactionStats.totalWithdrawals !== undefined) {
-        defaultStats[2].value = `₦${transactionStats.totalWithdrawals.toLocaleString()}`;
-      }
+    if (wallet?.statistics) {
+      const walletInfo = wallet?.statistics;
+      defaultStats[0].value = formatNaira(
+        Number(walletInfo?.totalWalletBalance),
+        true,
+      );
+      defaultStats[1].value = formatNaira(
+        Number(walletInfo?.totalDeposits),
+        true,
+      );
+      defaultStats[2].value = formatNaira(
+        Number(walletInfo?.totalWithdrawals),
+        true,
+      );
     }
 
     return defaultStats;
@@ -97,15 +127,19 @@ function Page() {
 
   const walletStats = getWalletStats();
 
-  const handleViewDetails = (transactionData: StaticTransactionData) => {
-    console.log('View details for:', transactionData);
-  };
-
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
-      <WalletStatsHeader />
+      <div className="flex items-center justify-between ">
+        <h2 className="text-2xl font-semibold">Wallet Statistic</h2>
+        <TimeRangeDropdown
+          options={options}
+          selected={selected}
+          onSelect={handleSelect}
+          customDateRange={customDateRange}
+          onCustomDateChange={handleCustomDateChange}
+        />
+      </div>
 
-      {/* Wallet Stats Cards */}
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
         {walletLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
@@ -128,16 +162,13 @@ function Page() {
           </div>
         ) : null}
 
-        {walletStats.map((stat) => (
-          <WalletStatCard key={stat.title} {...stat} />
-        ))}
+        {!walletLoading &&
+          walletStats.map((stat) => (
+            <WalletStatCard key={stat.title} {...stat} />
+          ))}
       </div>
 
-      {/* Transaction Table */}
-      <TransactionTable
-        viewDetails={handleViewDetails}
-        onStatsUpdate={handleStatsUpdate}
-      />
+      <TransactionTable onStatsUpdate={handleStatsUpdate} />
     </div>
   );
 }

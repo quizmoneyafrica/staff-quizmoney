@@ -8,8 +8,6 @@ import WithdrawalCards, {
 import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal';
 import Pagination from '@/app/components/leaderboard/Pagination';
 import { Search, ListFilter, ChevronDown } from 'lucide-react';
-import { useAppDispatch } from '@/app/hooks/useAuth';
-import { setDashboardDetails } from '@/app/store/dashboardSlice';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
@@ -25,10 +23,9 @@ import {
   WalletIconBigLightestYellow,
 } from '@/app/icons/icons';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
+import { calculateDateRange } from '@/app/utils/date-range';
 
 function Page() {
-  const dispatch = useAppDispatch();
-
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -47,7 +44,9 @@ function Page() {
 
   const filterOptions = ['All', 'Approved', 'Pending', 'Rejected'];
 
-  const [selected, setSelected] = useState('This week');
+  const options = ['This week', 'Last 30 days', 'Custom'];
+
+  const [selected, setSelected] = useState(options[0]);
   const [customDateRange, setCustomDateRange] = useState(null);
 
   useEffect(() => {
@@ -59,71 +58,7 @@ function Page() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const formatDateRange = (dateRange) => {
-    if (!dateRange || !dateRange.startDate || !dateRange.endDate) return null;
-
-    const formatDate = (date) => {
-      if (typeof date === 'string') return date;
-      return date.toISOString().split('T')[0];
-    };
-
-    return {
-      start: formatDate(dateRange.startDate),
-      end: formatDate(dateRange.endDate),
-    };
-  };
-
-  const calculateDateRange = (selectedOption, customDateRange) => {
-    if (selectedOption === 'Custom' && customDateRange) {
-      return formatDateRange(customDateRange);
-    }
-
-    const today = new Date();
-    const formatDate = (date) => {
-      return date.toISOString().split('T')[0];
-    };
-
-    switch (selectedOption) {
-      case 'This week': {
-        const startOfWeek = new Date(today);
-        const dayOfWeek = today.getDay();
-        const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-        startOfWeek.setDate(today.getDate() - daysFromMonday);
-        startOfWeek.setHours(0, 0, 0, 0);
-
-        const endOfWeek = new Date(today);
-        endOfWeek.setHours(23, 59, 59, 999);
-
-        return {
-          start: formatDate(startOfWeek),
-          end: formatDate(endOfWeek),
-        };
-      }
-
-      case 'Last 30 days': {
-        const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(today.getDate() - 30);
-        thirtyDaysAgo.setHours(0, 0, 0, 0);
-
-        const endDate = new Date(today);
-        endDate.setHours(23, 59, 59, 999);
-
-        return {
-          start: formatDate(thirtyDaysAgo),
-          end: formatDate(endDate),
-        };
-      }
-
-      default:
-        return null;
-    }
-  };
-
-  const {
-    data,
-    isPending: fetchingDashData,
-    error,
-  } = useGetWithdrawalRequests(
+  const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
     currentPage,
     itemsPerPage,
     selectedFilter?.toLowerCase(),
@@ -255,8 +190,6 @@ function Page() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  const options = ['This week', 'Last 30 days', 'Custom'];
 
   const handleSelect = (option) => {
     setSelected(option);

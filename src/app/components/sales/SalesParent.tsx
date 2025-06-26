@@ -2,7 +2,6 @@
 
 import WalletStatCard from '@/app/components/wallet/WalletStatCard';
 import React, { useCallback, useEffect } from 'react';
-import WalletStatsHeader from '@/app/components/wallet/WalletStatsHeader';
 import SalesChart from '@/app/components/sales/SalesChart';
 import TotalTransactionsTable from '@/app/components/sales/TotalTransactionsTable';
 import { useSelector } from 'react-redux';
@@ -98,7 +97,6 @@ function SalesParent() {
 
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
-      {/* <WalletStatsHeader /> */}
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
         {walletStats.map((stat) => (
           <WalletStatCard key={stat.title} {...stat} />

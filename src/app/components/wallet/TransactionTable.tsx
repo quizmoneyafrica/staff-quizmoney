@@ -9,12 +9,14 @@ import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ListFilter, Loader2 } from 'lucide-react';
-
+import { calculateDateRange } from '@/app/utils/date-range';
 import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
 import { useGetAllTransactionsWithStats } from '@/app/hooks/useTransaction';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime } from '@/app/utils/utils';
+import { useDebounce } from '@/app/hooks/useDebounce';
+
 interface TransactionStats {
   totalWalletBalance: number;
   totalSuccessfulTransactions: number;
@@ -61,7 +63,6 @@ interface ApiResponse {
 
 interface TransactionTableProps {
   data?: StaticTransactionData[];
-  viewDetails: (data: StaticTransactionData) => void;
   onStatsUpdate?: (stats: TransactionStats) => void;
 }
 
@@ -98,7 +99,6 @@ const transformTransaction = (tx: RawTransaction): StaticTransactionData => {
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   data,
-  viewDetails,
   onStatsUpdate,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -116,6 +116,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const [selected, setSelected] = useState('This week');
   const [customDateRange, setCustomDateRange] = useState(null);
 
+  const debouncedSearchTerm = useDebounce(searchTerm);
   const itemsPerPage = 10;
 
   type SortableTransactionKeys =
@@ -126,74 +127,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     | 'transactionStatus'
     | 'date';
 
-  const formatDateRange = (dateRange) => {
-    if (!dateRange || !dateRange.startDate || !dateRange.endDate) return null;
-
-    const formatDate = (date) => {
-      if (typeof date === 'string') return date;
-      return date.toISOString().split('T')[0];
-    };
-
-    return {
-      start: formatDate(dateRange.startDate),
-      end: formatDate(dateRange.endDate),
-    };
-  };
-
-  const calculatedDateRange = useMemo(() => {
-    const calculateDateRange = (selectedOption, customDateRange) => {
-      if (selectedOption === 'Custom' && customDateRange) {
-        return formatDateRange(customDateRange);
-      }
-
-      const today = new Date();
-      const formatDate = (date) => {
-        return date.toISOString().split('T')[0];
-      };
-
-      switch (selectedOption) {
-        case 'This week': {
-          const startOfWeek = new Date(today);
-          const dayOfWeek = today.getDay();
-
-          const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-          startOfWeek.setDate(today.getDate() - daysToSubtract);
-          startOfWeek.setHours(0, 0, 0, 0);
-
-          // End of week is Sunday
-          const endOfWeek = new Date(startOfWeek);
-          endOfWeek.setDate(startOfWeek.getDate() + 6);
-          endOfWeek.setHours(23, 59, 59, 999);
-
-          return {
-            start: formatDate(startOfWeek),
-            end: formatDate(endOfWeek),
-          };
-        }
-
-        case 'Last 30 days': {
-          const thirtyDaysAgo = new Date(today);
-          thirtyDaysAgo.setDate(today.getDate() - 30);
-          thirtyDaysAgo.setHours(0, 0, 0, 0);
-
-          const endDate = new Date(today);
-          endDate.setHours(23, 59, 59, 999);
-
-          return {
-            start: formatDate(thirtyDaysAgo),
-            end: formatDate(endDate),
-          };
-        }
-
-        default:
-          return null;
-      }
-    };
-
-    return calculateDateRange(selected, customDateRange);
-  }, [selected, customDateRange]);
-
   const {
     data: apiResponse,
     isLoading,
@@ -203,10 +136,10 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     currentPage,
     itemsPerPage,
     undefined,
-    searchTerm || undefined,
+    debouncedSearchTerm || undefined,
     statusFilter !== 'All' ? statusFilter : undefined,
-    calculatedDateRange,
-    calculatedDateRange,
+    calculateDateRange(selected, customDateRange),
+    undefined,
   ) as {
     data: ApiResponse | undefined;
     isLoading: boolean;
@@ -325,15 +258,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-2 text-gray-600">Loading transactions...</span>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="py-12 text-center">
@@ -404,95 +328,104 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             />
           </div>
         </div>
-        <Table.Root
-          variant="ghost"
-          className="min-w-full border-collapse text-sm"
-        >
-          <Table.Header className="bg-primary-50">
-            <Table.Row>
-              <Th label="Transaction ID" onClick={() => handleSort('id')} />
-              <Th label="Users" onClick={() => handleSort('username')} />
-              <Th
-                label="Transaction Type"
-                onClick={() => handleSort('transactionType')}
-              />
-              <Th
-                label="Transaction Amount"
-                onClick={() => handleSort('transactionAmount')}
-              />
-              <Th
-                label="Transaction Status"
-                onClick={() => handleSort('transactionStatus')}
-              />
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {sortedData && sortedData.length > 0 ? (
-              sortedData.map((item, index) => (
-                <Table.Row
-                  key={item.id}
-                  className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                  onClick={() => handleRowClick(item)}
-                >
-                  <Table.Cell className="whitespace-nowrap px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                        {(currentPage - 1) * itemsPerPage + index + 1}
+
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Loading transactions...</span>
+          </div>
+        )}
+        {!isLoading && (
+          <Table.Root
+            variant="ghost"
+            className="min-w-full border-collapse text-sm"
+          >
+            <Table.Header className="bg-primary-50">
+              <Table.Row>
+                <Th label="Transaction ID" onClick={() => handleSort('id')} />
+                <Th label="Users" onClick={() => handleSort('username')} />
+                <Th
+                  label="Transaction Type"
+                  onClick={() => handleSort('transactionType')}
+                />
+                <Th
+                  label="Transaction Amount"
+                  onClick={() => handleSort('transactionAmount')}
+                />
+                <Th
+                  label="Transaction Status"
+                  onClick={() => handleSort('transactionStatus')}
+                />
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {sortedData && sortedData.length > 0 ? (
+                sortedData.map((item, index) => (
+                  <Table.Row
+                    key={item.id}
+                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
+                    onClick={() => handleRowClick(item)}
+                  >
+                    <Table.Cell className="whitespace-nowrap px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
+                          {(currentPage - 1) * itemsPerPage + index + 1}
+                        </div>
+                        <div>
+                          <p className="font-heading font-bold uppercase text-neutral-800">
+                            {item.id}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {item.date} • {item.time}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-heading font-bold uppercase text-neutral-800">
-                          {item.id}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                          <Avatar
+                            src={item.avatarUrl}
+                            fallback={item.username?.charAt(0).toUpperCase()}
+                            radius="full"
+                            className="bg-primary-50"
+                          />
+                        </div>
+                        <p className="text-primary-800 capitalize">
+                          {item.username}
                         </p>
-                        <p className="text-xs text-neutral-500">
-                          {item.date} • {item.time}
-                        </p>
                       </div>
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
-                        <Avatar
-                          src={item.avatarUrl}
-                          fallback={item.username?.charAt(0).toUpperCase()}
-                          radius="full"
-                          className="bg-primary-50"
-                        />
-                      </div>
-                      <p className="text-primary-800 capitalize">
-                        {item.username}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4 capitalize">
+                      {item.transactionType}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4 font-semibold">
+                      {item.transactionAmount}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <p
+                        className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusClass(
+                          item.transactionStatus,
+                        )}`}
+                      >
+                        {item.transactionStatus}
                       </p>
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4 capitalize">
-                    {item.transactionType}
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4 font-semibold">
-                    {item.transactionAmount}
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4">
-                    <p
-                      className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusClass(
-                        item.transactionStatus,
-                      )}`}
-                    >
-                      {item.transactionStatus}
-                    </p>
+                    </Table.Cell>
+                  </Table.Row>
+                ))
+              ) : (
+                <Table.Row>
+                  <Table.Cell
+                    colSpan={6}
+                    className="text-error-500 py-12 text-center font-bold"
+                  >
+                    No Transactions Found
                   </Table.Cell>
                 </Table.Row>
-              ))
-            ) : (
-              <Table.Row>
-                <Table.Cell
-                  colSpan={6}
-                  className="text-error-500 py-12 text-center font-bold"
-                >
-                  No Transactions Found
-                </Table.Cell>
-              </Table.Row>
-            )}
-          </Table.Body>
-        </Table.Root>
+              )}
+            </Table.Body>
+          </Table.Root>
+        )}
       </div>
 
       <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
