@@ -3,7 +3,12 @@
 
 import GameApi from '@/app/api/game';
 import AppLoader from '@/app/components/loader/loader';
-import { Game, initialGame, QuestionState } from '@/app/store/gameSlice';
+import {
+  Game,
+  initialGame,
+  QuestionState,
+  setCurrentGame,
+} from '@/app/store/gameSlice';
 import CustomTextField from '@/app/utils/CustomTextField';
 import { useParams } from 'next/navigation';
 import React, { useState } from 'react';
@@ -12,6 +17,7 @@ import QuestionBox from './questionBox';
 import { NoQuestions } from '../../noQuestion';
 import { useUpdateGame } from '@/app/hooks/useUpdateGame';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { useDispatch } from 'react-redux';
 
 interface QuestionWithId extends QuestionState {
   id: string;
@@ -23,6 +29,7 @@ interface GameWithIds extends Omit<Game, 'questions'> {
 
 function Page() {
   const params = useParams();
+  const dispatch = useDispatch();
   const [fetchedData, setFetchedData] = useState<GameWithIds>({
     ...initialGame,
     questions: [],
@@ -57,6 +64,8 @@ function Page() {
           questions: questionsWithIds,
         });
 
+        dispatch(setCurrentGame(result));
+
         const isoString = result?.startDate?.iso;
         const dateObj = isoString ? new Date(isoString) : null;
 
@@ -88,7 +97,7 @@ function Page() {
     };
 
     fetchGames();
-  }, [params.id]);
+  }, [params.id, dispatch]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -123,6 +132,15 @@ function Page() {
             ? Number(value) || 0
             : value,
       }));
+
+      if (name === 'name') {
+        dispatch(
+          setCurrentGame({
+            ...fetchedData,
+            name: value,
+          }),
+        );
+      }
     }
   };
 

@@ -70,6 +70,7 @@ function AppHeader() {
   const pathname = usePathname();
   const excludedPaths = ['/practice-game'];
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
+  const currentGame = useAppSelector((s) => s.game.currentGame);
   const router = useRouter();
   const [openLogout, setOpenLogout] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -77,6 +78,7 @@ function AppHeader() {
     const list = state.notifications.notifications;
     return Array.isArray(list) ? list.filter((n) => !n.read).length : 0;
   });
+
   const user = encrypted ? decryptData(encrypted) : null;
 
   const fetchNotifications = useCallback(async () => {
@@ -223,15 +225,28 @@ function AppHeader() {
 
   if (excludedPaths.includes(pathname)) return null;
 
-  const lastSegment =
-    pathname
-      .split('/')
-      .filter(Boolean)
-      .pop()
-      ?.replace(/-/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase()) || '';
+  const getPageTitle = () => {
+    if (pathname.includes('/view-game/') && currentGame?.name) {
+      return currentGame.name;
+    }
 
-  // Profile and Notification Component
+    if (pathname.includes('/edit-game/') && currentGame?.name) {
+      return currentGame.name;
+    }
+
+    const lastSegment =
+      pathname
+        .split('/')
+        .filter(Boolean)
+        .pop()
+        ?.replace(/-/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase()) || '';
+
+    return lastSegment;
+  };
+
+  const pageTitle = getPageTitle();
+
   const ProfileAndNotification = () => (
     <div className="flex items-center gap-3 lg:gap-6">
       <Link
@@ -490,9 +505,9 @@ function AppHeader() {
                   )}
                   {!pathname.includes('player-profile') && (
                     <span className="lg:flex">
-                      {lastSegment === 'Home'
+                      {pageTitle === 'Home'
                         ? `Welcome, ${user?.firstName} 👋`
-                        : lastSegment}
+                        : pageTitle}
                     </span>
                   )}
                   {pathname.includes('player-profile') && (
@@ -511,7 +526,7 @@ function AppHeader() {
             </div>
           </div>
 
-          {lastSegment === 'Home' && (
+          {pageTitle === 'Home' && (
             <Text className="mt-2 text-sm lg:text-base">
               Let&apos;s see what you&apos;ve got
             </Text>

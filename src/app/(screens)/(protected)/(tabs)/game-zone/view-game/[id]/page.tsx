@@ -2,25 +2,39 @@
 'use client';
 import GameApi from '@/app/api/game';
 import AppLoader from '@/app/components/loader/loader';
-import { Game, initialGame } from '@/app/store/gameSlice';
+import {
+  Game,
+  initialGame,
+  setCurrentGame,
+  clearCurrentGame,
+} from '@/app/store/gameSlice';
+import { useAppDispatch } from '@/app/hooks/useAuth';
 import CustomTextField from '@/app/utils/CustomTextField';
 import { formatNaira } from '@/app/utils/utils';
 import { useParams } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import QuestionBox from './questionBox';
 
 function Page() {
   const params = useParams();
+  const dispatch = useAppDispatch();
   const [fetchedData, setFetchedData] = useState<Game>(initialGame);
-  const [fetchingData, setFetchingData] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchGames = async () => {
       if (!params.id) return;
+
       try {
+        setFetchingData(true);
         const res = await GameApi.getGameById(`${params.id}`);
-        setFetchedData(res.data.result);
+        const gameData = res.data.result;
+
+        setFetchedData(gameData);
+
+        dispatch(setCurrentGame(gameData));
+
         setFetchingData(false);
       } catch (error: any) {
         console.error('error: ', error);
@@ -30,12 +44,18 @@ function Page() {
     };
 
     fetchGames();
-  }, [params.id]);
+
+    return () => {
+      dispatch(clearCurrentGame());
+    };
+  }, [params.id, dispatch]);
 
   if (fetchingData) {
     return <AppLoader />;
   }
+
   if (!fetchedData) return <p>No Data</p>;
+
   const isoString = fetchedData?.startDate?.iso;
   const dateObj = isoString ? new Date(isoString) : null;
   const options = { timeZone: 'Africa/Lagos', hour12: false };
@@ -79,8 +99,6 @@ function Page() {
               type="text"
               name="entryFee"
               value={formatNaira(Number(fetchedData?.entryFee))}
-              // inputMode="numeric"
-              // pattern="[0-9]*"
               readOnly
             />
 
@@ -90,7 +108,6 @@ function Page() {
               placeholder="₦1,000"
               name="gamePrize"
               value={formatNaira(Number(fetchedData?.gamePrize))}
-              //   inputMode="numeric"
               readOnly
             />
             <CustomTextField
@@ -117,8 +134,7 @@ function Page() {
           </div>
         </div>
 
-        {/* Questions   */}
-
+        {/* Questions */}
         <>
           {fetchedData?.questions?.length > 0 ? (
             <>
