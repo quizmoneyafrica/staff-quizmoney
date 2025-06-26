@@ -28,10 +28,13 @@ import {
   notificationService,
   PushNotificationFromAPI,
 } from '@/app/api/pushNotification';
+import { formatDateTime } from '@/app/utils/utils';
 
 interface StaticPushNotificationData {
   id: string;
   date: string;
+  time: string;
+  fullDate: string;
   Subject: string;
   notificationBody: string;
   avatarUrl: string;
@@ -84,25 +87,21 @@ const PushNotificationTable = () => {
   const transformApiData = (
     apiNotifications: PushNotificationFromAPI[],
   ): StaticPushNotificationData[] => {
-    return apiNotifications.map((notification) => ({
-      id: notification.objectId,
-      date: formatDate(notification.createdAt),
-      Subject: notification.subject,
-      notificationBody: notification.message,
-      avatarUrl: notification.image || 'https://github.com/shadcn.png',
-      createdAt: notification.createdAt,
-      updatedAt: notification.updatedAt,
-    }));
-  };
+    return apiNotifications.map((notification) => {
+      const { time, fullDate } = formatDateTime(notification.createdAt);
 
-  const formatDate = (isoDate: string): string => {
-    const date = new Date(isoDate);
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+      return {
+        id: notification.objectId,
+        date: notification.createdAt,
+        time: time,
+        fullDate: fullDate,
+        Subject: notification.subject,
+        notificationBody: notification.message,
+        avatarUrl: notification.image || 'https://github.com/shadcn.png',
+        createdAt: notification.createdAt,
+        updatedAt: notification.updatedAt,
+      };
+    });
   };
 
   useEffect(() => {
@@ -240,28 +239,14 @@ const PushNotificationTable = () => {
     }
   };
 
-  const parseDate = (dateString: string) => {
-    // Parse date format "DD/MM/YYYY HH:MM"
-    const [datePart, timePart] = dateString.split(' ');
-    const [day, month, year] = datePart.split('/');
-    const [hours, minutes] = timePart.split(':');
-    return new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day),
-      parseInt(hours),
-      parseInt(minutes),
-    );
-  };
-
   const sortedNotifications = useMemo(() => {
     const sorted = [...notifications].sort((a, b) => {
       let aValue: string | Date;
       let bValue: string | Date;
 
       if (sortField === 'date') {
-        aValue = parseDate(a[sortField]);
-        bValue = parseDate(b[sortField]);
+        aValue = new Date(a.date);
+        bValue = new Date(b.date);
       } else {
         aValue = a[sortField].toLowerCase();
         bValue = b[sortField].toLowerCase();
@@ -640,7 +625,7 @@ const PushNotificationTable = () => {
                           {notification.id}
                         </p>
                         <p className="text-xs text-neutral-500">
-                          {notification.date}
+                          {notification.fullDate} • {notification.time}
                         </p>
                       </div>
                     </div>

@@ -14,7 +14,7 @@ import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
 import { useGetAllTransactionsWithStats } from '@/app/hooks/useTransaction';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
-
+import { formatDateTime } from '@/app/utils/utils';
 interface TransactionStats {
   totalWalletBalance: number;
   totalSuccessfulTransactions: number;
@@ -36,7 +36,9 @@ interface RawTransaction {
 
 interface StaticTransactionData {
   id: string;
+  createdAt: string;
   date: string;
+  time: string;
   username: string;
   avatarUrl: string;
   transactionType: string;
@@ -76,17 +78,23 @@ const formatStatus = (status: string): 'Pending' | 'Successful' | 'Failed' => {
   }
 };
 
-const transformTransaction = (tx: RawTransaction): StaticTransactionData => ({
-  id: tx.id,
-  date: new Date(
-    typeof tx.createdAt === 'string' ? tx.createdAt : tx.createdAt.iso,
-  ).toLocaleDateString(),
-  username: tx.user?.name || 'Unknown',
-  avatarUrl: tx.user?.avatar || '',
-  transactionType: tx.type || 'N/A',
-  transactionAmount: `₦${Number(tx.amount).toLocaleString()}`,
-  transactionStatus: formatStatus(tx.status),
-});
+const transformTransaction = (tx: RawTransaction): StaticTransactionData => {
+  const createdAtString =
+    typeof tx.createdAt === 'string' ? tx.createdAt : tx.createdAt.iso;
+  const { time, fullDate } = formatDateTime(createdAtString);
+
+  return {
+    id: tx.id,
+    createdAt: createdAtString,
+    date: fullDate,
+    time: time,
+    username: tx.user?.name || 'Unknown',
+    avatarUrl: tx.user?.avatar || '',
+    transactionType: tx.type || 'N/A',
+    transactionAmount: `₦${Number(tx.amount).toLocaleString()}`,
+    transactionStatus: formatStatus(tx.status),
+  };
+};
 
 const TransactionTable: React.FC<TransactionTableProps> = ({
   data,
@@ -146,7 +154,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       switch (selectedOption) {
         case 'This week': {
           const startOfWeek = new Date(today);
-          const dayOfWeek = today.getDay(); //
+          const dayOfWeek = today.getDay();
 
           const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
@@ -450,7 +458,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                         <p className="font-heading font-bold uppercase text-neutral-800">
                           {item.id}
                         </p>
-                        <p className="text-xs text-neutral-500">{item.date}</p>
+                        <p className="text-xs text-neutral-500">
+                          {item.date} • {item.time}
+                        </p>
                       </div>
                     </div>
                   </Table.Cell>

@@ -11,6 +11,7 @@ import Pagination from '../leaderboard/Pagination';
 import CustomImage from '@/app/components/CustomImage';
 import { useSelector } from 'react-redux';
 import { Player, selectPlayers } from '@/app/store/playersSlice';
+import { formatDateTime } from '@/app/utils/utils';
 
 type SortField =
   | 'objectId'
@@ -236,65 +237,71 @@ const PlayersTable = () => {
           </Table.Header>
           <Table.Body>
             {currentData.length > 0 ? (
-              currentData.map((player, index) => (
-                <Table.Row key={player.objectId} className="cursor-pointer">
-                  <Table.Cell className="whitespace-nowrap px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                        {startIndex + index + 1}
+              currentData.map((player, index) => {
+                const { time, fullDate } = formatDateTime(player.createdAt.iso);
+
+                return (
+                  <Table.Row key={player.objectId} className="cursor-pointer">
+                    <Table.Cell className="whitespace-nowrap px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
+                          {startIndex + index + 1}
+                        </div>
+                        <div>
+                          <p className="font-heading font-bold uppercase text-neutral-800">
+                            {player.objectId}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {fullDate} • {time}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-heading font-bold uppercase text-neutral-800">
-                          {player.objectId}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                          <Avatar
+                            src=""
+                            fallback={player.firstName?.charAt(0).toUpperCase()}
+                            radius="full"
+                            className="bg-primary-50"
+                          />
+                        </div>
+                        <p className="text-primary-800 capitalize">
+                          {player.firstName}
                         </p>
-                        <p className="text-xs text-neutral-500">
-                          {new Date(player.createdAt.iso).toLocaleString()}
-                        </p>
                       </div>
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
-                        <Avatar
-                          src=""
-                          fallback={player.firstName?.charAt(0).toUpperCase()}
-                          radius="full"
-                          className="bg-primary-50"
-                        />
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <div className="text-sm text-gray-900">
+                        {player.email}
                       </div>
-                      <p className="text-primary-800 capitalize">
-                        {player.firstName}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <p
+                        className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
+                          player.accountType === 'admin'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {player.accountType}
                       </p>
-                    </div>
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4">
-                    <div className="text-sm text-gray-900">{player.email}</div>
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4">
-                    <p
-                      className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
-                        player.accountType === 'admin'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {player.accountType}
-                    </p>
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4 text-sm text-gray-500">
-                    {new Date(player.createdAt.iso).toLocaleDateString()}
-                  </Table.Cell>
-                  <Table.Cell className="px-4 py-4 text-sm font-medium">
-                    <Link
-                      href={`/players/player-profile/${player.objectId}`}
-                      className="text-blue-900"
-                    >
-                      View Details
-                    </Link>
-                  </Table.Cell>
-                </Table.Row>
-              ))
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4 text-sm text-gray-500">
+                      {fullDate}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4 text-sm font-medium">
+                      <Link
+                        href={`/players/player-profile/${player.objectId}`}
+                        className="text-blue-900"
+                      >
+                        View Details
+                      </Link>
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })
             ) : (
               <Table.Row>
                 <Table.Cell
