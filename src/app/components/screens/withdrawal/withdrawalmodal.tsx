@@ -5,7 +5,12 @@ import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
-import { useApproveWithdrawal, useRejectWithdrawal } from '@/app/api';
+// import { useApproveWithdrawal, useRejectWithdrawal } from '@/app/api';
+import {
+  useApproveWithdrawal,
+  useRejectWithdrawal,
+} from '@/app/api/withdrawal';
+
 import { toast } from 'sonner';
 import { toastPosition } from '@/app/utils/utils';
 
@@ -339,7 +344,9 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                       </motion.div>
                     </motion.div>
 
-                    {withdrawalData.status?.toLowerCase() !== 'resolved' && (
+                    {!['resolved', 'rejected'].includes(
+                      withdrawalData.status?.toLowerCase() || '',
+                    ) && (
                       <motion.div
                         className="flex flex-col gap-4"
                         variants={containerVariants}

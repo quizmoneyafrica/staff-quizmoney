@@ -48,10 +48,6 @@ export const useGetAllTransactionsWithStats = (
       payload.search = search.trim();
     }
 
-    // if (status && status !== 'All') {
-    //   payload.status = status.toLowerCase();
-    // }
-
     if (status && status !== 'All') {
       const statusMapping: Record<string, string> = {
         Successful: 'completed',
@@ -61,38 +57,47 @@ export const useGetAllTransactionsWithStats = (
       payload.status = statusMapping[status] || status.toLowerCase();
     }
 
-    if (dateRange?.start && dateRange.end) {
+    if (dateRange?.start && dateRange?.end) {
       payload.dateRange = {
         start: dateRange.start,
         end: dateRange.end,
       };
+      console.log('Adding dateRange to payload:', payload.dateRange);
     }
 
-    if (dateRangeStats?.start && dateRangeStats.end) {
+    if (dateRangeStats?.start && dateRangeStats?.end) {
       payload.dateRangeStats = {
         start: dateRangeStats.start,
         end: dateRangeStats.end,
       };
+      console.log('Adding dateRangeStats to payload:', payload.dateRangeStats);
     }
 
+    console.log(
+      'Final API Payload being sent:',
+      JSON.stringify(payload, null, 2),
+    );
     return payload;
   };
 
+  const queryKey = [
+    'get_all_transactions_with_stats',
+    page,
+    limit,
+    transactionType || null,
+    search || null,
+    status || null,
+    dateRange ? `${dateRange.start}-${dateRange.end}` : null,
+    dateRangeStats ? `${dateRangeStats.start}-${dateRangeStats.end}` : null,
+  ];
+
+  console.log('React Query Key:', queryKey);
+
   return useQuery({
-    queryKey: [
-      'get_all_transactions_with_stats',
-      page,
-      limit,
-      transactionType,
-      search,
-      status,
-      dateRange?.start,
-      dateRange?.end,
-      dateRangeStats?.start,
-      dateRangeStats?.end,
-    ],
-    queryFn: () =>
-      request
+    queryKey,
+    queryFn: () => {
+      console.log('Making API call with payload:', buildPayload());
+      return request
         .post(`/getAllTransactionsWithStats`, buildPayload())
         .then((res) => {
           console.log('API Response:', res.data);
@@ -101,7 +106,8 @@ export const useGetAllTransactionsWithStats = (
         .catch((error) => {
           console.error('API Error:', error);
           throw error.response?.data || error;
-        }),
+        });
+    },
     staleTime: search ? 2 * 60 * 1000 : 10 * 60 * 1000,
     refetchOnWindowFocus: false,
   });

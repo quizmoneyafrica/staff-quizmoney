@@ -23,18 +23,32 @@ interface Question {
   isExpanded: boolean;
 }
 
+const toNumber = (value: string | number | undefined): number => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') return Number(value) || 0;
+  return 0;
+};
+
+const toString = (value: string | number | undefined): string => {
+  if (value === undefined || value === null) return '';
+  return String(value);
+};
+
 function Page() {
   const dispatch = useAppDispatch();
   const game = useAppSelector((state) => state.game.createGame);
   const [datetimeInput, setDatetimeInput] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionsLimit] = useState(10); // Made it configurable
 
   const createGameMutation = useCreateGame({
     onSuccess: (data) => {
       console.log('Game created successfully:', data);
+      toast.success('Game created successfully!');
     },
     onError: (error) => {
       console.error('Failed to create game:', error);
+      toast.error('Failed to create game. Please try again.');
     },
   });
 
@@ -114,20 +128,79 @@ function Page() {
     setQuestions(updatedQuestions);
   };
 
-  const validateGameData = () => {
-    if (
-      !game.name?.trim() ||
-      !game.entryFee ||
-      !game.gamePrize ||
-      !game.numOfShare ||
-      !datetimeInput
-    ) {
-      toast.error('Please fill in all required game details');
+  const validateGameDetailsStepByStep = () => {
+    if (!game.name?.trim()) {
+      toast.error('Please enter a game name');
+
+      const nameField = document.querySelector(
+        'input[name="name"]',
+      ) as HTMLInputElement;
+      nameField?.focus();
       return false;
     }
 
+    if (!game.entryFee || toNumber(game.entryFee) < 100) {
+      toast.error('Please enter a valid entry fee (minimum ₦100)');
+      const entryFeeField = document.querySelector(
+        'input[name="entryFee"]',
+      ) as HTMLInputElement;
+      entryFeeField?.focus();
+      return false;
+    }
+
+    if (!game.gamePrize || toNumber(game.gamePrize) < 500) {
+      toast.error('Please enter a valid game prize (minimum ₦500)');
+      const gamePrizeField = document.querySelector(
+        'input[name="gamePrize"]',
+      ) as HTMLInputElement;
+      gamePrizeField?.focus();
+      return false;
+    }
+
+    if (!datetimeInput) {
+      toast.error('Please select a game date and time');
+      const dateTimeField = document.querySelector(
+        'input[name="startDateTime"]',
+      ) as HTMLInputElement;
+      dateTimeField?.focus();
+      return false;
+    }
+
+    const selectedDate = new Date(datetimeInput);
+    const now = new Date();
+    if (selectedDate <= now) {
+      toast.error('Game date and time must be in the future');
+      const dateTimeField = document.querySelector(
+        'input[name="startDateTime"]',
+      ) as HTMLInputElement;
+      dateTimeField?.focus();
+      return false;
+    }
+
+    if (!game.numOfShare || toNumber(game.numOfShare) < 1) {
+      toast.error('Please enter the number of winners to share prize');
+      const numOfShareField = document.querySelector(
+        'input[name="numOfShare"]',
+      ) as HTMLInputElement;
+      numOfShareField?.focus();
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateQuestions = () => {
     if (!questions || questions.length === 0) {
       toast.error('Please add at least one question');
+      return false;
+    }
+
+    if (questions.length < questionsLimit) {
+      toast.error(
+        `Please add exactly ${questionsLimit} questions. You currently have ${
+          questions.length
+        } question${questions.length === 1 ? '' : 's'}.`,
+      );
       return false;
     }
 
@@ -135,17 +208,24 @@ function Page() {
       const question = questions[i];
 
       if (!question.question?.trim()) {
-        toast.error(`Question ${i + 1} is missing question text`);
+        toast.error(`Question ${i + 1}: Please enter the question text`);
+        return false;
+      }
+
+      if (question.question.trim().length < 10) {
+        toast.error(
+          `Question ${i + 1}: Question must be at least 10 characters long`,
+        );
         return false;
       }
 
       if (question.correctOptionIndex === -1) {
-        toast.error(`Question ${i + 1} has no correct option selected`);
+        toast.error(`Question ${i + 1}: Please select the correct answer`);
         return false;
       }
 
       if (!question.options || question.options.length < 4) {
-        toast.error(`Question ${i + 1} must have at least 4 options`);
+        toast.error(`Question ${i + 1}: Must have at least 4 answer options`);
         return false;
       }
 
@@ -153,13 +233,17 @@ function Page() {
         const option = question.options[j];
         if (!option.text?.trim()) {
           const optionLetter = String.fromCharCode(65 + j);
-          toast.error(`Question ${i + 1}, Option ${optionLetter} is empty`);
+          toast.error(
+            `Question ${
+              i + 1
+            }, Option ${optionLetter}: Please enter option text`,
+          );
           return false;
         }
       }
 
       if (question.correctOptionIndex >= question.options.length) {
-        toast.error(`Question ${i + 1} has invalid correct option selection`);
+        toast.error(`Question ${i + 1}: Selected correct answer is invalid`);
         return false;
       }
     }
@@ -172,11 +256,14 @@ function Page() {
       const questionsToValidate = submittedQuestions || questions;
       setQuestions(questionsToValidate);
 
-      if (!validateGameData()) {
+      if (!validateGameDetailsStepByStep()) {
         return;
       }
 
-      // 🔁 Map local `Question[]` to `QuestionState[]`
+      if (!validateQuestions()) {
+        return;
+      }
+
       const mappedQuestions = questionsToValidate.map((q, index) => ({
         number: (index + 1).toString(),
         question: q.question,
@@ -189,6 +276,7 @@ function Page() {
       await createGameMutation.mutateAsync(apiPayload);
     } catch (error) {
       console.error('Error creating game:', error);
+      toast.error('Failed to create game. Please try again.');
     }
   };
 
@@ -221,7 +309,7 @@ function Page() {
               placeholder="1000"
               type="number"
               name="entryFee"
-              value={game.entryFee}
+              value={toString(game.entryFee)}
               inputMode="numeric"
               pattern="[0-9]*"
               onChange={handleGameDetailsChange}
@@ -232,7 +320,7 @@ function Page() {
               label="Game Prize (₦)"
               name="gamePrize"
               type="text"
-              value={`${game.gamePrize}`}
+              value={toString(game.gamePrize)}
               onChange={handleGameDetailsChange}
               inputMode="numeric"
               pattern="[0-9]*"
@@ -252,7 +340,7 @@ function Page() {
               label="Share Prize Between"
               name="numOfShare"
               type="text"
-              value={`${game.numOfShare}`}
+              value={toString(game.numOfShare)}
               onChange={handleGameDetailsChange}
               inputMode="numeric"
               pattern="[0-9]*"
@@ -263,7 +351,7 @@ function Page() {
               label="Set Questions Limit"
               name="questionsLimit"
               type="number"
-              value="10"
+              value={toString(questionsLimit)}
               readOnly
               disabled
               required
@@ -301,7 +389,7 @@ function Page() {
         onQuestionsChange={handleQuestionsChange}
         onSubmit={handleSubmitGame}
         isSubmitting={createGameMutation.isPending}
-        questionsLimit={10}
+        questionsLimit={questionsLimit}
       />
     </>
   );

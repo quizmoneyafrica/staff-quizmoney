@@ -7,12 +7,13 @@ import {
 } from '@radix-ui/react-dropdown-menu';
 import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ListFilter, Loader2 } from 'lucide-react';
 
 import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
 import { useGetAllTransactionsWithStats } from '@/app/hooks/useTransaction';
+import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 
 interface TransactionStats {
   totalWalletBalance: number;
@@ -104,6 +105,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const [sortBy, setSortBy] = useState<SortableTransactionKeys | ''>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
+  const [selected, setSelected] = useState('This week');
+  const [customDateRange, setCustomDateRange] = useState(null);
+
   const itemsPerPage = 10;
 
   type SortableTransactionKeys =
@@ -113,6 +117,89 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     | 'transactionType'
     | 'transactionStatus'
     | 'date';
+
+  const formatDateRange = (dateRange) => {
+    if (!dateRange || !dateRange.startDate || !dateRange.endDate) return null;
+
+    const formatDate = (date) => {
+      if (typeof date === 'string') return date;
+      return date.toISOString().split('T')[0];
+    };
+
+    return {
+      start: formatDate(dateRange.startDate),
+      end: formatDate(dateRange.endDate),
+    };
+  };
+
+  const calculatedDateRange = useMemo(() => {
+    const calculateDateRange = (selectedOption, customDateRange) => {
+      if (selectedOption === 'Custom' && customDateRange) {
+        return formatDateRange(customDateRange);
+      }
+
+      const today = new Date();
+      const formatDate = (date) => {
+        return date.toISOString().split('T')[0];
+      };
+
+      switch (selectedOption) {
+        case 'This week': {
+          const startOfWeek = new Date(today);
+          const dayOfWeek = today.getDay(); //
+
+          const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+          startOfWeek.setDate(today.getDate() - daysToSubtract);
+          startOfWeek.setHours(0, 0, 0, 0);
+
+          // End of week is Sunday
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          endOfWeek.setHours(23, 59, 59, 999);
+
+          console.log('This week date range calculated:', {
+            start: formatDate(startOfWeek),
+            end: formatDate(endOfWeek),
+            startOfWeek: startOfWeek.toISOString(),
+            endOfWeek: endOfWeek.toISOString(),
+          });
+
+          return {
+            start: formatDate(startOfWeek),
+            end: formatDate(endOfWeek),
+          };
+        }
+
+        case 'Last 30 days': {
+          const thirtyDaysAgo = new Date(today);
+          thirtyDaysAgo.setDate(today.getDate() - 30);
+          thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+          const endDate = new Date(today);
+          endDate.setHours(23, 59, 59, 999);
+
+          return {
+            start: formatDate(thirtyDaysAgo),
+            end: formatDate(endDate),
+          };
+        }
+
+        default:
+          return null;
+      }
+    };
+
+    return calculateDateRange(selected, customDateRange);
+  }, [selected, customDateRange]);
+
+  useEffect(() => {
+    console.log('=== DATE RANGE DEBUG ===');
+    console.log('Selected option:', selected);
+    console.log('Custom date range:', customDateRange);
+    console.log('Calculated date range:', calculatedDateRange);
+    console.log('========================');
+  }, [selected, customDateRange, calculatedDateRange]);
 
   const {
     data: apiResponse,
@@ -125,8 +212,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     undefined,
     searchTerm || undefined,
     statusFilter !== 'All' ? statusFilter : undefined,
-    undefined,
-    undefined,
+    calculatedDateRange,
+    calculatedDateRange,
   ) as {
     data: ApiResponse | undefined;
     isLoading: boolean;
@@ -180,6 +267,24 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const options = ['This week', 'Last 30 days', 'Custom'];
+
+  const handleSelect = (option) => {
+    console.log('Time range selected:', option);
+    setSelected(option);
+    setCurrentPage(1);
+
+    if (option !== 'Custom') {
+      setCustomDateRange(null);
+    }
+  };
+
+  const handleCustomDateChange = (dateRange) => {
+    console.log('Custom date range changed:', dateRange);
+    setCustomDateRange(dateRange);
     setCurrentPage(1);
   };
 
@@ -254,24 +359,25 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     <>
       <div className="overflow-x-auto">
         <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
-          <div className="flex items-center gap-4 ">
-            <div className="relative flex-grow">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0 "
-              />
-            </div>
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
             <div className="relative">
               <button
-                className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4  py-2 outline-none"
+                className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4 py-2 outline-none"
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
               >
-                <ListFilter className=" size-5 text-[#1B212D]" />
-                <span className=" hidden md:block  ">Filter by</span>
+                <ListFilter className="size-5 text-[#1B212D]" />
+                <span className="hidden md:block">Filter by</span>
               </button>
               {isFilterOpen && (
                 <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
@@ -295,6 +401,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 </div>
               )}
             </div>
+
+            <TimeRangeDropdown
+              options={options}
+              selected={selected}
+              onSelect={handleSelect}
+              customDateRange={customDateRange}
+              onCustomDateChange={handleCustomDateChange}
+            />
           </div>
         </div>
         <Table.Root
@@ -391,6 +505,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           Showing data {(currentPage - 1) * itemsPerPage + 1} to{' '}
           {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
           entries
+          {selected !== 'This week' && ` (${selected})`}
+          {statusFilter !== 'All' && ` • Filtered by ${statusFilter}`}
         </div>
         <Pagination
           currentPage={currentPage}

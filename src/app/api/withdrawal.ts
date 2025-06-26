@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRequestInstance } from './config';
 
@@ -12,6 +13,17 @@ interface WithdrawalRequestPayload {
   status?: string;
   search?: string;
   dateRange?: DateRange;
+}
+
+interface WithdrawalResponse {
+  results: any[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
 }
 
 export const useGetWithdrawalRequests = (
@@ -66,6 +78,8 @@ export const useGetWithdrawalRequests = (
         }),
     staleTime: search ? 2 * 60 * 1000 : 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+
+    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -114,7 +128,7 @@ export const useGetWithdrawalStats = () => {
     queryKey: ['get_withdrawal_stats'],
     queryFn: () =>
       request
-        .post(`/withdrawalRequestStats`)
+        .post(`/withdrawalRequestStatsV2`)
         .then((res) => res.data)
         .catch((error) => {
           throw error.response?.data || error;

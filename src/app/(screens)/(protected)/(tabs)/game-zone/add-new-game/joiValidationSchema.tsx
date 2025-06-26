@@ -100,14 +100,27 @@ const gameDetailsSchema = Joi.object({
 });
 
 // Questions form schema
+// export const questionsFormSchema = Joi.object({
+//   questions: Joi.array()
+//     .items(questionSchema)
+//     .min(1)
+//     .max(10)
+//     .required()
+//     .messages({
+//       'array.min': 'Please add at least one question',
+//       'array.max': 'You can add at most 10 questions',
+//       'any.required': 'Questions are required',
+//     }),
+// });
+
 export const questionsFormSchema = Joi.object({
   questions: Joi.array()
     .items(questionSchema)
-    .min(1)
+    .min(10)
     .max(10)
     .required()
     .messages({
-      'array.min': 'Please add at least one question',
+      'array.min': 'You must add exactly 10 questions to create a game',
       'array.max': 'You can add at most 10 questions',
       'any.required': 'Questions are required',
     }),

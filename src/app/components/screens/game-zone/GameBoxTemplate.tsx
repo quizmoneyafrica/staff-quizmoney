@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Game } from '@/app/store/gameSlice';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import DeleteConfirmationModal from '../../gamezone/deleteconfirmation';
 
 interface IGameBoxTemplateProps {
   game: Game;
-  deleteGame: (objectId: string) => void;
+  deleteGame: (objectId: string) => Promise<void>;
 }
 
 const GameBoxTemplate: React.FunctionComponent<IGameBoxTemplateProps> = (
@@ -16,6 +16,7 @@ const GameBoxTemplate: React.FunctionComponent<IGameBoxTemplateProps> = (
   const { game, deleteGame } = props;
   const router = useRouter();
   const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -23,8 +24,16 @@ const GameBoxTemplate: React.FunctionComponent<IGameBoxTemplateProps> = (
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    deleteGame(game.objectId);
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteGame(game.objectId);
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Delete operation failed:', error);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleEditGame = () => {
@@ -45,12 +54,17 @@ const GameBoxTemplate: React.FunctionComponent<IGameBoxTemplateProps> = (
 
         <button
           onClick={handleDelete}
-          className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 transition-colors duration-200 hover:bg-white/100"
-          style={{ cursor: 'pointer' }}
+          disabled={isDeleting}
+          className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 transition-colors duration-200 hover:bg-white/100 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ cursor: isDeleting ? 'not-allowed' : 'pointer' }}
           aria-label="Delete game"
           type="button"
         >
-          <Trash2 className="h-6 w-6 text-red-600" />
+          {isDeleting ? (
+            <Loader2 className="h-5 w-5 animate-spin text-red-600" />
+          ) : (
+            <Trash2 className="h-6 w-6 text-red-600" />
+          )}
         </button>
 
         <div className="z-[2] flex flex-col items-center justify-center gap-5">
@@ -72,14 +86,16 @@ const GameBoxTemplate: React.FunctionComponent<IGameBoxTemplateProps> = (
           <div className="flex items-center justify-center gap-5">
             <button
               onClick={handleEditGame}
-              className="font-heading bg-error-400 hover:bg-error-500 cursor-pointer rounded-full px-4 py-2 text-white transition-colors duration-200"
+              disabled={isDeleting}
+              className="font-heading bg-error-400 hover:bg-error-500 cursor-pointer rounded-full px-4 py-2 text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
               Edit Game
             </button>
             <button
               onClick={handleViewGameDetails}
-              className="font-heading bg-primary-900 hover:bg-primary-800 cursor-pointer rounded-full px-4 py-2 text-white transition-colors duration-200"
+              disabled={isDeleting}
+              className="font-heading bg-primary-900 hover:bg-primary-800 cursor-pointer rounded-full px-4 py-2 text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
               View Details
@@ -94,6 +110,7 @@ const GameBoxTemplate: React.FunctionComponent<IGameBoxTemplateProps> = (
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleConfirmDelete}
         title={`Are you sure you want to delete "${game.name}"?`}
+        isLoading={isDeleting}
       />
     </>
   );

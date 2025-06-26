@@ -26,6 +26,16 @@ export interface UpdateGamePayload {
   startDate?: string;
 }
 
+export interface GetAllGamesPayload {
+  page: number;
+  limit: number;
+  search: string;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+}
+
 const GameApi = {
   createGame(
     payload: CreateGamePayload,
@@ -44,20 +54,31 @@ const GameApi = {
   fetchNextGame(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(`${BASE_URL}/errorLoad`, {}, { headers: appHeaders });
   },
-  getAllGames(): Promise<AxiosResponse<ApiResponse>> {
+
+  getAllGames(
+    payload: GetAllGamesPayload,
+  ): Promise<AxiosResponse<ApiResponse>> {
+    return axios.post(`${BASE_URL}/getAllGames`, payload, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  getAllGamesOld(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/getAllGames`,
       {},
       { headers: getSessionTokenHeaders() },
     );
   },
+
   deleteGame(objectId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/deleteGame`,
-      { objectId },
+      { gameId: objectId },
       { headers: getSessionTokenHeaders() },
     );
   },
+
   getGameById(objectId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/getGameById`,
@@ -65,6 +86,7 @@ const GameApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
+
   registerForGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/registerForGame`,
@@ -72,6 +94,7 @@ const GameApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
+
   removeUserFromGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/removeUserFromGame`,
@@ -79,6 +102,7 @@ const GameApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
+
   deactivateSession(gameId: string) {
     return axios.post(
       `${BASE_URL}/deactivateSession`,
@@ -86,6 +110,7 @@ const GameApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
+
   getLoggedinUserGameResults(
     gameId: string,
   ): Promise<AxiosResponse<ApiResponse>> {
@@ -95,6 +120,7 @@ const GameApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
+
   updateErasers(erasersUsed: number) {
     return axios.post(
       `${BASE_URL}/updateErasers`,
@@ -102,6 +128,7 @@ const GameApi = {
       { headers: getSessionTokenHeaders() },
     );
   },
+
   recordGameAnswer(
     gameId: string,
     questionNumber: string,

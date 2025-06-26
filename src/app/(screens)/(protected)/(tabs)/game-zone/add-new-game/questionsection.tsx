@@ -36,7 +36,6 @@ interface QuestionsSectionProps {
   questionsLimit?: number;
 }
 
-// Type definitions for error handling
 interface FormError {
   message?: string;
   type?: string;
@@ -97,10 +96,56 @@ const QuestionsSection: React.FC<QuestionsSectionProps> = ({
   );
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  const [errorQueue, setErrorQueue] = useState<string[]>([]);
+  const [currentErrorIndex, setCurrentErrorIndex] = useState(0);
+
   React.useEffect(() => {
     const currentQuestions = getValues('questions');
     onQuestionsChange?.(currentQuestions);
   }, [questions, onQuestionsChange, getValues]);
+
+  const scrollToErrorField = (fieldPath: string) => {
+    const element = document.querySelector(
+      `[name="${fieldPath}"]`,
+    ) as HTMLElement;
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.focus();
+    }
+  };
+
+  const collectAllErrors = () => {
+    const allErrors: string[] = [];
+    const questionsData = getValues('questions');
+
+    questionsData.forEach((question, qIndex) => {
+      if (!question.question?.trim()) {
+        allErrors.push(`Question ${qIndex + 1} text is required`);
+      }
+      question.options.forEach((option, oIndex) => {
+        if (!option.text?.trim()) {
+          allErrors.push(
+            `Question ${qIndex + 1}, Option ${String.fromCharCode(
+              65 + oIndex,
+            )} is required`,
+          );
+        }
+      });
+      if (question.correctOptionIndex === -1) {
+        allErrors.push(
+          `Question ${qIndex + 1} must have a correct answer selected`,
+        );
+      }
+    });
+
+    if (questionsData.length < questionsLimit) {
+      allErrors.unshift(
+        `You must add exactly ${questionsLimit} questions (currently ${questionsData.length})`,
+      );
+    }
+
+    return allErrors;
+  };
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) {
@@ -151,7 +196,8 @@ const QuestionsSection: React.FC<QuestionsSectionProps> = ({
 
   const addNewQuestion = async () => {
     if (questions.length >= questionsLimit) {
-      setErrorMessage(`You can only add up to ${questionsLimit} questions`);
+      // setErrorMessage(`You can only add up to ${questionsLimit} questions`);
+      setErrorMessage(`You must have exactly ${questionsLimit} questions`);
       setTimeout(() => setErrorMessage(''), 3000);
       return;
     }
@@ -319,16 +365,62 @@ const QuestionsSection: React.FC<QuestionsSectionProps> = ({
     return null;
   };
 
-  const handleFormSubmit = handleSubmit(async (data) => {
-    try {
-      if (onSubmit) {
-        await onSubmit(data.questions);
-      }
-    } catch (error) {
-      console.error('Form submission error:', error);
-      toast.error('Failed to submit questions. Please try again.');
+  const showNextError = () => {
+    if (currentErrorIndex < errorQueue.length - 1) {
+      const nextIndex = currentErrorIndex + 1;
+      setCurrentErrorIndex(nextIndex);
+      toast.error(errorQueue[nextIndex]);
     }
-  });
+  };
+
+  const handleFormSubmit = handleSubmit(
+    async (data) => {
+      try {
+        if (onSubmit) {
+          await onSubmit(data.questions);
+        }
+      } catch (error) {
+        console.error('Form submission error:', error);
+        toast.error('Failed to submit questions. Please try again.');
+      }
+    },
+    (errors) => {
+      const allErrors = collectAllErrors();
+      setErrorQueue(allErrors);
+      setCurrentErrorIndex(0);
+
+      if (allErrors.length > 0) {
+        toast.error(allErrors[0]);
+
+        const questionsData = getValues('questions');
+        let found = false;
+
+        for (
+          let qIndex = 0;
+          qIndex < questionsData.length && !found;
+          qIndex++
+        ) {
+          if (!questionsData[qIndex].question?.trim()) {
+            scrollToErrorField(`questions.${qIndex}.question`);
+            found = true;
+          } else {
+            for (
+              let oIndex = 0;
+              oIndex < questionsData[qIndex].options.length && !found;
+              oIndex++
+            ) {
+              if (!questionsData[qIndex].options[oIndex].text?.trim()) {
+                scrollToErrorField(
+                  `questions.${qIndex}.options.${oIndex}.text`,
+                );
+                found = true;
+              }
+            }
+          }
+        }
+      }
+    },
+  );
 
   return (
     <div className="mt-10 space-y-4">
@@ -697,17 +789,28 @@ const QuestionsSection: React.FC<QuestionsSectionProps> = ({
 
           {onSubmit && (
             <div className="pt-8">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`w-full cursor-pointer rounded-lg px-6 py-3 font-medium text-white transition-colors md:w-auto ${
-                  isSubmitting
-                    ? 'cursor-not-allowed bg-gray-400'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {isSubmitting ? 'Creating Game...' : 'Create Game'}
-              </button>
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || questions.length !== questionsLimit}
+                  className={`w-full cursor-pointer rounded-lg px-6 py-3 font-medium text-white transition-colors md:w-auto ${
+                    isSubmitting || questions.length !== questionsLimit
+                      ? 'cursor-not-allowed bg-gray-400'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                >
+                  {isSubmitting
+                    ? 'Creating Game...'
+                    : `Create Game (${questions.length}/${questionsLimit} questions)`}
+                </button>
+              </div>
+
+              {questions.length !== questionsLimit && (
+                <p className="mt-2 text-sm text-red-600">
+                  You need exactly {questionsLimit} questions to create a game.
+                  Currently you have {questions.length}.
+                </p>
+              )}
             </div>
           )}
         </form>

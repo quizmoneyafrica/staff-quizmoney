@@ -10,12 +10,23 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import QuestionBox from './questionBox';
 import { NoQuestions } from '../../noQuestion';
-
 import { useUpdateGame } from '@/app/hooks/useUpdateGame';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+
+interface QuestionWithId extends QuestionState {
+  id: string;
+}
+
+interface GameWithIds extends Omit<Game, 'questions'> {
+  questions: QuestionWithId[];
+}
 
 function Page() {
   const params = useParams();
-  const [fetchedData, setFetchedData] = useState<Game>(initialGame);
+  const [fetchedData, setFetchedData] = useState<GameWithIds>({
+    ...initialGame,
+    questions: [],
+  });
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
   const [fetchingData, setFetchingData] = useState(true);
@@ -34,7 +45,17 @@ function Page() {
         setFetchingData(true);
         const res = await GameApi.getGameById(`${params.id}`);
         const result = res.data.result;
-        setFetchedData(result);
+
+        const questionsWithIds: QuestionWithId[] =
+          result.questions?.map((question: QuestionState, index: number) => ({
+            ...question,
+            id: `question-${index}-${Date.now()}`,
+          })) || [];
+
+        setFetchedData({
+          ...result,
+          questions: questionsWithIds,
+        });
 
         const isoString = result?.startDate?.iso;
         const dateObj = isoString ? new Date(isoString) : null;
@@ -112,9 +133,37 @@ function Page() {
     setFetchedData((prev) => ({
       ...prev,
       questions: prev.questions.map((question, index) =>
-        index === questionIndex ? updatedQuestion : question,
+        index === questionIndex
+          ? { ...updatedQuestion, id: question.id }
+          : question,
       ),
     }));
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
+
+    if (sourceIndex === destinationIndex) {
+      return;
+    }
+
+    setFetchedData((prev) => {
+      const newQuestions = Array.from(prev.questions);
+      const [reorderedItem] = newQuestions.splice(sourceIndex, 1);
+      newQuestions.splice(destinationIndex, 0, reorderedItem);
+
+      return {
+        ...prev,
+        questions: newQuestions,
+      };
+    });
+
+    toast.success('Question order updated');
   };
 
   const handleSave = async () => {
@@ -124,7 +173,6 @@ function Page() {
         return;
       }
 
-      // Transform questions to match API format
       const transformedQuestions = fetchedData.questions.map(
         (question, index) => ({
           number: index + 1,
@@ -137,7 +185,7 @@ function Page() {
       const payload = {
         objectId: String(params.id),
         name: fetchedData.name,
-        description: '', // Fixed: removed reference to fetchedData.description
+        description: '',
         questions: transformedQuestions,
         gamePrize: fetchedData.gamePrize,
         numOfShare: fetchedData.numOfShare,
@@ -231,23 +279,35 @@ function Page() {
           </div>
         </div>
 
-        {/* Questions */}
-        <>
-          {fetchedData?.questions?.length > 0 ? (
-            <>
-              {fetchedData?.questions?.map((question, index) => (
-                <QuestionBox
-                  key={index}
-                  questionNumber={index}
-                  question={question}
-                  onQuestionUpdate={handleQuestionUpdate}
-                />
-              ))}
-            </>
-          ) : (
-            <NoQuestions />
-          )}
-        </>
+        {/* Questions with Drag and Drop */}
+        {fetchedData?.questions?.length > 0 ? (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="questions-list">
+              {(provided, snapshot) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className={`space-y-4 ${
+                    snapshot.isDraggingOver ? 'bg-blue-50' : ''
+                  } transition-colors duration-200`}
+                >
+                  {fetchedData.questions.map((question, index) => (
+                    <QuestionBox
+                      key={question.id}
+                      questionNumber={index}
+                      question={question}
+                      questionId={question.id}
+                      onQuestionUpdate={handleQuestionUpdate}
+                    />
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        ) : (
+          <NoQuestions />
+        )}
       </div>
     </>
   );

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client';
 
 import WithdrawalCards, {
@@ -13,7 +15,7 @@ import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { useGetWithdrawalRequests, useGetWithdrawalStats } from '@/app/api';
+import { useGetWithdrawalRequests, useGetWithdrawalStats } from '@/app/api/';
 import {
   WalletCardIcon,
   WalletIconBig,
@@ -51,6 +53,7 @@ function Page() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1);
     }, 500);
 
     return () => clearTimeout(timer);
@@ -88,7 +91,6 @@ function Page() {
         startOfWeek.setDate(today.getDate() - daysFromMonday);
         startOfWeek.setHours(0, 0, 0, 0);
 
-        // End of week is today
         const endOfWeek = new Date(today);
         endOfWeek.setHours(23, 59, 59, 999);
 
@@ -117,9 +119,13 @@ function Page() {
     }
   };
 
-  const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
-    1,
-    1000,
+  const {
+    data,
+    isPending: fetchingDashData,
+    error,
+  } = useGetWithdrawalRequests(
+    currentPage,
+    itemsPerPage,
     selectedFilter?.toLowerCase(),
     debouncedSearchTerm,
     calculateDateRange(selected, customDateRange),
@@ -133,6 +139,42 @@ function Page() {
     }
     return [];
   }, [data]);
+
+  const paginationInfo = useMemo(() => {
+    if (data?.pagination) {
+      return {
+        currentPage: data.pagination.currentPage,
+        totalPages: data.pagination.totalPages,
+        totalCount: data.pagination.totalCount,
+        hasNext: data.pagination.hasNext,
+        hasPrevious: data.pagination.hasPrevious,
+      };
+    }
+
+    return {
+      currentPage: currentPage,
+      totalPages: 1,
+      totalCount: withdrawalData.length,
+      hasNext: false,
+      hasPrevious: false,
+    };
+  }, [data, currentPage, withdrawalData.length]);
+
+  const shouldShowPagination = useMemo(() => {
+    if (fetchingDashData) return false;
+
+    return (
+      paginationInfo.totalPages > 1 ||
+      currentPage > 1 ||
+      withdrawalData.length === itemsPerPage
+    );
+  }, [
+    fetchingDashData,
+    paginationInfo.totalPages,
+    currentPage,
+    withdrawalData.length,
+    itemsPerPage,
+  ]);
 
   const withdrawalStats = React.useMemo(() => {
     if (statsData?.result) {
@@ -220,64 +262,6 @@ function Page() {
     }
   };
 
-  const sortedData = React.useMemo(() => {
-    if (!withdrawalData || withdrawalData.length === 0) return [];
-
-    let sorted = [...withdrawalData];
-
-    if (sortBy) {
-      sorted = sorted.sort((a: UnknownObject, b: UnknownObject) => {
-        let aValue: string | number | Date;
-        let bValue: string | number | Date;
-
-        switch (sortBy) {
-          case 'id':
-            aValue = (a.id || '').toString().toLowerCase();
-            bValue = (b.id || '').toString().toLowerCase();
-            break;
-          case 'firstName':
-            aValue = (a.firstName || '').toString().toLowerCase();
-            bValue = (b.firstName || '').toString().toLowerCase();
-            break;
-          case 'balance':
-            aValue = Number(a.balance || 0);
-            bValue = Number(b.balance || 0);
-            break;
-          case 'amount':
-            aValue = Number(a.amount || 0);
-            bValue = Number(b.amount || 0);
-            break;
-          case 'status':
-            aValue = (a.status || 'pending').toString().toLowerCase();
-            bValue = (b.status || 'pending').toString().toLowerCase();
-            break;
-          case 'createdAt':
-            aValue = new Date(a.createdAt?.iso || a.createdAt || 0);
-            bValue = new Date(b.createdAt?.iso || b.createdAt || 0);
-            break;
-          default:
-            return 0;
-        }
-
-        if (sortOrder === 'asc') {
-          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-        } else {
-          return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-        }
-      });
-    }
-
-    return sorted;
-  }, [withdrawalData, sortBy, sortOrder]);
-
-  const paginatedData = React.useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return sortedData.slice(startIndex, endIndex);
-  }, [sortedData, currentPage, itemsPerPage]);
-
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -286,6 +270,7 @@ function Page() {
 
   const handleSelect = (option) => {
     setSelected(option);
+    setCurrentPage(1);
 
     if (option !== 'Custom') {
       setCustomDateRange(null);
@@ -361,7 +346,7 @@ function Page() {
             title="Total Pending Request"
             value={withdrawalStats.pendingRequests.toString()}
             bgColor="yellow"
-            showEye={true}
+            // showEye={true}
             isValueVisible={showPendingAmount}
             onEyeToggle={() => setShowPendingAmount(!showPendingAmount)}
             icon={<WalletCardIconDarkYellow />}
@@ -464,8 +449,8 @@ function Page() {
                     Loading withdrawal requests...
                   </Table.Cell>
                 </Table.Row>
-              ) : paginatedData.length > 0 ? (
-                paginatedData.map((item: UnknownObject, index: number) => {
+              ) : withdrawalData.length > 0 ? (
+                withdrawalData.map((item: UnknownObject, index: number) => {
                   const { time, fullDate } = formatDateTime(
                     item.createdAt?.iso || new Date().toISOString(),
                   );
@@ -554,11 +539,27 @@ function Page() {
                 <Table.Row>
                   <Table.Cell
                     colSpan={6}
-                    className="text-error-500 py-12 text-center font-bold"
+                    className="text-error-500 py-12 text-center"
                   >
-                    {selectedFilter === 'All'
-                      ? 'No Withdrawal Requests Found'
-                      : `No ${selectedFilter} Withdrawal Requests Found`}
+                    <div className="space-y-2">
+                      <p className="font-bold">
+                        {selectedFilter === 'All'
+                          ? 'No Withdrawal Requests Found'
+                          : `No ${selectedFilter} Withdrawal Requests Found`}
+                      </p>
+                      {currentPage > 1 && (
+                        <p className="text-sm text-gray-500">
+                          You&apos;re on page {currentPage}. Try{' '}
+                          <button
+                            onClick={() => handlePageChange(1)}
+                            className="text-primary-600 hover:text-primary-800 underline"
+                          >
+                            going to page 1
+                          </button>{' '}
+                          or adjusting your filters.
+                        </p>
+                      )}
+                    </div>
                   </Table.Cell>
                 </Table.Row>
               )}
@@ -566,20 +567,36 @@ function Page() {
           </Table.Root>
         </div>
 
-        {!fetchingDashData && paginatedData.length > 0 && (
+        {shouldShowPagination && (
           <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
             <div className="text-sm text-gray-500">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-              {Math.min(currentPage * itemsPerPage, sortedData.length)} of{' '}
-              {sortedData.length} entries
+              {paginationInfo.totalCount > 0 ? (
+                <>
+                  Showing {(paginationInfo.currentPage - 1) * itemsPerPage + 1}{' '}
+                  to{' '}
+                  {Math.min(
+                    paginationInfo.currentPage * itemsPerPage,
+                    paginationInfo.totalCount,
+                  )}{' '}
+                  of {paginationInfo.totalCount} entries
+                </>
+              ) : (
+                `Page ${currentPage} of ${paginationInfo.totalPages}`
+              )}
               {selectedFilter !== 'All' && ` (filtered by ${selectedFilter})`}
               {debouncedSearchTerm && ` (search: "${debouncedSearchTerm}")`}
             </div>
             <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
+              currentPage={paginationInfo.currentPage}
+              totalPages={paginationInfo.totalPages}
               onPageChange={handlePageChange}
             />
+          </div>
+        )}
+
+        {fetchingDashData && (
+          <div className="mt-4 flex justify-center p-4">
+            <div className="text-sm text-gray-500">Loading...</div>
           </div>
         )}
       </div>

@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 
 interface IDeleteConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   title?: string;
+  isLoading?: boolean;
 }
 
 const DeleteConfirmationModal: React.FunctionComponent<
@@ -15,18 +16,24 @@ const DeleteConfirmationModal: React.FunctionComponent<
   onClose,
   onConfirm,
   title = 'Are you sure you want to delete this game?',
+  isLoading = false,
 }) => {
   if (!isOpen) return null;
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && !isLoading) {
       onClose();
     }
   };
 
-  const handleConfirm = () => {
-    onConfirm();
-    onClose();
+  const handleConfirm = async () => {
+    await onConfirm();
+  };
+
+  const handleClose = () => {
+    if (!isLoading) {
+      onClose();
+    }
   };
 
   return (
@@ -36,8 +43,9 @@ const DeleteConfirmationModal: React.FunctionComponent<
     >
       <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <button
-          onClick={onClose}
-          className="absolute right-4 top-6 cursor-pointer text-black transition-colors hover:text-gray-700"
+          onClick={handleClose}
+          disabled={isLoading}
+          className="absolute right-4 top-6 cursor-pointer text-black transition-colors hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <X size={24} />
         </button>
@@ -55,13 +63,16 @@ const DeleteConfirmationModal: React.FunctionComponent<
           <div className="flex justify-center gap-4">
             <button
               onClick={handleConfirm}
-              className="cursor-pointer  rounded-full bg-blue-900 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700"
+              disabled={isLoading}
+              className="flex cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-900 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Yes, Delete
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isLoading ? 'Deleting...' : 'Yes, Delete'}
             </button>
             <button
-              onClick={onClose}
-              className="cursor-pointer rounded-full bg-red-500 px-6 py-2 font-medium text-white transition-colors hover:bg-red-600"
+              onClick={handleClose}
+              disabled={isLoading}
+              className="cursor-pointer rounded-full bg-red-500 px-6 py-2 font-medium text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               No, Cancel
             </button>
