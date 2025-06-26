@@ -9,8 +9,6 @@ import React, {
 } from 'react';
 import {
   Search,
-  ListFilter,
-  ChevronDown,
   MoreVertical,
   Send,
   Edit,
@@ -19,8 +17,6 @@ import {
 } from 'lucide-react';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
-import classNames from 'classnames';
-import Link from 'next/link';
 import Pagination from '../leaderboard/Pagination';
 import CreateNotificationModal from './PushNotificationModal';
 import SendNotificationModal from './SendNotificationModal';
@@ -411,7 +407,6 @@ const PushNotificationTable = () => {
   } | null>(null);
 
   const handleActionClick = (action: string, notificationId: string) => {
-    console.log(`${action} clicked for notification:`, notificationId);
     setOpenDropdown(null);
 
     if (action === 'Send') {

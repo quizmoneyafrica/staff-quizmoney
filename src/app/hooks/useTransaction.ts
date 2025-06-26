@@ -62,7 +62,6 @@ export const useGetAllTransactionsWithStats = (
         start: dateRange.start,
         end: dateRange.end,
       };
-      console.log('Adding dateRange to payload:', payload.dateRange);
     }
 
     if (dateRangeStats?.start && dateRangeStats?.end) {
@@ -70,13 +69,8 @@ export const useGetAllTransactionsWithStats = (
         start: dateRangeStats.start,
         end: dateRangeStats.end,
       };
-      console.log('Adding dateRangeStats to payload:', payload.dateRangeStats);
     }
 
-    console.log(
-      'Final API Payload being sent:',
-      JSON.stringify(payload, null, 2),
-    );
     return payload;
   };
 
@@ -91,16 +85,12 @@ export const useGetAllTransactionsWithStats = (
     dateRangeStats ? `${dateRangeStats.start}-${dateRangeStats.end}` : null,
   ];
 
-  console.log('React Query Key:', queryKey);
-
   return useQuery({
     queryKey,
     queryFn: () => {
-      console.log('Making API call with payload:', buildPayload());
       return request
         .post(`/getAllTransactionsWithStats`, buildPayload())
         .then((res) => {
-          console.log('API Response:', res.data);
           return res.data.result;
         })
         .catch((error) => {

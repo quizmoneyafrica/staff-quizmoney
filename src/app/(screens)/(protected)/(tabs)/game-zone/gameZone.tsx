@@ -53,7 +53,6 @@ function GameZone() {
         };
 
         const res = await GameApi.getAllGames(requestBody);
-        console.log('API result:', res);
 
         const games = Array.isArray(res.data.result?.data)
           ? res.data.result.data

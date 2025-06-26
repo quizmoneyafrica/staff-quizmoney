@@ -42,8 +42,7 @@ function Page() {
   const [questionsLimit] = useState(10); // Made it configurable
 
   const createGameMutation = useCreateGame({
-    onSuccess: (data) => {
-      console.log('Game created successfully:', data);
+    onSuccess: () => {
       toast.success('Game created successfully!');
     },
     onError: (error) => {

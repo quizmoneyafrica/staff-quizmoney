@@ -166,13 +166,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           endOfWeek.setDate(startOfWeek.getDate() + 6);
           endOfWeek.setHours(23, 59, 59, 999);
 
-          console.log('This week date range calculated:', {
-            start: formatDate(startOfWeek),
-            end: formatDate(endOfWeek),
-            startOfWeek: startOfWeek.toISOString(),
-            endOfWeek: endOfWeek.toISOString(),
-          });
-
           return {
             start: formatDate(startOfWeek),
             end: formatDate(endOfWeek),
@@ -200,14 +193,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
     return calculateDateRange(selected, customDateRange);
   }, [selected, customDateRange]);
-
-  useEffect(() => {
-    console.log('=== DATE RANGE DEBUG ===');
-    console.log('Selected option:', selected);
-    console.log('Custom date range:', customDateRange);
-    console.log('Calculated date range:', calculatedDateRange);
-    console.log('========================');
-  }, [selected, customDateRange, calculatedDateRange]);
 
   const {
     data: apiResponse,

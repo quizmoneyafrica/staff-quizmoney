@@ -11,8 +11,6 @@
 //       request
 //         .post(`/getAllTransactionsWithStats`)
 //         .then((res) => {
-//           console.log('✅ API Response Success:', res.data);
-//           console.log('✅ Full Response Object:', res);
 //           return res.data;
 //         })
 //         .catch((error) => {

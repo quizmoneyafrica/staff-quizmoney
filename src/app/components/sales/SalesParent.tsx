@@ -86,7 +86,7 @@ function SalesParent() {
           store?.dispatch(setSalesData(res.data.result));
         }
       } catch (error) {
-        console.log(error, 'Sales Error');
+        console.error(error, 'Sales Error');
       } finally {
         store.dispatch(setLoadingSales(false));
       }
