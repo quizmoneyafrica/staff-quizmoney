@@ -105,9 +105,7 @@ export function formatQuizDate(input: string): string {
 export function formatDateTime(isoString: string) {
   const date = new Date(isoString);
 
-  const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
-
-  const time = format(date, 'h:mm') + `:${milliseconds} ` + format(date, 'a');
+  const time = format(date, 'h:mm:SS a');
   const fullDate = format(date, 'MMM dd, yyyy');
 
   return {
