@@ -89,7 +89,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
   const transformApiData = (
     apiNotifications: PushNotificationFromAPI[],
   ): StaticPushNotificationData[] => {
-    console.log('Raw API data:', apiNotifications);
     const transformed = apiNotifications.map((notification) => {
       const { time, fullDate } = formatDateTime(notification.createdAt);
 
@@ -105,7 +104,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
         updatedAt: notification.updatedAt,
       };
     });
-    console.log('Transformed data:', transformed);
     return transformed;
   };
 
@@ -180,8 +178,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
           limit: itemsPerPage,
           searchTerm, //  search term to API if your API supports it
         });
-
-        console.log('API Response:', response);
 
         if (response.result?.pushNotifications) {
           const transformedData = transformApiData(
@@ -306,8 +302,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
         image: data.image,
       });
 
-      console.log('Create Response:', response);
-
       setCreateSuccess(true);
       setIsCreateModalOpen(false);
 
@@ -344,8 +338,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
         image: data.image,
       });
 
-      console.log('Update Response:', response);
-
       setEditSuccess(true);
       setIsCreateModalOpen(false);
       setIsEditMode(false);
@@ -374,8 +366,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
       const response = await notificationService.deletePushNotification({
         notificationId: notificationId,
       });
-
-      console.log('Delete Response:', response);
 
       setDeleteSuccess(true);
 

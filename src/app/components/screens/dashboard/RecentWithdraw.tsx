@@ -33,7 +33,7 @@ const RecentWithdraw: React.FunctionComponent = () => {
   // }, [dispatch, requests.length]);
 
   const fetchWithdrawalRequest = React.useCallback(async () => {
-    if ((requests?.length ?? 0) > 0) return;
+    if (requests?.length > 0) return;
     setFetching(true);
     try {
       const res = await WithdrawalApi.fetchWithdrawalRequest();

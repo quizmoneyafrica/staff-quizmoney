@@ -23,10 +23,10 @@ export const fetchToken = async () => {
       const token = await getToken(fcmMessaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_KEY_PAIR,
       });
-      if (token) {
-        console.log('FCM Token:', token);
-        // Save this token to your DB for the user
-      }
+      // if (token) {
+      //   console.info('token: ', token);
+      //   // Save this token to your DB for the user
+      // }
       return token;
     }
     return null;

@@ -63,10 +63,6 @@ function Page() {
     undefined,
     calculateDateRange(selected, customDateRange),
   );
-  console.log(
-    'calculateDateRange(selected, customDateRange): ',
-    calculateDateRange(selected, customDateRange),
-  );
 
   const handleStatsUpdate = (stats: any) => {
     setTransactionStats(stats);
