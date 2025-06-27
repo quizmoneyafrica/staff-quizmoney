@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Loader2,
   CheckCircle,
+  BarChart3,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,10 +22,13 @@ import {
   useSendNotificationToUsers,
 } from '@/app/hooks/useMutation';
 import PlayersApi from '@/app/api/playersApi';
+import NotificationSuccessPopup from './NotificationSuccessPopup';
+import { AxiosError } from 'axios';
 
 interface User {
   objectId: string;
   firstName: string;
+  lastName?: string;
   email: string;
   accountType: string;
   avatar: string;
@@ -35,13 +39,11 @@ interface User {
   };
 }
 
-interface ApiResponse {
-  result: {
-    totalNoOfUsers: number;
-    totalActiveUsers: number;
-    totalInactiveUsers: number;
-    data: User[];
-  };
+interface AllUsersResponse {
+  totalNoOfUsers: number;
+  totalActiveUsers: number;
+  totalInactiveUsers: number;
+  data: User[];
 }
 
 interface SendNotificationModalProps {
@@ -62,10 +64,25 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loadingProgress, setLoadingProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
   const usersPerPage = 10;
 
   const sendToAllMutation = useSendNotificationToAll();
   const sendToUsersMutation = useSendNotificationToUsers();
+
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    recipientCount: number;
+    isAllUsers: boolean;
+    notificationTitle: string;
+  }>({
+    recipientCount: 0,
+    isAllUsers: false,
+    notificationTitle: '',
+  });
 
   const {
     data: playersData,
@@ -73,25 +90,72 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     error: usersError,
     refetch: refetchUsers,
   } = useQuery({
-    queryKey: ['adminPlayers'],
+    queryKey: ['adminPlayers', 'all'],
     queryFn: async () => {
-      const response = await PlayersApi.fetchAdminPlayers();
-      return response.data as ApiResponse;
+      console.log('Fetching users...');
+      const result = await PlayersApi.fetchAllUsersWithProgress((progress) => {
+        console.log('Progress update:', progress);
+        setLoadingProgress({
+          current: progress.current,
+          total: progress.total,
+        });
+      });
+      console.log('Fetch completed:', result);
+      return result;
     },
-    enabled: isOpen,
+    enabled: isOpen, // Only fetch when modal is open
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    retry: (failureCount, error) => {
+      if ((error as AxiosError)?.code === 'ECONNABORTED') return false;
+      return failureCount < 2;
+    },
+    // retry: (failureCount, error) => {
+    //   if (error?.code === 'ECONNABORTED') return false;
+    //   return failureCount < 2;
+    // },
   });
 
-  const users = playersData?.result?.data || [];
-  const totalUsers = playersData?.result?.totalNoOfUsers || 0;
-  const activeUsers = playersData?.result?.totalActiveUsers || 0;
+  useEffect(() => {
+    if (playersData) {
+      console.log('Users loaded successfully:', playersData);
+      setLoadingProgress(null);
+    }
+  }, [playersData]);
+
+  useEffect(() => {
+    if (usersError) {
+      console.error('Error loading users:', usersError);
+      setLoadingProgress(null);
+    }
+  }, [usersError]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setLoadingProgress(null);
+    }
+  }, [isOpen]);
+
+  const users = playersData?.data || [];
+  const totalUsers = playersData?.totalNoOfUsers || 0;
+  const activeUsers = playersData?.totalActiveUsers || 0;
+
+  console.log('Current state:', {
+    users: users.length,
+    totalUsers,
+    activeUsers,
+    isLoadingUsers,
+    playersData: !!playersData,
+  });
 
   const filteredUsers = useMemo(() => {
+    console.log('Filtering users:', users.length, 'Search query:', searchQuery);
     return users.filter(
       (user) =>
-        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()),
+        (user.firstName?.toLowerCase() || '').includes(
+          searchQuery.toLowerCase(),
+        ) ||
+        (user.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()),
     );
   }, [users, searchQuery]);
 
@@ -105,14 +169,23 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     setSearchQuery('');
     setSelectedUsers([]);
     setCurrentPage(1);
+    setLoadingProgress(null);
+
+    sendToAllMutation.reset();
+    sendToUsersMutation.reset();
+
     onClose();
   };
 
   const handleSelectUsersClick = () => {
+    sendToAllMutation.reset();
+    sendToUsersMutation.reset();
     setShowUserSelection(true);
   };
 
   const handleBackClick = () => {
+    sendToAllMutation.reset();
+    sendToUsersMutation.reset();
     setShowUserSelection(false);
     setSearchQuery('');
     setCurrentPage(1);
@@ -159,7 +232,13 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
         title: notificationData.title,
         body: notificationData.body,
       });
-      handleClose();
+
+      setSuccessData({
+        recipientCount: totalUsers,
+        isAllUsers: true,
+        notificationTitle: notificationData.title,
+      });
+      setShowSuccessPopup(true);
     } catch (error) {
       console.error('Failed to send notification to all users:', error);
     }
@@ -181,10 +260,26 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
         title: notificationData.title,
         body: notificationData.body,
       });
-      handleClose();
+
+      setSuccessData({
+        recipientCount: selectedUsers.length,
+        isAllUsers: false,
+        notificationTitle: notificationData.title,
+      });
+      setShowSuccessPopup(true);
     } catch (error) {
       console.error('Failed to send notification to selected users:', error);
     }
+  };
+
+  const handleSuccessPopupClose = () => {
+    setShowSuccessPopup(false);
+    setSuccessData({
+      recipientCount: 0,
+      isAllUsers: false,
+      notificationTitle: '',
+    });
+    handleClose();
   };
 
   const handlePageChange = (page: number) => {
@@ -195,8 +290,10 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
 
   const isLoading =
     sendToAllMutation.isPending || sendToUsersMutation.isPending;
+
   const isSuccess =
-    sendToAllMutation.isSuccess || sendToUsersMutation.isSuccess;
+    (sendToAllMutation.isSuccess || sendToUsersMutation.isSuccess) &&
+    !showSuccessPopup;
   const error =
     sendToAllMutation.error || sendToUsersMutation.error || usersError;
 
@@ -235,7 +332,38 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                   </div>
                 </motion.div>
 
-                {playersData && (
+                {/* Loading Progress */}
+                {loadingProgress && (
+                  <div className="mb-4 rounded-md bg-blue-50 p-3">
+                    <div className="flex items-center gap-3">
+                      <BarChart3 className="h-5 w-5 text-blue-600" />
+                      <div className="flex-1">
+                        <div className="mb-1 text-sm font-medium text-blue-800">
+                          Loading users...
+                        </div>
+                        <div className="text-xs text-blue-600">
+                          Page {loadingProgress.current} of{' '}
+                          {loadingProgress.total}
+                        </div>
+                        <div className="mt-2 h-2 w-full rounded-full bg-blue-200">
+                          <div
+                            className="h-2 rounded-full bg-blue-600 transition-all duration-300"
+                            style={{
+                              width: `${
+                                (loadingProgress.current /
+                                  loadingProgress.total) *
+                                100
+                              }%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* User Stats */}
+                {playersData && !loadingProgress && (
                   <div className="mb-4 flex items-center gap-4 rounded-md bg-blue-50 p-3">
                     <Users className="h-5 w-5 text-blue-600" />
                     <div className="text-sm text-blue-800">
@@ -338,7 +466,10 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                             type="button"
                             onClick={handleSendToAll}
                             disabled={
-                              isLoading || !notificationData || isLoadingUsers
+                              isLoading ||
+                              !notificationData ||
+                              isLoadingUsers ||
+                              loadingProgress !== null
                             }
                             className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-blue-800 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           >
@@ -408,7 +539,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                       )}
 
                       {/* User List */}
-                      {!isLoadingUsers && (
+                      {!isLoadingUsers && !loadingProgress && (
                         <div className="space-y-3">
                           <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
                             <input
@@ -456,7 +587,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                                     alt={user.firstName}
                                     className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
                                     onError={(e) => {
-                                      // Fallback for broken images
                                       e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
                                         user.firstName,
                                       )}&background=3b82f6&color=fff`;
@@ -465,7 +595,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                                   <div className="grid min-w-0 flex-1 grid-cols-2 gap-8">
                                     <div className="flex flex-col">
                                       <p className="truncate text-sm font-medium text-gray-900">
-                                        {user.firstName}
+                                        {user.firstName} {user.lastName || ''}
                                       </p>
                                       <p className="truncate text-xs text-gray-500">
                                         {user.status === 'active'
@@ -482,13 +612,15 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                             ))}
                           </div>
 
-                          {currentUsers.length === 0 && !isLoadingUsers && (
-                            <div className="py-8 text-center text-gray-500">
-                              {searchQuery
-                                ? 'No users found matching your search.'
-                                : 'No users available.'}
-                            </div>
-                          )}
+                          {currentUsers.length === 0 &&
+                            !isLoadingUsers &&
+                            !loadingProgress && (
+                              <div className="py-8 text-center text-gray-500">
+                                {searchQuery
+                                  ? 'No users found matching your search.'
+                                  : 'No users available.'}
+                              </div>
+                            )}
 
                           {totalPages > 1 && (
                             <div className="flex items-center justify-between border-t border-gray-200 pt-3">
@@ -589,6 +721,14 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                           undone.
                         </p>
                       </div>
+
+                      <NotificationSuccessPopup
+                        isOpen={showSuccessPopup}
+                        onClose={handleSuccessPopupClose}
+                        recipientCount={successData.recipientCount}
+                        isAllUsers={successData.isAllUsers}
+                        notificationTitle={successData.notificationTitle}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>

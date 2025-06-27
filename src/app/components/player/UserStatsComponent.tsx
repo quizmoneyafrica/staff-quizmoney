@@ -1,9 +1,14 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import CustomImage from '../CustomImage';
-import { useSelector } from 'react-redux';
-import { selectPlayers } from '@/app/store/playersSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  selectPlayers,
+  setStatsLoading,
+  setStatsData,
+} from '@/app/store/playersSlice';
+import PlayersApi from '@/app/api/playersApi';
 import { Skeleton } from '@radix-ui/themes';
 
 interface Stat {
@@ -56,14 +61,48 @@ const LoadingStatCard: React.FC<{ index: number }> = ({ index }) => {
 };
 
 const UserStatsComponent: React.FC = () => {
-  const { playersData, isLoading: isStatLoading } = useSelector(selectPlayers);
-  const { totalActiveUsers, totalInactiveUsers, totalNoOfUsers } =
-    playersData ?? {};
+  const dispatch = useDispatch();
+  const { statsData, isStatsLoading } = useSelector(selectPlayers);
+
+  // Fetch stats data independently from table data
+  const fetchStatsData = useCallback(async () => {
+    try {
+      dispatch(setStatsLoading(true));
+
+      const params = {
+        page: 1,
+        limit: 1,
+      };
+
+      const res = await PlayersApi.fetchPlayers(params);
+
+      if (res.data.result) {
+        dispatch(
+          setStatsData({
+            totalNoOfUsers: res.data.result.totalNoOfUsers,
+            totalActiveUsers: res.data.result.totalActiveUsers,
+            totalInactiveUsers: res.data.result.totalInactiveUsers,
+          }),
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      dispatch(setStatsLoading(false));
+    }
+  }, [dispatch]);
+
+  // Fetch stats on component mount only
+  useEffect(() => {
+    if (!statsData) {
+      fetchStatsData();
+    }
+  }, [fetchStatsData, statsData]);
 
   const stats: Stat[] = [
     {
       title: 'Total No of Users',
-      value: `${totalNoOfUsers?.toLocaleString() ?? 0}`,
+      value: `${statsData?.totalNoOfUsers?.toLocaleString() ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -75,7 +114,7 @@ const UserStatsComponent: React.FC = () => {
     },
     {
       title: 'Total active Users',
-      value: `${totalActiveUsers?.toLocaleString() ?? 0}`,
+      value: `${statsData?.totalActiveUsers?.toLocaleString() ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -87,7 +126,7 @@ const UserStatsComponent: React.FC = () => {
     },
     {
       title: 'Total No of inactive Users',
-      value: `${totalInactiveUsers?.toLocaleString() ?? 0}`,
+      value: `${statsData?.totalInactiveUsers?.toLocaleString() ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -110,7 +149,7 @@ const UserStatsComponent: React.FC = () => {
     },
   };
 
-  if (isStatLoading) {
+  if (isStatsLoading) {
     return (
       <motion.div
         className="w-full"

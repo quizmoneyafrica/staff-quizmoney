@@ -41,7 +41,13 @@ interface StaticPushNotificationData {
 type SortField = 'id' | 'Subject' | 'notificationBody' | 'date';
 type SortDirection = 'asc' | 'desc';
 
-const PushNotificationTable = () => {
+interface PushNotificationTableProps {
+  onDataChange?: () => void;
+}
+
+const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
+  onDataChange,
+}) => {
   const [notifications, setNotifications] = useState<
     StaticPushNotificationData[]
   >([]);
@@ -78,12 +84,13 @@ const PushNotificationTable = () => {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const itemsPerPage = 7;
+  const itemsPerPage = 10;
 
   const transformApiData = (
     apiNotifications: PushNotificationFromAPI[],
   ): StaticPushNotificationData[] => {
-    return apiNotifications.map((notification) => {
+    console.log('Raw API data:', apiNotifications);
+    const transformed = apiNotifications.map((notification) => {
       const { time, fullDate } = formatDateTime(notification.createdAt);
 
       return {
@@ -98,7 +105,15 @@ const PushNotificationTable = () => {
         updatedAt: notification.updatedAt,
       };
     });
+    console.log('Transformed data:', transformed);
+    return transformed;
   };
+
+  const notifyDataChange = useCallback(() => {
+    if (onDataChange) {
+      onDataChange();
+    }
+  }, [onDataChange]);
 
   useEffect(() => {
     if (createSuccess) {
@@ -160,24 +175,20 @@ const PushNotificationTable = () => {
         setLoading(true);
         setError(null);
 
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setMonth(startDate.getMonth() - 6);
-
         const response = await notificationService.getPushNotifications({
           page,
           limit: itemsPerPage,
-          dateRange: {
-            start: startDate.toISOString().split('T')[0],
-            end: endDate.toISOString().split('T')[0],
-          },
+          searchTerm, //  search term to API if your API supports it
         });
+
+        console.log('API Response:', response);
 
         if (response.result?.pushNotifications) {
           const transformedData = transformApiData(
             response.result.pushNotifications,
           );
 
+          // If API doesn't support server-side search, filter client-side
           const filteredData = searchTerm
             ? transformedData.filter(
                 (notification) =>
@@ -194,7 +205,12 @@ const PushNotificationTable = () => {
             : transformedData;
 
           setNotifications(filteredData);
-          setTotalCount(response.result.totalCount || filteredData.length);
+
+          const actualCount = searchTerm
+            ? filteredData.length
+            : response.result.totalCount || transformedData.length;
+
+          setTotalCount(actualCount);
         } else {
           setNotifications([]);
           setTotalCount(0);
@@ -284,16 +300,21 @@ const PushNotificationTable = () => {
       setCreateLoading(true);
       setCreateError(null);
 
-      await notificationService.createPushNotification({
+      const response = await notificationService.createPushNotification({
         subject: data.subject,
         message: data.body,
         image: data.image,
       });
 
+      console.log('Create Response:', response);
+
       setCreateSuccess(true);
       setIsCreateModalOpen(false);
 
-      await fetchNotifications(currentPage, searchQuery);
+      setCurrentPage(1);
+      await fetchNotifications(1, searchQuery);
+
+      notifyDataChange();
     } catch (error) {
       console.error('Error creating notification:', error);
       setCreateError(
@@ -316,12 +337,14 @@ const PushNotificationTable = () => {
       setEditLoading(true);
       setEditError(null);
 
-      await notificationService.updatePushNotification({
+      const response = await notificationService.updatePushNotification({
         notificationId: data.notificationId,
         subject: data.subject,
         message: data.body,
         image: data.image,
       });
+
+      console.log('Update Response:', response);
 
       setEditSuccess(true);
       setIsCreateModalOpen(false);
@@ -329,6 +352,8 @@ const PushNotificationTable = () => {
       setEditingNotification(null);
 
       await fetchNotifications(currentPage, searchQuery);
+
+      notifyDataChange();
     } catch (error) {
       console.error('Error updating notification:', error);
       setEditError(
@@ -346,13 +371,26 @@ const PushNotificationTable = () => {
       setDeleteLoading(notificationId);
       setDeleteError(null);
 
-      await notificationService.deletePushNotification({
+      const response = await notificationService.deletePushNotification({
         notificationId: notificationId,
       });
 
+      console.log('Delete Response:', response);
+
       setDeleteSuccess(true);
 
-      await fetchNotifications(currentPage, searchQuery);
+      const remainingItems = totalCount - 1;
+      const maxPageAfterDelete = Math.ceil(remainingItems / itemsPerPage);
+
+      let pageToLoad = currentPage;
+      if (currentPage > maxPageAfterDelete && maxPageAfterDelete > 0) {
+        pageToLoad = maxPageAfterDelete;
+        setCurrentPage(pageToLoad);
+      }
+
+      await fetchNotifications(pageToLoad, searchQuery);
+
+      notifyDataChange();
     } catch (error) {
       console.error('Error deleting notification:', error);
       setDeleteError(

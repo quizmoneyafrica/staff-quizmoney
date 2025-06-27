@@ -1,45 +1,94 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import PlayersTable from './PlayersTable';
 import UserStatsComponent from './UserStatsComponent';
 import {
   selectPlayers,
   setLoadingPlayers,
   setPlayersData,
+  setDateRange,
 } from '@/app/store/playersSlice';
 import { store } from '@/app/store/store';
 import PlayersApi from '@/app/api/playersApi';
 import { useSelector } from 'react-redux';
-// import PlayersHeader from './PlayersHeader';
+import { useDebounce } from '@/app/hooks/useDebounce';
+import { calculateDateRange } from '@/app/utils/date-range';
 
 export default function PlayersParent() {
-  const { playersData } = useSelector(selectPlayers);
-  const fetchPlayersData = React.useCallback(async () => {
-    if (!playersData)
-      try {
-        store.dispatch(setLoadingPlayers(true));
-        const res = await PlayersApi.fetchAdminPlayers();
+  const {
+    currentPage,
+    itemsPerPage,
+    searchQuery,
+    selectedAccountType,
+    dateRange,
+  } = useSelector(selectPlayers);
 
-        if (res.data.result) {
-          store?.dispatch(setPlayersData(res.data.result));
-        }
-      } catch (error) {
-        console.error('error: ', error);
-      } finally {
-        store.dispatch(setLoadingPlayers(false));
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const fetchPlayersData = useCallback(async () => {
+    try {
+      store.dispatch(setLoadingPlayers(true));
+
+      const params: any = {
+        page: currentPage,
+        limit: itemsPerPage,
+      };
+
+      if (selectedAccountType) {
+        params.accountType = selectedAccountType;
       }
-  }, [playersData]);
+
+      if (debouncedSearchQuery) {
+        params.search = debouncedSearchQuery;
+      }
+
+      if (dateRange) {
+        params.dateRange = dateRange;
+      }
+
+      const res = await PlayersApi.fetchPlayers(params);
+
+      if (res.data.result) {
+        store.dispatch(
+          setPlayersData({
+            ...res.data.result,
+
+            totalNoOfUsers: res.data.result.totalNoOfUsers,
+            totalActiveUsers: res.data.result.totalActiveUsers,
+            totalInactiveUsers: res.data.result.totalInactiveUsers,
+          }),
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching players:', error);
+    } finally {
+      store.dispatch(setLoadingPlayers(false));
+    }
+  }, [
+    currentPage,
+    itemsPerPage,
+    debouncedSearchQuery,
+    selectedAccountType,
+    dateRange,
+  ]);
+
+  useEffect(() => {
+    // default date range to "This week" when component mounts
+    if (!dateRange) {
+      const defaultDateRange = calculateDateRange('This week', null);
+      store.dispatch(setDateRange(defaultDateRange));
+    }
+  }, [dateRange]);
 
   useEffect(() => {
     fetchPlayersData();
   }, [fetchPlayersData]);
 
   return (
-    <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden   py-6">
-      {/* <div className="flex justify-end">
-        <PlayersHeader />
-      </div> */}
+    <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
       <UserStatsComponent />
+
       <PlayersTable />
     </div>
   );

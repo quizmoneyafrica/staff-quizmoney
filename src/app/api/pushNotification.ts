@@ -20,10 +20,7 @@ export interface CreatePushNotificationRequest {
 export interface GetPushNotificationsRequest {
   page: number;
   limit: number;
-  dateRange?: {
-    start: string;
-    end: string;
-  };
+  searchTerm?: string; //  for server-side search
 }
 
 export interface UpdatePushNotificationRequest {
@@ -66,7 +63,7 @@ export interface PushNotificationFromAPI {
 export interface GetPushNotificationsResponse {
   message: string;
   pushNotifications: PushNotificationFromAPI[];
-  totalCount?: number;
+  totalCount: number; // Made required for proper pagination
 }
 
 export interface CreatePushNotificationResponse {

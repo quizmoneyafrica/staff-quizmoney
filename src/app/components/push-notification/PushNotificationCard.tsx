@@ -1,8 +1,9 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import CustomImage from '../CustomImage';
 import { Skeleton } from '@radix-ui/themes';
+import { notificationService } from '@/app/api/pushNotification';
 
 interface Stat {
   title: string;
@@ -13,6 +14,10 @@ interface Stat {
 
 interface StatCardProps {
   stat: Stat;
+}
+
+interface PushNotificationCardProps {
+  refreshTrigger?: number;
 }
 
 const LoadingStatCard: React.FC = () => {
@@ -53,14 +58,64 @@ const LoadingStatCard: React.FC = () => {
   );
 };
 
-const PushNotificationCard: React.FC = () => {
-  // Static notification count - replace with actual API call when available
-  const totalNotifications = 24;
-  const isLoading = false;
+const PushNotificationCard: React.FC<PushNotificationCardProps> = ({
+  refreshTrigger = 0,
+}) => {
+  const [totalNotifications, setTotalNotifications] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchNotificationCount = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log('Fetching notification count...');
+
+      const response = await notificationService.getPushNotifications({
+        page: 1,
+        limit: 1,
+      });
+
+      console.log('API Response:', response);
+
+      if (response.result && response.result.totalCount !== undefined) {
+        const count = response.result.totalCount || 0;
+        console.log('Total count from API:', count);
+        setTotalNotifications(count);
+      } else {
+        const errorMsg =
+          response.result?.message || 'Failed to fetch notification count';
+        setError(errorMsg);
+        console.error('API response error:', response);
+      }
+    } catch (err) {
+      setError('Network error - please check connection');
+      console.error('Error fetching notifications:', err);
+
+      if (err instanceof Error) {
+        console.error('Error message:', err.message);
+        console.error('Error stack:', err.stack);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotificationCount();
+  }, []);
+
+  // Refetch when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchNotificationCount();
+    }
+  }, [refreshTrigger]);
 
   const stat: Stat = {
     title: 'Total No Notification',
-    value: `${totalNotifications}`,
+    value: error ? '0' : `${totalNotifications}`,
     icon: (
       <CustomImage
         src={'/icons/useruser.svg'}
@@ -82,6 +137,7 @@ const PushNotificationCard: React.FC = () => {
   return (
     <div className="w-full">
       <StatCard stat={stat} />
+      {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
     </div>
   );
 };
