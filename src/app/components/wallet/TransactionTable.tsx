@@ -357,7 +357,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {sortedData && sortedData.length > 0 ? (
+              {sortedData && sortedData?.length > 0 ? (
                 sortedData.map((item, index) => (
                   <Table.Row
                     key={item.id}

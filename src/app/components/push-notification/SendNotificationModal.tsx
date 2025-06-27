@@ -92,15 +92,12 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   } = useQuery({
     queryKey: ['adminPlayers', 'all'],
     queryFn: async () => {
-      console.log('Fetching users...');
       const result = await PlayersApi.fetchAllUsersWithProgress((progress) => {
-        console.log('Progress update:', progress);
         setLoadingProgress({
           current: progress.current,
           total: progress.total,
         });
       });
-      console.log('Fetch completed:', result);
       return result;
     },
     enabled: isOpen, // Only fetch when modal is open
@@ -118,7 +115,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
 
   useEffect(() => {
     if (playersData) {
-      console.log('Users loaded successfully:', playersData);
       setLoadingProgress(null);
     }
   }, [playersData]);
@@ -149,7 +145,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   });
 
   const filteredUsers = useMemo(() => {
-    console.log('Filtering users:', users.length, 'Search query:', searchQuery);
     return users.filter(
       (user) =>
         (user.firstName?.toLowerCase() || '').includes(

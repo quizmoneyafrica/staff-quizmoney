@@ -70,18 +70,13 @@ const PushNotificationCard: React.FC<PushNotificationCardProps> = ({
       setIsLoading(true);
       setError(null);
 
-      console.log('Fetching notification count...');
-
       const response = await notificationService.getPushNotifications({
         page: 1,
         limit: 1,
       });
 
-      console.log('API Response:', response);
-
       if (response.result && response.result.totalCount !== undefined) {
         const count = response.result.totalCount || 0;
-        console.log('Total count from API:', count);
         setTotalNotifications(count);
       } else {
         const errorMsg =
