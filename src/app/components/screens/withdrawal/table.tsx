@@ -81,8 +81,10 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedData = sortedData.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+
+  const paginatedData = sortedData?.slice(startIndex, endIndex);
+
+  const totalPages = Math.ceil(sortedData?.length / itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -129,7 +131,8 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {paginatedData.length > 0 ? (
+            {/* {paginatedData.length > 0 ? ( */}
+            {paginatedData?.length > 0 ? (
               paginatedData.map((item, index) => {
                 const { time, fullDate } = formatDateTime(item.createdAt.iso);
 
@@ -232,7 +235,8 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
       <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
         <div className="text-sm text-gray-500">
           Showing data {startIndex + 1} to{' '}
-          {Math.min(endIndex, sortedData.length)} of {sortedData.length} entries
+          {Math.min(endIndex, sortedData?.length)} of {sortedData?.length}{' '}
+          entries
         </div>
         <Pagination
           currentPage={currentPage}

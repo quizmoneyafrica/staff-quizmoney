@@ -19,8 +19,21 @@ const RecentWithdraw: React.FunctionComponent = () => {
   const [selectedData, setSelectedData] = React.useState<WithdrawalRequest>();
   const [fetching, setFetching] = React.useState(false);
 
+  // const fetchWithdrawalRequest = React.useCallback(async () => {
+  //   if (requests.length > 0) return;
+  //   setFetching(true);
+  //   try {
+  //     const res = await WithdrawalApi.fetchWithdrawalRequest();
+  //     dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
+  //   } catch {
+  //     toast.error('Error fetching Withdrawal Request. Please refresh');
+  //   } finally {
+  //     setFetching(false);
+  //   }
+  // }, [dispatch, requests.length]);
+
   const fetchWithdrawalRequest = React.useCallback(async () => {
-    if (requests.length > 0) return;
+    if ((requests?.length ?? 0) > 0) return;
     setFetching(true);
     try {
       const res = await WithdrawalApi.fetchWithdrawalRequest();
@@ -30,7 +43,7 @@ const RecentWithdraw: React.FunctionComponent = () => {
     } finally {
       setFetching(false);
     }
-  }, [dispatch, requests.length]);
+  }, [dispatch, requests?.length]);
 
   React.useEffect(() => {
     fetchWithdrawalRequest();

@@ -87,7 +87,6 @@ function AppHeader() {
       dispatch(setNotifications(res.data.result.notifications));
     } catch (err) {
       const error = err as NotificationError;
-      console.error(error.message);
     }
   }, [dispatch]);
 
