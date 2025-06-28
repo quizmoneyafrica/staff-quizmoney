@@ -3,16 +3,25 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatNaira } from '@/app/utils/utils';
+import { FormatDateOptions } from 'date-fns';
 
 interface Transaction {
-  id: number;
-  transactionId: string;
-  transactionType: string;
-  amount: string;
-  dateTime: string;
-  action: string;
+  id: string;
+  transactionId?: string;
+  transactionType?: string;
   type: string;
-  status?: string;
+  amount: number;
+  status: string;
+  createdAt: {
+    __type: string;
+    iso: string;
+  };
+  description: string;
+
+  dateTime?: string;
+  action?: string;
+  date?: string;
+  [key: string]: unknown;
 }
 
 interface TransactionDetailsModalProps {
@@ -26,6 +35,69 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
   onClose,
   transactionData,
 }) => {
+  const getTransactionId = (transaction: Transaction) => {
+    return transaction.transactionId || transaction.id || 'N/A';
+  };
+
+  const getTransactionType = (transaction: Transaction) => {
+    return transaction.transactionType || transaction.type || 'N/A';
+  };
+
+  const formatDate = (transaction: Transaction) => {
+    if (transaction.createdAt?.iso) {
+      const date = new Date(transaction.createdAt.iso);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+
+    if (transaction.dateTime) {
+      const date = new Date(transaction.dateTime);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+
+    if (transaction.date) {
+      const date = new Date(transaction.date);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+
+    return 'N/A';
+  };
+
+  const formatAmount = (amount: number | string) => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return '₦0';
+
+    try {
+      return formatNaira(amount);
+    } catch {
+      return new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 0,
+      }).format(numAmount);
+    }
+  };
+
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
       <Dialog.Portal>
@@ -39,7 +111,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             <Dialog.Title className="mb-12 text-[32px] font-bold text-gray-900">
-              Transaction History
+              Transaction Details
             </Dialog.Title>
 
             {transactionData && (
@@ -49,7 +121,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                     Transaction ID
                   </span>
                   <span className="font-semibold text-gray-900">
-                    ID{transactionData.transactionId}
+                    {getTransactionId(transactionData)}
                   </span>
                 </div>
 
@@ -58,15 +130,21 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                     Transaction Type
                   </span>
                   <span className="font-semibold text-gray-900">
-                    {transactionData.transactionType}
+                    {getTransactionType(transactionData)}
                   </span>
                 </div>
 
+                {/* <div className="flex items-center justify-between">
+                  <span className="font-medium text-gray-600">Description</span>
+                  <span className="font-semibold text-gray-900">
+                    {transactionData.description || 'N/A'}
+                  </span>
+                </div> */}
+
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-600">Amount</span>
-
                   <span className="text-[22px] font-bold text-gray-900">
-                    {formatNaira(transactionData.amount)}
+                    {formatAmount(transactionData.amount)}
                   </span>
                 </div>
 
@@ -74,15 +152,25 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                   <span className="font-medium text-gray-600">
                     Transaction Status
                   </span>
-                  <span className="rounded-full bg-green-100 px-4 py-2 text-[16px] font-semibold text-green-700">
-                    {transactionData.status || 'Successful'}
+                  <span
+                    className={`rounded-full px-4 py-2 text-[16px] font-semibold ${
+                      transactionData.status === 'completed'
+                        ? 'bg-green-100 text-green-700'
+                        : transactionData.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : transactionData.status === 'failed'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {transactionData.status || 'Unknown'}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-600">Date & time</span>
+                  <span className="font-medium text-gray-600">Date & Time</span>
                   <span className="font-semibold text-gray-900">
-                    {transactionData.dateTime}
+                    {formatDate(transactionData)}
                   </span>
                 </div>
               </div>

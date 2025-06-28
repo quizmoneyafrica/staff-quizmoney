@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+  memo,
 } from 'react';
 import {
   Search,
@@ -44,6 +45,59 @@ type SortDirection = 'asc' | 'desc';
 interface PushNotificationTableProps {
   onDataChange?: () => void;
 }
+
+interface SearchHeaderProps {
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  onCreateClick: () => void;
+  createLoading: boolean;
+}
+
+const SearchHeader = memo<SearchHeaderProps>(
+  ({ searchQuery, onSearchChange, onCreateClick, createLoading }) => {
+    const handleSearchChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        onSearchChange(e.target.value);
+      },
+      [onSearchChange],
+    );
+
+    return (
+      <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
+        <div className="flex items-center gap-4 ">
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search notifications"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0 "
+            />
+          </div>
+        </div>
+        <div className="flex-shrink-0">
+          <button
+            onClick={onCreateClick}
+            disabled={createLoading}
+            className="cursor-pointer whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {createLoading ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating...
+              </div>
+            ) : (
+              'Create New Notification'
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  },
+);
+
+SearchHeader.displayName = 'SearchHeader';
 
 const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
   onDataChange,
@@ -113,6 +167,14 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
     }
   }, [onDataChange]);
 
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
+
+  const handleCreateClick = useCallback(() => {
+    setIsCreateModalOpen(true);
+  }, []);
+
   useEffect(() => {
     if (createSuccess) {
       const timer = setTimeout(() => {
@@ -176,7 +238,7 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
         const response = await notificationService.getPushNotifications({
           page,
           limit: itemsPerPage,
-          searchTerm, //  search term to API if your API supports it
+          searchTerm,
         });
 
         if (response.result?.pushNotifications) {
@@ -184,7 +246,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
             response.result.pushNotifications,
           );
 
-          // If API doesn't support server-side search, filter client-side
           const filteredData = searchTerm
             ? transformedData.filter(
                 (notification) =>
@@ -277,10 +338,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
       setCurrentPage(page);
       fetchNotifications(page, searchQuery);
     }
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
   };
 
   const toggleDropdown = (notificationId: string) => {
@@ -556,36 +613,13 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
         </div>
       )}
 
-      <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
-        <div className="flex items-center gap-4 ">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search notifications"
-              value={searchQuery}
-              onChange={handleSearch}
-              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0 "
-            />
-          </div>
-        </div>
-        <div className="flex-shrink-0">
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            disabled={createLoading}
-            className="cursor-pointer whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {createLoading ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Creating...
-              </div>
-            ) : (
-              'Create New Notification'
-            )}
-          </button>
-        </div>
-      </div>
+      {/* Memoized Search Header */}
+      <SearchHeader
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        onCreateClick={handleCreateClick}
+        createLoading={createLoading}
+      />
 
       <div className="overflow-x-auto">
         <Table.Root

@@ -8,52 +8,47 @@ import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
+import { CreditCard } from 'lucide-react';
 import Pagination from '../../leaderboard/Pagination';
 import WithdrawalModal from './withdrawalmodal';
-import { useGetWithdrawalRequests } from '@/app/api';
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useState } from 'react';
+
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}
 
 interface IRecentWithdrawTableProps {
   data: WithdrawalRequest[];
   viewDetails?: (data: WithdrawalRequest) => void;
   showDirectAction?: boolean;
+  pagination?: PaginationInfo;
+  onPageChange?: (page: number) => void;
+  currentPage?: number;
 }
 
 const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
   data,
   viewDetails,
   showDirectAction = false,
+  pagination,
+  onPageChange,
+  currentPage = 1,
 }) => {
   type SortableWithdrawalKeys =
-    | 'id'
+    | 'transactionId'
     | 'firstName'
     | 'amount'
     | 'balance'
-    | 'status'
-    | 'createdAt';
+    | 'status';
 
   const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | ''>('');
   const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] =
     useState<WithdrawalRequest | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-  const [selectedFilter] = useState<string>('pending');
-
-  //   const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
-  //     currentPage,
-  //     itemsPerPage,
-  //     selectedFilter?.toLowerCase(),
-  //   );
-  //
-  //   const withdrawalData = useMemo(() => {
-  //     if (data?.result) {
-  //       return data?.result?.withdrawalRequests ?? [];
-  //     }
-  //
-  //     return [];
-  //   }, [data]);
 
   const handleSort = (key: SortableWithdrawalKeys) => {
     if (sortBy === key) {
@@ -65,28 +60,19 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
   };
 
   const sortedData = React.useMemo(() => {
-    if (sortBy) {
-      return data.slice().sort((a, b) => {
+    if (sortBy && data) {
+      return [...data].sort((a, b) => {
         const order = sortOrder === 'asc' ? 1 : -1;
-        const aValue = a[sortBy] as string | number | Date;
-        const bValue = b[sortBy] as string | number | Date;
+        const aValue: string | number = a[sortBy] as string | number;
+        const bValue: string | number = b[sortBy] as string | number;
 
         if (aValue < bValue) return -1 * order;
         if (aValue > bValue) return 1 * order;
         return 0;
       });
     }
-    return data;
+    return data || [];
   }, [data, sortBy, sortOrder]);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = sortedData?.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(sortedData?.length / itemsPerPage);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
 
   const handleViewDetails = (item: WithdrawalRequest) => {
     setSelectedWithdrawal(item);
@@ -102,6 +88,12 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
     setSelectedWithdrawal(null);
   };
 
+  const handlePageChange = (page: number) => {
+    if (onPageChange) {
+      onPageChange(page);
+    }
+  };
+
   return (
     <>
       <div className="overflow-x-auto">
@@ -111,7 +103,10 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
         >
           <Table.Header className="bg-primary-50">
             <Table.Row>
-              <Th label="Request ID" onClick={() => handleSort('id')} />
+              <Th
+                label="Transaction ID"
+                onClick={() => handleSort('transactionId')}
+              />
               <Th label="First Name" onClick={() => handleSort('firstName')} />
               <Th
                 label="Wallet Balance"
@@ -129,22 +124,37 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {paginatedData?.length > 0 ? (
-              paginatedData.map((item, index) => {
-                const { time, fullDate } = formatDateTime(item.createdAt.iso);
+            {sortedData?.length > 0 ? (
+              sortedData.map((item, index) => {
+                const createdDate = new Date(item.createdAt.iso);
+                const formattedDateTime =
+                  createdDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }) +
+                  ' • ' +
+                  createdDate.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true,
+                  });
 
                 return (
-                  <Table.Row key={item.id}>
+                  <Table.Row key={item.transactionId}>
                     <Table.Cell className="whitespace-nowrap px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                          {index + 1}
+                          <CreditCard className="h-5 w-5 text-neutral-600" />
                         </div>
                         <div>
                           <p className="font-heading font-bold uppercase text-neutral-800">
-                            {fullDate}
+                            {item.transactionId}
                           </p>
-                          <p className="text-xs text-neutral-500">{time}</p>
+                          <p className="text-xs text-neutral-500">
+                            {formattedDateTime}
+                          </p>
                         </div>
                       </div>
                     </Table.Cell>
@@ -158,16 +168,25 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                             className="bg-primary-50"
                           />
                         </div>
-                        <p className="text-primary-800 capitalize">
-                          {item.firstName}
-                        </p>
+                        <div>
+                          <p className="text-primary-800 font-medium capitalize">
+                            {item.firstName} {item.lastName}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {item.email}
+                          </p>
+                        </div>
                       </div>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
-                      {formatNaira(Number(item.balance), true)}
+                      <span className="font-medium">
+                        {formatNaira(Number(item.balance), true)}
+                      </span>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
-                      {formatNaira(Number(item.amount), true)}
+                      <span className="font-medium text-orange-600">
+                        {formatNaira(Number(item.amount), true)}
+                      </span>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
                       <p
@@ -193,7 +212,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                       ) : (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <button>
+                            <button className="rounded p-1 hover:bg-gray-100">
                               <DotsVerticalIcon />
                             </button>
                           </DropdownMenuTrigger>
@@ -221,7 +240,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                   colSpan={6}
                   className="text-error-500 py-12 text-center font-bold"
                 >
-                  No Pending Request
+                  No Pending Withdrawal Requests
                 </Table.Cell>
               </Table.Row>
             )}
@@ -229,18 +248,19 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
         </Table.Root>
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
-        <div className="text-sm text-gray-500">
-          Showing data {startIndex + 1} to{' '}
-          {Math.min(endIndex, sortedData?.length)} of {sortedData?.length}{' '}
-          entries
+      {data && data.length > 0 && pagination && (
+        <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
+          <div className="text-sm text-gray-500">
+            Showing page {pagination.currentPage} of {pagination.totalPages}(
+            {pagination.totalItems} total entries)
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      </div>
+      )}
 
       <WithdrawalModal
         isOpen={isModalOpen}

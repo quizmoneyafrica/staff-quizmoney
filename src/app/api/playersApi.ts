@@ -1,6 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
 import { BASE_URL, getSessionTokenHeaders } from './userApi';
-import { ApiResponse } from './interface';
 
 interface FetchPlayersParams {
   page: number;
@@ -19,30 +18,32 @@ interface FetchPlayersParams {
 interface User {
   objectId: string;
   firstName: string;
-  lastName: string;
+  lastName?: string;
   email: string;
-  accountType: string;
+  accountType: 'user' | 'admin';
   createdAt: {
-    __type: string;
+    __type: 'Date';
     iso: string;
   };
-  avatar: string;
-  status: string;
+  avatar?: string;
+  status: 'active' | 'inactive'; //
 }
 
-interface PaginatedApiResponse {
-  result: {
-    totalNoOfUsers: number;
-    totalActiveUsers: number;
-    totalInactiveUsers: number;
-    data: User[];
-    pagination: {
-      currentPage: number;
-      limit: number;
-      totalPages: number;
-      totalItems: number;
-    };
+interface PaginatedUsersResponse {
+  totalNoOfUsers: number;
+  totalActiveUsers: number;
+  totalInactiveUsers: number;
+  data: User[];
+  pagination: {
+    currentPage: number;
+    limit: number;
+    totalPages: number;
+    totalItems: number;
   };
+}
+
+interface FetchPlayersApiResponse {
+  result: PaginatedUsersResponse;
 }
 
 interface AllUsersResponse {
@@ -55,10 +56,10 @@ interface AllUsersResponse {
 const PlayersApi = {
   fetchPlayers(
     params: FetchPlayersParams,
-  ): Promise<AxiosResponse<ApiResponse>> {
+  ): Promise<AxiosResponse<FetchPlayersApiResponse>> {
     const requestParams = {
       ...params,
-      limit: 10,
+      limit: params.limit || 10,
     };
 
     return axios.post(`${BASE_URL}/fetchPlayers`, requestParams, {
@@ -66,10 +67,11 @@ const PlayersApi = {
     });
   },
 
-  // Fetch all users by paginating through all pages
+  // Fetch all users by paginating
   async fetchAllUsers(
     accountType?: string,
     search?: string,
+    dateRange?: { start: string; end: string },
     batchSize: number = 100,
   ): Promise<AllUsersResponse> {
     const allUsers: User[] = [];
@@ -78,13 +80,14 @@ const PlayersApi = {
     let totalInactiveUsers = 0;
 
     try {
-      const firstResponse = await axios.post<PaginatedApiResponse>(
+      const firstResponse = await axios.post<FetchPlayersApiResponse>(
         `${BASE_URL}/fetchPlayers`,
         {
           page: 1,
           limit: batchSize,
           ...(accountType && { accountType }),
           ...(search && { search }),
+          ...(dateRange && { dateRange }),
         },
         {
           headers: getSessionTokenHeaders(),
@@ -104,13 +107,14 @@ const PlayersApi = {
 
         for (let page = 2; page <= totalPages; page++) {
           remainingRequests.push(
-            axios.post<PaginatedApiResponse>(
+            axios.post<FetchPlayersApiResponse>(
               `${BASE_URL}/fetchPlayers`,
               {
                 page,
                 limit: batchSize,
                 ...(accountType && { accountType }),
                 ...(search && { search }),
+                ...(dateRange && { dateRange }),
               },
               {
                 headers: getSessionTokenHeaders(),
@@ -121,7 +125,6 @@ const PlayersApi = {
 
         const responses = await Promise.all(remainingRequests);
 
-        // Collect all users
         responses.forEach((response) => {
           allUsers.push(...response.data.result.data);
         });
@@ -139,106 +142,36 @@ const PlayersApi = {
     }
   },
 
-  // Alternative: Fetch users in batches with a callback for progress updates
-  async fetchAllUsersWithProgress(
-    onProgress: (progress: {
-      current: number;
-      total: number;
-      users: User[];
-    }) => void,
-    accountType?: string,
-    search?: string,
-    batchSize: number = 100,
-  ): Promise<AllUsersResponse> {
-    const allUsers: User[] = [];
-    let totalNoOfUsers = 0;
-    let totalActiveUsers = 0;
-    let totalInactiveUsers = 0;
+  async fetchUsersWithFilters(
+    filters: {
+      accountType?: string;
+      search?: string;
+      dateRange?: { start: string; end: string };
+      status?: 'active' | 'inactive';
+    } = {},
+    pagination: {
+      page?: number;
+      limit?: number;
+    } = {},
+  ): Promise<AxiosResponse<FetchPlayersApiResponse>> {
+    const requestParams = {
+      page: pagination.page || 1,
+      limit: pagination.limit || 10,
+      ...filters,
+    };
 
-    try {
-      const firstResponse = await axios.post<PaginatedApiResponse>(
-        `${BASE_URL}/fetchPlayers`,
-        {
-          page: 1,
-          limit: batchSize,
-          ...(accountType && { accountType }),
-          ...(search && { search }),
-        },
-        {
-          headers: getSessionTokenHeaders(),
-        },
-      );
-
-      const { result } = firstResponse.data;
-      const totalPages = result.pagination.totalPages;
-      totalNoOfUsers = result.totalNoOfUsers;
-      totalActiveUsers = result.totalActiveUsers;
-      totalInactiveUsers = result.totalInactiveUsers;
-
-      allUsers.push(...result.data);
-
-      onProgress({
-        current: 1,
-        total: totalPages,
-        users: [...allUsers],
-      });
-
-      for (let page = 2; page <= totalPages; page++) {
-        const response = await axios.post<PaginatedApiResponse>(
-          `${BASE_URL}/fetchPlayers`,
-          {
-            page,
-            limit: batchSize,
-            ...(accountType && { accountType }),
-            ...(search && { search }),
-          },
-          {
-            headers: getSessionTokenHeaders(),
-          },
-        );
-
-        allUsers.push(...response.data.result.data);
-
-        onProgress({
-          current: page,
-          total: totalPages,
-          users: [...allUsers],
-        });
-
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-
-      return {
-        totalNoOfUsers,
-        totalActiveUsers,
-        totalInactiveUsers,
-        data: allUsers,
-      };
-    } catch (error) {
-      console.error('Error fetching all users with progress:', error);
-      throw error;
-    }
+    return axios.post(`${BASE_URL}/fetchPlayers`, requestParams, {
+      headers: getSessionTokenHeaders(),
+    });
   },
+};
 
-  // old method for backward compatibility
-  /**
-   * @deprecated Use fetchAllUsers() instead for better handling of large datasets
-   */
-  fetchAdminPlayers(): Promise<AxiosResponse<ApiResponse>> {
-    console.warn(
-      'fetchAdminPlayers is deprecated. Use fetchAllUsers() instead.',
-    );
-    return axios.post(
-      `${BASE_URL}/fetchPlayers`,
-      {
-        page: 1,
-        limit: 1000, // This is problematic for large datasets
-      },
-      {
-        headers: getSessionTokenHeaders(),
-      },
-    );
-  },
+export type {
+  User,
+  PaginatedUsersResponse,
+  FetchPlayersApiResponse,
+  AllUsersResponse,
+  FetchPlayersParams,
 };
 
 export default PlayersApi;

@@ -2,22 +2,81 @@
 
 'use client';
 import React, { useState } from 'react';
-import { ListFilter, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ListFilter,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+} from 'lucide-react';
 import { usePlayerTransactions } from '@/app/hooks/usePlayerProfile';
 import CustomImage from '../CustomImage';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
+import { useRef, useEffect, useCallback } from 'react';
+
+const getTransactionId = (transaction: Transaction) => {
+  return transaction.transactionId || transaction.id || 'N/A';
+};
+
+const getTransactionType = (transaction: Transaction) => {
+  return transaction.transactionType || transaction.type || 'N/A';
+};
+
+const formatDate = (transaction: Transaction) => {
+  if (transaction.createdAt?.iso) {
+    const date = new Date(transaction.createdAt.iso);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  if (transaction.dateTime) {
+    const date = new Date(transaction.dateTime);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  if (transaction.date) {
+    const date = new Date(transaction.date);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  return 'N/A';
+};
 
 interface Transaction {
-  id: number;
-  transactionId: string;
-  transactionType: string;
-  amount: string;
-  dateTime: string;
-  action: string;
+  id: string;
+  transactionId?: string;
   type: string;
-  status?: string;
+  amount: number;
+  status: string;
+  createdAt: {
+    __type: string;
+    iso: string;
+  };
+  description: string;
+
+  transactionType?: string;
+  dateTime?: string;
+  action?: string;
   date?: string;
-  description?: string;
   [key: string]: unknown;
 }
 
@@ -141,10 +200,17 @@ export default function PlayerTransactionHistory({
     useState<Transaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('');
-  const [filterStatus, setFilterStatus] = useState<string>('completed');
 
+  const [selectedFilter, setSelectedFilter] = useState<string>('All');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const transactionLimit = 10;
+
+  const getApiFilterStatus = (filter: string) => {
+    return filter === 'All' ? undefined : filter.toLowerCase();
+  };
 
   const {
     data: transactionResponse,
@@ -154,20 +220,53 @@ export default function PlayerTransactionHistory({
   } = usePlayerTransactions(userId, {
     page: currentPage,
     limit: transactionLimit,
-    type: filterType || undefined,
-    status: filterStatus || undefined,
-
-    // dateRange: {
-    //   start: '2025-05-13',
-    //   end: '2025-06-09'
-    // }
+    status: getApiFilterStatus(selectedFilter),
+    search: searchTerm.trim() || undefined,
   });
 
-  // Use the response from the new hook or fallback to prop data
   const transactions = transactionData || transactionResponse?.transactions;
   const currentItems = transactions?.data || [];
   const totalPages = transactions?.pagination?.totalPages || 1;
   const currentPageFromAPI = transactions?.pagination?.currentPage || 1;
+
+  const filteredItems = currentItems.filter((txn) => {
+    if (!searchTerm.trim()) return true;
+
+    const search = searchTerm.trim().toLowerCase();
+    const txnId = getTransactionId(txn).toLowerCase();
+    const txnType = getTransactionType(txn).toLowerCase();
+    const txnStatus = (txn.status ?? '').toLowerCase();
+    const txnDescription = (txn.description ?? '').toLowerCase();
+    const txnDate = formatDate(txn).toLowerCase();
+
+    return (
+      txnId.includes(search) ||
+      txnType.includes(search) ||
+      txnStatus.includes(search) ||
+      txnDescription.includes(search) ||
+      txnDate.includes(search)
+    );
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filterDropdownRef.current &&
+        !filterDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedFilter, searchTerm]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -183,10 +282,63 @@ export default function PlayerTransactionHistory({
     setSelectedTransaction(null);
   };
 
-  const handleSearch = (e: React.FormEvent | React.KeyboardEvent) => {
-    e.preventDefault();
+  const debouncedSearch = useCallback(
+    debounce((searchValue: string) => {
+      setCurrentPage(1);
+    }, 300),
+    [],
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
+
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number,
+  ): (...args: Parameters<T>) => void {
+    let timeout: NodeJS.Timeout;
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  }
+
+  useEffect(() => {
+    if (
+      searchTerm &&
+      searchInputRef.current &&
+      document.activeElement !== searchInputRef.current
+    ) {
+      const shouldRefocus =
+        searchInputRef.current.dataset.wasFocused === 'true';
+      if (shouldRefocus) {
+        searchInputRef.current.focus();
+
+        const length = searchInputRef.current.value.length;
+        searchInputRef.current.setSelectionRange(length, length);
+      }
+    }
+  }, [filteredItems, searchTerm]);
+
+  const handleSearchFocus = () => {
+    if (searchInputRef.current) {
+      searchInputRef.current.dataset.wasFocused = 'true';
+    }
+  };
+
+  const handleSearchBlur = () => {
+    if (searchInputRef.current) {
+      searchInputRef.current.dataset.wasFocused = 'false';
+    }
+  };
+
+  const handleFilterSelect = (status: string) => {
+    setSelectedFilter(status);
+    setIsFilterOpen(false);
     setCurrentPage(1);
-    refetch();
   };
 
   const formatAmount = (amount?: number, type?: string) => {
@@ -200,18 +352,6 @@ export default function PlayerTransactionHistory({
     return type === 'debit' || type === 'withdrawal'
       ? `- ${formattedAmount}`
       : formattedAmount;
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
   };
 
   const getTransactionIcon = (type?: string, status?: string) => {
@@ -234,34 +374,6 @@ export default function PlayerTransactionHistory({
     return 'text-red-600';
   };
 
-  if (isLoading) {
-    return (
-      <div className="w-full" data-aos="fade-up" data-aos-duration="800">
-        <div className="mb-4 flex items-center justify-between rounded-md bg-white px-5 py-5">
-          <h2 className="font-bold">Transaction History</h2>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Loading transactions...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full" data-aos="fade-up" data-aos-duration="800">
-        <div className="mb-4 flex items-center justify-between rounded-md bg-white px-5 py-5">
-          <h2 className="font-bold">Transaction History</h2>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-red-500">
-            Error loading transactions. Please try again.
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full" data-aos="fade-up" data-aos-duration="800">
       <div
@@ -271,14 +383,18 @@ export default function PlayerTransactionHistory({
       >
         <h2 className="font-bold">Transaction History</h2>
         <div className="flex items-center gap-2 md:gap-5">
+          {/* Search Input */}
           <div className="relative w-full rounded-md border border-[#F5F5F5] focus:border-[#F5F5F5] md:w-fit">
             <input
+              ref={searchInputRef}
               type="text"
               placeholder="Search transactions..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+              onChange={handleSearchChange}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
               className="focus:ring-primary-900 w-full rounded-md border-none py-2 pl-10 pr-4 outline-none focus:ring-0"
+              disabled={isLoading}
             />
             <svg
               className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-500"
@@ -296,168 +412,193 @@ export default function PlayerTransactionHistory({
             </svg>
           </div>
 
-          {/* <div className="flex gap-2">
-            <select
-              value={filterType}
-              onChange={(e) => {
-                setFilterType(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-md border border-[#F5F5F5] px-2 py-2 text-sm outline-none"
+          <div className="relative" ref={filterDropdownRef}>
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`flex items-center gap-1 whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50 ${
+                isLoading ? 'cursor-not-allowed opacity-50' : ''
+              }`}
+              disabled={isLoading}
             >
-              <option value="">All Types</option>
-              <option value="deposit">Deposit</option>
-              <option value="withdrawal">Withdrawal</option>
-              <option value="bonus">Bonus</option>
-              <option value="refund">Refund</option>
-            </select>
-            <select
-              value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-md border border-[#F5F5F5] px-2 py-2 text-sm outline-none"
-            >
-              <option value="">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div> */}
+              <ListFilter className="size-5 text-[#1B212D]" />
+              <span className="hidden md:block">
+                {selectedFilter === 'All' ? 'Filter by' : selectedFilter}
+              </span>
+              <ChevronDown
+                className={`size-4 text-[#1B212D] transition-transform ${
+                  isFilterOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
 
-          <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#F5F5F5] px-4 py-2 outline-none">
-            <ListFilter className="size-5 text-[#1B212D]" />
-            <span className="hidden md:block">Filter by</span>
-          </button>
+            {isFilterOpen && (
+              <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-[#D9D9D9] bg-white shadow-lg">
+                <ul className="py-1">
+                  {['All', 'completed', 'pending', 'failed'].map((status) => (
+                    <li key={status}>
+                      <button
+                        className={`w-full px-4 py-2 text-left text-sm capitalize hover:bg-gray-100 ${
+                          selectedFilter === status
+                            ? 'bg-gray-100 font-semibold'
+                            : ''
+                        } ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
+                        onClick={() => handleFilterSelect(status)}
+                        disabled={isLoading}
+                      >
+                        {status}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {currentItems.length === 0 ? (
+      {error && (
         <div className="flex items-center justify-center rounded-lg bg-white py-12">
-          <div className="text-gray-500">No transactions found.</div>
+          <div className="text-red-500">
+            Error loading transactions. Please try again.
+          </div>
         </div>
-      ) : (
+      )}
+
+      {!error && (
         <>
-          <div className="w-full overflow-x-auto rounded-lg">
-            <div className="min-w-[900px]">
-              <table className="w-full">
-                <thead className="bg-inherit">
-                  <tr>
-                    <th
-                      className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                      data-aos="fade-up"
-                      data-aos-delay="200"
-                    >
-                      Transaction ID
-                    </th>
-                    <th
-                      className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                      data-aos="fade-up"
-                      data-aos-delay="300"
-                    >
-                      Transaction Type
-                    </th>
-                    <th
-                      className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                      data-aos="fade-up"
-                      data-aos-delay="400"
-                    >
-                      Amount
-                    </th>
-                    <th
-                      className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                      data-aos="fade-up"
-                      data-aos-delay="500"
-                    >
-                      Date & Time
-                    </th>
-                    <th
-                      className="w-[100px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                      data-aos="fade-up"
-                      data-aos-delay="550"
-                    >
-                      Status
-                    </th>
-                    <th
-                      className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                      data-aos="fade-up"
-                      data-aos-delay="600"
-                    >
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {currentItems.map((transaction, index) => (
-                    <tr
-                      key={transaction.transactionId || index}
-                      data-aos="fade-up"
-                      data-aos-delay={700 + index * 100}
-                    >
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <CustomImage
-                            src={getTransactionIcon(
+          {isLoading ? (
+            <div className="flex items-center justify-center rounded-lg bg-white py-12">
+              <div className="flex items-center gap-2 text-gray-500">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600"></div>
+                Loading transactions...
+              </div>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex items-center justify-center rounded-lg bg-white py-12">
+              <div className="text-gray-500">No transactions found.</div>
+            </div>
+          ) : (
+            <>
+              <div className="w-full overflow-x-auto rounded-lg">
+                <div className="min-w-[900px]">
+                  <table className="w-full">
+                    <thead className="bg-inherit">
+                      <tr>
+                        <th
+                          className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          data-aos="fade-up"
+                          data-aos-delay="200"
+                        >
+                          Transaction ID
+                        </th>
+                        <th
+                          className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          data-aos="fade-up"
+                          data-aos-delay="300"
+                        >
+                          Transaction Type
+                        </th>
+                        <th
+                          className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          data-aos="fade-up"
+                          data-aos-delay="400"
+                        >
+                          Amount
+                        </th>
+                        <th
+                          className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          data-aos="fade-up"
+                          data-aos-delay="500"
+                        >
+                          Date & Time
+                        </th>
+                        <th
+                          className="w-[100px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          data-aos="fade-up"
+                          data-aos-delay="550"
+                        >
+                          Status
+                        </th>
+                        <th
+                          className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          data-aos="fade-up"
+                          data-aos-delay="600"
+                        >
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {filteredItems.map((transaction, index) => (
+                        <tr
+                          key={transaction.id || index}
+                          data-aos="fade-up"
+                          data-aos-delay={700 + index * 100}
+                        >
+                          <td className="whitespace-nowrap px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <CustomImage
+                                src={getTransactionIcon(
+                                  transaction.type,
+                                  transaction.status,
+                                )}
+                                alt="transaction status"
+                                className="size-5"
+                              />
+                              {getTransactionId(transaction)}
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4">
+                            {getTransactionType(transaction)}
+                          </td>
+                          <td
+                            className={`whitespace-nowrap px-6 py-4 font-medium ${getAmountColor(
                               transaction.type,
                               transaction.status,
-                            )}
-                            alt="transaction status"
-                            className="size-5"
-                          />
-                          {transaction.transactionId || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        {transaction.description || transaction.type || 'N/A'}
-                      </td>
-                      <td
-                        className={`whitespace-nowrap px-6 py-4 font-medium ${getAmountColor(
-                          transaction.type,
-                          transaction.status,
-                        )}`}
-                      >
-                        {formatAmount(transaction.amount, transaction.type)}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        {formatDate(transaction.date)}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                            transaction.status === 'completed'
-                              ? 'bg-green-100 text-green-800'
-                              : transaction.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : transaction.status === 'failed'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {transaction.status || 'Unknown'}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4">
-                        <button
-                          className="bg-primary-900 hover:bg-primary-500 cursor-pointer rounded-3xl px-4 py-2 text-sm text-white"
-                          onClick={() => handleViewDetails(transaction)}
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                            )}`}
+                          >
+                            {formatAmount(transaction.amount, transaction.type)}
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4">
+                            {formatDate(transaction)}
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize ${
+                                transaction.status === 'completed'
+                                  ? 'bg-green-100 text-green-800'
+                                  : transaction.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : transaction.status === 'failed'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {transaction.status || 'Unknown'}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4">
+                            <button
+                              className="bg-primary-900 hover:bg-primary-500 cursor-pointer rounded-3xl px-4 py-2 text-sm text-white"
+                              onClick={() => handleViewDetails(transaction)}
+                            >
+                              View Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-          <Pagination
-            currentPage={currentPageFromAPI}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+              <Pagination
+                currentPage={currentPageFromAPI}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </>
+          )}
         </>
       )}
 

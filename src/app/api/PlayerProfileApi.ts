@@ -27,6 +27,7 @@ interface GetPlayerTransactionsRequest {
   limit: number;
   type?: string;
   status?: string;
+  search?: string;
   dateRange?: {
     start: string;
     end: string;
@@ -43,14 +44,22 @@ interface GameHistoryItem {
   extraData?: Record<string, unknown>;
 }
 
-interface TransactionItem {
+export interface TransactionItem {
+  id: string;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: {
+    __type: string;
+    iso: string;
+  };
+  description: string;
+
   transactionId?: string;
-  type?: string;
-  amount?: number;
-  status?: string;
+  transactionType?: string;
+  dateTime?: string;
   date?: string;
-  description?: string;
-  extraData?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 interface PlayerProfileData {
@@ -177,7 +186,7 @@ export type {
   GetPlayerTransactionsRequest,
   PlayerProfileData,
   GameHistoryItem,
-  TransactionItem,
+  // TransactionItem,
   GameStatsResponse,
   PlayerTransactionsResponse,
 };

@@ -42,7 +42,7 @@ function Page() {
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  const filterOptions = ['All', 'Approved', 'Pending', 'Rejected'];
+  const filterOptions = ['All', 'Resolved', 'Pending', 'Rejected'];
 
   const options = ['This week', 'Last 30 days', 'Custom'];
 

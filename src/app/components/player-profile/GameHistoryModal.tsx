@@ -7,16 +7,18 @@ import CustomImage from '../CustomImage';
 
 type GameHistoryItem = {
   id: string;
-  date: string;
+  date: string | { iso: string };
   reward: {
     type: 'money' | 'item';
     value: string;
     itemCount?: number;
   };
-  status: 'Won' | 'Loss';
+  status: 'Won' | 'Loss' | 'won' | 'lost';
   correctScore: number;
   incorrectScore: number;
   totalTime: string;
+  gameId?: string;
+  position?: number;
 };
 
 type GameHistoryModalProps = {
@@ -24,6 +26,59 @@ type GameHistoryModalProps = {
 };
 
 export default function GameHistoryModal({ game }: GameHistoryModalProps) {
+  const formatDateTime = (dateValue: string | { iso: string }): string => {
+    try {
+      let dateObj: Date;
+
+      if (typeof dateValue === 'string') {
+        dateObj = new Date(dateValue);
+      } else if (
+        dateValue &&
+        typeof dateValue === 'object' &&
+        'iso' in dateValue
+      ) {
+        dateObj = new Date(dateValue.iso);
+      } else {
+        return 'Invalid Date';
+      }
+
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid Date';
+      }
+
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      };
+
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      };
+
+      const formattedDate = dateObj.toLocaleDateString('en-US', dateOptions);
+      const formattedTime = dateObj.toLocaleTimeString('en-US', timeOptions);
+
+      return `${formattedDate} at ${formattedTime}`;
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
+  };
+
+  const getStatusDisplay = (status: string) => {
+    const normalizedStatus = status.toLowerCase();
+    const isWon = normalizedStatus === 'won';
+    const displayText = isWon ? 'Won' : 'Lost';
+    const colorClass = isWon ? 'text-green-500' : 'text-red-600';
+
+    return { displayText, colorClass };
+  };
+
+  const statusDisplay = getStatusDisplay(game.status);
+
   return (
     <Dialog.Portal>
       <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
@@ -40,18 +95,14 @@ export default function GameHistoryModal({ game }: GameHistoryModalProps) {
           <div className="space-y-7 text-[18px]">
             <div className="flex justify-between">
               <span className="font-medium text-gray-700">Game ID</span>
-              <span className="font-semibold text-black">ID{game.id}</span>
+
+              <span className="font-semibold text-black">{game.id}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-medium text-gray-700">Game Status</span>
-              <span
-                className={
-                  game.status === 'Won'
-                    ? 'font-semibold text-green-500'
-                    : 'font-semibold text-red-600'
-                }
-              >
-                {game.status}
+
+              <span className={`font-semibold ${statusDisplay.colorClass}`}>
+                {statusDisplay.displayText}
               </span>
             </div>
             <div className="flex justify-between">
@@ -70,7 +121,7 @@ export default function GameHistoryModal({ game }: GameHistoryModalProps) {
                 <span className="font-bold">
                   {game.incorrectScore} Incorrect
                 </span>
-                <CustomImage src={'/icons/tickRed.svg'} alt="tick green" />
+                <CustomImage src={'/icons/tickRed.svg'} alt="tick red" />
               </span>
             </div>
             <div className="flex justify-between">
@@ -81,8 +132,20 @@ export default function GameHistoryModal({ game }: GameHistoryModalProps) {
               <span className="font-medium text-gray-700">
                 Game date &amp; time
               </span>
-              <span className="font-semibold text-black">{game.date}</span>
+
+              <span className="font-semibold text-black">
+                {formatDateTime(game.date)}
+              </span>
             </div>
+
+            {/* {game.position && (
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-700">Position</span>
+                <span className="font-semibold text-black">
+                  #{game.position}
+                </span>
+              </div>
+            )} */}
           </div>
           <Dialog.Close asChild>
             <button

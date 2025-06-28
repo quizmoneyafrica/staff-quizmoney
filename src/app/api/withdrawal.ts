@@ -39,7 +39,12 @@ export const useGetWithdrawalRequests = (
     const payload: WithdrawalRequestPayload = {
       page,
       limit,
-      status: filter === 'all' ? undefined : filter,
+      status:
+        filter === 'all'
+          ? undefined
+          : filter === 'approved'
+          ? 'resolved'
+          : filter,
     };
 
     if (search && search.trim()) {

@@ -18,6 +18,7 @@ import {
   setSelectedTimeRange,
   setCustomDateRange,
   setDateRange,
+  resetFilters,
 } from '@/app/store/playersSlice';
 import { formatDateTime } from '@/app/utils/utils';
 import { serializeDateRange, isValidDateRange } from '@/app/utils/dateUtils';
@@ -46,7 +47,7 @@ const PlayersTable = () => {
   } = useSelector(selectPlayers);
 
   const players: Player[] = playersData?.data ?? [];
-  // use server-side pagination data
+
   const totalPages = playersData?.pagination?.totalPages || 0;
   const totalItems = playersData?.pagination?.totalItems || 0;
   const currentLimit = playersData?.pagination?.limit || 10;
@@ -58,20 +59,17 @@ const PlayersTable = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [localSearchValue, setLocalSearchValue] = useState(searchQuery);
   const [cursorPosition, setCursorPosition] = useState<number>(0);
-  // const focusTimeoutRef = useRef<NodeJS.Timeout>();
+
   const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
   const timeRangeOptions = ['This week', 'Last 30 days', 'Custom'];
 
-  // Initialize with "This week" filter on component mount
   useEffect(() => {
-    if (!selectedTimeRange || selectedTimeRange !== 'This week') {
-      dispatch(setSelectedTimeRange('This week'));
-      const calculatedDateRange = calculateDateRange('This week', null);
-      dispatch(setDateRange(calculatedDateRange));
-    }
+    dispatch(resetFilters());
+    const calculatedDateRange = calculateDateRange('This week', null);
+    dispatch(setDateRange(calculatedDateRange));
   }, [dispatch]);
 
   useEffect(() => {
@@ -528,7 +526,7 @@ const PlayersTable = () => {
               'No entries found'
             )}
           </div>
-          {/* FIXED: Conditionally render pagination and handle disabled state */}
+
           {totalPages > 0 && (
             <div
               className={classNames(

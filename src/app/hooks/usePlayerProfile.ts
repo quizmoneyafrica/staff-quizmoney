@@ -5,7 +5,6 @@ import PlayerApi, {
   PlayerProfileData,
   PlayerTransactionsResponse,
 } from '../api/PlayerProfileApi';
-import { ApiResponse } from '../api/interface';
 
 const DEFAULT_PARAMS = {
   gameHistoryPage: 1,
@@ -68,7 +67,6 @@ export const usePlayerTransactions = (
     queryFn: async (): Promise<PlayerTransactionsResponse['result']> => {
       try {
         const response = await PlayerApi.getPlayerTransactions(requestParams);
-
         if (response.data.result) {
           return response.data.result;
         } else {

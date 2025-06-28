@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -13,7 +13,6 @@ import {
   ArrowLeft,
   Loader2,
   CheckCircle,
-  BarChart3,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,30 +20,13 @@ import {
   useSendNotificationToAll,
   useSendNotificationToUsers,
 } from '@/app/hooks/useMutation';
-import PlayersApi from '@/app/api/playersApi';
+import PlayersApi, {
+  type FetchPlayersApiResponse,
+  type PaginatedUsersResponse,
+  type User,
+} from '@/app/api/playersApi';
 import NotificationSuccessPopup from './NotificationSuccessPopup';
 import { AxiosError } from 'axios';
-
-interface User {
-  objectId: string;
-  firstName: string;
-  lastName?: string;
-  email: string;
-  accountType: string;
-  avatar: string;
-  status: string;
-  createdAt: {
-    __type: string;
-    iso: string;
-  };
-}
-
-interface AllUsersResponse {
-  totalNoOfUsers: number;
-  totalActiveUsers: number;
-  totalInactiveUsers: number;
-  data: User[];
-}
 
 interface SendNotificationModalProps {
   isOpen: boolean;
@@ -64,10 +46,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loadingProgress, setLoadingProgress] = useState<{
-    current: number;
-    total: number;
-  } | null>(null);
   const usersPerPage = 10;
 
   const sendToAllMutation = useSendNotificationToAll();
@@ -89,82 +67,69 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     isLoading: isLoadingUsers,
     error: usersError,
     refetch: refetchUsers,
-  } = useQuery({
-    queryKey: ['adminPlayers', 'all'],
+  } = useQuery<FetchPlayersApiResponse, AxiosError, PaginatedUsersResponse>({
+    queryKey: ['adminPlayers', currentPage, searchQuery, usersPerPage],
     queryFn: async () => {
-      const result = await PlayersApi.fetchAllUsersWithProgress((progress) => {
-        setLoadingProgress({
-          current: progress.current,
-          total: progress.total,
-        });
+      const result = await PlayersApi.fetchPlayers({
+        page: currentPage,
+        limit: usersPerPage,
+        search: searchQuery || undefined,
       });
-      return result;
+      return result.data;
     },
-    enabled: isOpen, // Only fetch when modal is open
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    enabled: showUserSelection,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
       if ((error as AxiosError)?.code === 'ECONNABORTED') return false;
       return failureCount < 2;
     },
-    // retry: (failureCount, error) => {
-    //   if (error?.code === 'ECONNABORTED') return false;
-    //   return failureCount < 2;
-    // },
+    select: (data) => data.result,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const { data: totalUsersData, isLoading: isLoadingTotalUsers } = useQuery<
+    FetchPlayersApiResponse,
+    AxiosError,
+    PaginatedUsersResponse
+  >({
+    queryKey: ['totalUsers'],
+    queryFn: async () => {
+      const result = await PlayersApi.fetchPlayers({
+        page: 1,
+        limit: 1,
+      });
+      return result.data;
+    },
+    enabled: isOpen && !showUserSelection,
+    staleTime: 5 * 60 * 1000,
+    select: (data) => data.result,
   });
 
   useEffect(() => {
-    if (playersData) {
-      setLoadingProgress(null);
-    }
-  }, [playersData]);
-
-  useEffect(() => {
-    if (usersError) {
-      console.error('Error loading users:', usersError);
-      setLoadingProgress(null);
-    }
-  }, [usersError]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setLoadingProgress(null);
+    if (!isOpen) {
+      setSearchQuery('');
+      setCurrentPage(1);
+      setSelectedUsers([]);
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const users = playersData?.data || [];
-  const totalUsers = playersData?.totalNoOfUsers || 0;
-  const activeUsers = playersData?.totalActiveUsers || 0;
-
-  console.log('Current state:', {
-    users: users.length,
-    totalUsers,
-    activeUsers,
-    isLoadingUsers,
-    playersData: !!playersData,
-  });
-
-  const filteredUsers = useMemo(() => {
-    return users.filter(
-      (user) =>
-        (user.firstName?.toLowerCase() || '').includes(
-          searchQuery.toLowerCase(),
-        ) ||
-        (user.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()),
-    );
-  }, [users, searchQuery]);
-
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
-  const startIndex = (currentPage - 1) * usersPerPage;
-  const endIndex = startIndex + usersPerPage;
-  const currentUsers = filteredUsers.slice(startIndex, endIndex);
+  const totalUsers =
+    totalUsersData?.totalNoOfUsers || playersData?.totalNoOfUsers || 0;
+  const activeUsers =
+    totalUsersData?.totalActiveUsers || playersData?.totalActiveUsers || 0;
+  const totalPages = playersData?.pagination?.totalPages || 1;
 
   const handleClose = () => {
     setShowUserSelection(false);
     setSearchQuery('');
     setSelectedUsers([]);
     setCurrentPage(1);
-    setLoadingProgress(null);
 
     sendToAllMutation.reset();
     sendToUsersMutation.reset();
@@ -184,6 +149,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     setShowUserSelection(false);
     setSearchQuery('');
     setCurrentPage(1);
+    setSelectedUsers([]);
   };
 
   const handleUserToggle = (userId: string) => {
@@ -195,15 +161,16 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   };
 
   const handleSelectAll = () => {
+    const currentUserIds = users.map((user) => user.objectId);
+
     if (
-      selectedUsers.length === currentUsers.length &&
-      currentUsers.every((user) => selectedUsers.includes(user.objectId))
+      selectedUsers.length === currentUserIds.length &&
+      currentUserIds.every((id) => selectedUsers.includes(id))
     ) {
       setSelectedUsers((prev) =>
-        prev.filter((id) => !currentUsers.map((u) => u.objectId).includes(id)),
+        prev.filter((id) => !currentUserIds.includes(id)),
       );
     } else {
-      const currentUserIds = currentUsers.map((user) => user.objectId);
       setSelectedUsers((prev) => {
         const newSelected = [...prev];
         currentUserIds.forEach((id) => {
@@ -283,6 +250,12 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     }
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setCurrentPage(1);
+  };
+
   const isLoading =
     sendToAllMutation.isPending || sendToUsersMutation.isPending;
 
@@ -291,6 +264,11 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
     !showSuccessPopup;
   const error =
     sendToAllMutation.error || sendToUsersMutation.error || usersError;
+
+  const currentPageUserIds = users.map((user) => user.objectId);
+  const isCurrentPageFullySelected =
+    currentPageUserIds.length > 0 &&
+    currentPageUserIds.every((id) => selectedUsers.includes(id));
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={handleClose}>
@@ -327,38 +305,8 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                   </div>
                 </motion.div>
 
-                {/* Loading Progress */}
-                {loadingProgress && (
-                  <div className="mb-4 rounded-md bg-blue-50 p-3">
-                    <div className="flex items-center gap-3">
-                      <BarChart3 className="h-5 w-5 text-blue-600" />
-                      <div className="flex-1">
-                        <div className="mb-1 text-sm font-medium text-blue-800">
-                          Loading users...
-                        </div>
-                        <div className="text-xs text-blue-600">
-                          Page {loadingProgress.current} of{' '}
-                          {loadingProgress.total}
-                        </div>
-                        <div className="mt-2 h-2 w-full rounded-full bg-blue-200">
-                          <div
-                            className="h-2 rounded-full bg-blue-600 transition-all duration-300"
-                            style={{
-                              width: `${
-                                (loadingProgress.current /
-                                  loadingProgress.total) *
-                                100
-                              }%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* User Stats */}
-                {playersData && !loadingProgress && (
+                {!showUserSelection && totalUsersData && (
                   <div className="mb-4 flex items-center gap-4 rounded-md bg-blue-50 p-3">
                     <Users className="h-5 w-5 text-blue-600" />
                     <div className="text-sm text-blue-800">
@@ -441,20 +389,11 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                           <button
                             type="button"
                             onClick={handleSelectUsersClick}
-                            disabled={isLoading || isLoadingUsers}
+                            disabled={isLoading}
                             className="flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            {isLoadingUsers ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Loading...</span>
-                              </>
-                            ) : (
-                              <>
-                                <span>Select User(s)</span>
-                                <UserPlus className="h-4 w-4" />
-                              </>
-                            )}
+                            <span>Select User(s)</span>
+                            <UserPlus className="h-4 w-4" />
                           </button>
 
                           <button
@@ -463,8 +402,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                             disabled={
                               isLoading ||
                               !notificationData ||
-                              isLoadingUsers ||
-                              loadingProgress !== null
+                              isLoadingTotalUsers
                             }
                             className="flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-blue-800 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           >
@@ -508,20 +446,20 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                         <h3 className="mb-2 text-sm font-medium text-gray-900">
                           Search Users
                         </h3>
-                        <div className="relative">
+                        <form
+                          onSubmit={handleSearchSubmit}
+                          className="relative"
+                        >
                           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                           <input
                             type="text"
                             placeholder="Enter username or email"
                             value={searchQuery}
-                            onChange={(e) => {
-                              setSearchQuery(e.target.value);
-                              setCurrentPage(1);
-                            }}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             disabled={isLoading || isLoadingUsers}
                             className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-800 focus:ring-1 focus:ring-blue-800 disabled:cursor-not-allowed disabled:bg-gray-50"
                           />
-                        </div>
+                        </form>
                       </div>
 
                       {isLoadingUsers && (
@@ -534,18 +472,13 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                       )}
 
                       {/* User List */}
-                      {!isLoadingUsers && !loadingProgress && (
+                      {!isLoadingUsers && playersData && (
                         <div className="space-y-3">
                           <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
                             <input
                               type="checkbox"
                               id="select-all"
-                              checked={
-                                currentUsers.length > 0 &&
-                                currentUsers.every((user) =>
-                                  selectedUsers.includes(user.objectId),
-                                )
-                              }
+                              checked={isCurrentPageFullySelected}
                               onChange={handleSelectAll}
                               disabled={isLoading}
                               className="h-4 w-4 rounded border-gray-300 text-blue-800 focus:ring-blue-800 disabled:cursor-not-allowed"
@@ -554,12 +487,12 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                               htmlFor="select-all"
                               className="text-sm font-medium text-gray-900"
                             >
-                              Select All Users ({currentUsers.length})
+                              Select All Users ({users.length})
                             </label>
                           </div>
 
                           <div className="max-h-60 space-y-2 overflow-y-auto">
-                            {currentUsers.map((user) => (
+                            {users.map((user) => (
                               <div
                                 key={user.objectId}
                                 className="flex items-center gap-3 rounded-md p-2 hover:bg-gray-50"
@@ -587,18 +520,11 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                                       )}&background=3b82f6&color=fff`;
                                     }}
                                   />
-                                  <div className="grid min-w-0 flex-1 grid-cols-2 gap-8">
-                                    <div className="flex flex-col">
-                                      <p className="truncate text-sm font-medium text-gray-900">
-                                        {user.firstName} {user.lastName || ''}
-                                      </p>
-                                      <p className="truncate text-xs text-gray-500">
-                                        {user.status === 'active'
-                                          ? '🟢 Active'
-                                          : '🔴 Inactive'}
-                                      </p>
-                                    </div>
-                                    <p className="truncate text-sm text-gray-500">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-medium text-gray-900">
+                                      {user.firstName} {user.lastName || ''}
+                                    </p>
+                                    <p className="truncate text-xs text-gray-500">
                                       {user.email}
                                     </p>
                                   </div>
@@ -607,15 +533,13 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                             ))}
                           </div>
 
-                          {currentUsers.length === 0 &&
-                            !isLoadingUsers &&
-                            !loadingProgress && (
-                              <div className="py-8 text-center text-gray-500">
-                                {searchQuery
-                                  ? 'No users found matching your search.'
-                                  : 'No users available.'}
-                              </div>
-                            )}
+                          {users.length === 0 && !isLoadingUsers && (
+                            <div className="py-8 text-center text-gray-500">
+                              {searchQuery
+                                ? 'No users found matching your search.'
+                                : 'No users available.'}
+                            </div>
+                          )}
 
                           {totalPages > 1 && (
                             <div className="flex items-center justify-between border-t border-gray-200 pt-3">
@@ -624,7 +548,11 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                                   onClick={() =>
                                     handlePageChange(currentPage - 1)
                                   }
-                                  disabled={currentPage === 1 || isLoading}
+                                  disabled={
+                                    currentPage === 1 ||
+                                    isLoading ||
+                                    isLoadingUsers
+                                  }
                                   className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   <ChevronLeft className="h-4 w-4" />
@@ -645,7 +573,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                                   <button
                                     key={page}
                                     onClick={() => handlePageChange(page)}
-                                    disabled={isLoading}
+                                    disabled={isLoading || isLoadingUsers}
                                     className={`rounded-md px-3 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                       currentPage === page
                                         ? 'bg-blue-800 text-white'
@@ -661,7 +589,9 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                                     handlePageChange(currentPage + 1)
                                   }
                                   disabled={
-                                    currentPage === totalPages || isLoading
+                                    currentPage === totalPages ||
+                                    isLoading ||
+                                    isLoadingUsers
                                   }
                                   className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
@@ -670,9 +600,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                               </div>
 
                               <div className="text-xs text-gray-500">
-                                Showing {startIndex + 1} to{' '}
-                                {Math.min(endIndex, filteredUsers.length)} of{' '}
-                                {filteredUsers.length} users
+                                Page {currentPage} of {totalPages}
                               </div>
                             </div>
                           )}

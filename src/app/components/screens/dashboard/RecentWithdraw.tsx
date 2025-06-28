@@ -1,53 +1,38 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import WithdrawalApi from '@/app/api/withdrawalApi';
-import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
-import {
-  setWithdrawalRequests,
-  WithdrawalRequest,
-} from '@/app/store/withdrawalSlice';
+import { useGetWithdrawalRequests } from '@/app/api';
+import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import RecentWithdrawTable from '../withdrawal/table';
 import QmDrawer from '../../drawer/drawer';
 import WithdrawDetailsModal from '../withdrawal/WithdrawDrawer';
 
 const RecentWithdraw: React.FunctionComponent = () => {
-  const dispatch = useAppDispatch();
-  const { requests } = useAppSelector((state) => state.withdraw);
   const [openViewModal, setOpenViewModal] = React.useState(false);
-
   const [selectedData, setSelectedData] = React.useState<WithdrawalRequest>();
-  const [fetching, setFetching] = React.useState(false);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [itemsPerPage] = React.useState(10);
+  const [isRefetching, setIsRefetching] = React.useState(false);
 
-  // const fetchWithdrawalRequest = React.useCallback(async () => {
-  //   if (requests.length > 0) return;
-  //   setFetching(true);
-  //   try {
-  //     const res = await WithdrawalApi.fetchWithdrawalRequest();
-  //     dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
-  //   } catch {
-  //     toast.error('Error fetching Withdrawal Request. Please refresh');
-  //   } finally {
-  //     setFetching(false);
-  //   }
-  // }, [dispatch, requests.length]);
+  const {
+    data,
+    isPending: fetching,
+    isError,
+    error,
+  } = useGetWithdrawalRequests(currentPage, itemsPerPage, 'pending', '', null);
 
-  const fetchWithdrawalRequest = React.useCallback(async () => {
-    if (requests?.length > 0) return;
-    setFetching(true);
-    try {
-      const res = await WithdrawalApi.fetchWithdrawalRequest();
-      dispatch(setWithdrawalRequests(res.data.result.withdrawalRequests));
-    } catch {
-      toast.error('Error fetching Withdrawal Request. Please refresh');
-    } finally {
-      setFetching(false);
+  const withdrawalRequests = React.useMemo(() => {
+    if (data?.results) {
+      return data.results;
     }
-  }, [dispatch, requests?.length]);
+    return [];
+  }, [data]);
 
   React.useEffect(() => {
-    fetchWithdrawalRequest();
-  }, [fetchWithdrawalRequest]);
+    if (isError) {
+      toast.error('Error fetching Withdrawal Requests. Please refresh');
+    }
+  }, [isError]);
 
   const handleOpenViewDetails = (data: WithdrawalRequest) => {
     setOpenViewModal(true);
@@ -58,7 +43,11 @@ const RecentWithdraw: React.FunctionComponent = () => {
     setOpenViewModal(false);
   };
 
-  if (fetching) {
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  if (fetching || isRefetching) {
     return (
       <motion.div
         layout
@@ -66,22 +55,25 @@ const RecentWithdraw: React.FunctionComponent = () => {
       ></motion.div>
     );
   }
+
   return (
     <div>
       <div className="p-4">
         <p className="font-heading text-base text-neutral-800">
-          Pending Withdrawal Request
+          Pending Withdrawal Request ({data?.pagination?.totalItems || 0})
         </p>
       </div>
 
       <QmDrawer
-        // open={openViewModal}
         onOpenChange={setOpenViewModal}
         heightClass="h-auto lg:h-[80%]"
         trigger={
           <RecentWithdrawTable
-            data={requests}
+            data={withdrawalRequests}
             viewDetails={handleOpenViewDetails}
+            pagination={data?.pagination}
+            onPageChange={handlePageChange}
+            currentPage={currentPage}
           />
         }
       >
@@ -89,18 +81,10 @@ const RecentWithdraw: React.FunctionComponent = () => {
           <WithdrawDetailsModal
             data={selectedData}
             onClose={closeViewDetails}
-            setFetching={setFetching}
+            setFetching={setIsRefetching}
           />
         )}
       </QmDrawer>
-      {/* {openViewModal && (
-        <WithdrawDetailsModal
-          isOpen={openViewModal}
-          onClose={closeViewDetails}
-          data={selectedData}
-          fetchWithdrawalRequest={fetchWithdrawalRequest}
-        />
-      )} */}
     </div>
   );
 };

@@ -15,14 +15,16 @@ type GameHistoryItem = {
   date?: string | { iso: string } | Date;
   score?: number;
   status?: string;
+  reward?: number;
   earnings?: number;
+  position?: number;
   id?: string;
   [key: string]: string | number | boolean | Date | { iso: string } | undefined;
 };
 
 type TransformedGameHistoryItem = {
   id: string;
-  date: string;
+  date: string | { iso: string };
   reward: {
     type: 'money' | 'item';
     value: string;
@@ -36,6 +38,7 @@ type TransformedGameHistoryItem = {
   gameId?: string;
   score?: number;
   earnings?: number;
+  position?: number;
 };
 
 interface PlayerGameHistorySectionProps {
@@ -81,6 +84,35 @@ export default function PlayerGameHistorySection({
     return pages;
   };
 
+  const formatDateForDisplay = (
+    dateValue: string | { iso: string } | Date | undefined,
+  ): string => {
+    if (!dateValue) return 'N/A';
+
+    try {
+      let dateObj: Date;
+
+      if (typeof dateValue === 'string') {
+        dateObj = new Date(dateValue);
+      } else if (typeof dateValue === 'object' && 'iso' in dateValue) {
+        dateObj = new Date(dateValue.iso);
+      } else if (dateValue instanceof Date) {
+        dateObj = dateValue;
+      } else {
+        return 'N/A';
+      }
+
+      if (isNaN(dateObj.getTime())) {
+        return 'N/A';
+      }
+
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'N/A';
+    }
+  };
+
   const transformGameData = (game: any): TransformedGameHistoryItem => {
     const safeToString = (
       value: string | number | boolean | Date | { iso: string } | undefined,
@@ -101,14 +133,14 @@ export default function PlayerGameHistorySection({
       return String(value);
     };
 
+    const rewardAmount = game.reward || game.earnings || 0;
+
     return {
       id: safeToString(game.gameId || game.id || 'N/A'),
-      date: safeToString(game.date),
+      date: game.date || 'N/A',
       reward: {
         type: 'money',
-        value: game.earnings
-          ? `₦${Number(game.earnings).toLocaleString()}`
-          : '₦0',
+        value: `₦${Number(rewardAmount).toLocaleString()}`,
       },
       correctScore: Number(game.score) || 0,
       incorrectScore: 0,
@@ -118,6 +150,7 @@ export default function PlayerGameHistorySection({
       gameId: game.gameId,
       score: game.score,
       earnings: game.earnings,
+      position: game.position,
     };
   };
 
@@ -209,14 +242,6 @@ export default function PlayerGameHistorySection({
                   >
                     Game ID
                   </th>
-                  {/* <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
-                    data-aos="fade-up"
-                    data-aos-delay="300"
-                  >
-                    Game Name
-                  </th> */}
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
@@ -257,14 +282,9 @@ export default function PlayerGameHistorySection({
                           {transformedGame.id}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {transformedGame.date}
+                          {formatDateForDisplay(transformedGame.date)}
                         </div>
                       </td>
-                      {/* <td className="whitespace-nowrap px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {transformedGame.gameName}
-                        </div>
-                      </td> */}
                       <td className="whitespace-nowrap px-6 py-4">
                         <span className="text-primary-900 inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5">
                           {transformedGame.reward.type === 'money' ? (
@@ -323,9 +343,9 @@ export default function PlayerGameHistorySection({
             >
               <button
                 onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                disabled={!pagination.hasPrev}
+                disabled={currentPage === 1}
                 className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
-                  !pagination.hasPrev
+                  currentPage === 1
                     ? 'cursor-not-allowed border-gray-200 text-gray-400'
                     : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
@@ -353,9 +373,9 @@ export default function PlayerGameHistorySection({
                     Math.min(pagination.totalPages, currentPage + 1),
                   )
                 }
-                disabled={!pagination.hasNext}
+                disabled={currentPage === pagination.totalPages}
                 className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
-                  !pagination.hasNext
+                  currentPage === pagination.totalPages
                     ? 'cursor-not-allowed border-gray-200 text-gray-400'
                     : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
@@ -365,11 +385,11 @@ export default function PlayerGameHistorySection({
             </nav>
           </div>
 
-          <div className="mt-4 text-center text-sm text-gray-500">
+          {/* <div className="mt-4 text-center text-sm text-gray-500">
             Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
-            {Math.min(currentPage * ITEMS_PER_PAGE, pagination.totalCount)} of{' '}
-            {pagination.totalCount} entries
-          </div>
+            {Math.min(currentPage * ITEMS_PER_PAGE, pagination.totalCount || 0)}{' '}
+            of {pagination.totalCount || 0} entries
+          </div> */}
         </>
       )}
     </div>
