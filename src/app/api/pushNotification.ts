@@ -64,6 +64,7 @@ export interface GetPushNotificationsResponse {
   message: string;
   pushNotifications: PushNotificationFromAPI[];
   totalCount: number; // Made required for proper pagination
+  pagination: UnknownObject;
 }
 
 export interface CreatePushNotificationResponse {

@@ -204,7 +204,7 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
 
           const actualCount = searchTerm
             ? filteredData.length
-            : response.result.totalCount || transformedData.length;
+            : response.result.pagination?.totalItems || transformedData.length;
 
           setTotalCount(actualCount);
         } else {

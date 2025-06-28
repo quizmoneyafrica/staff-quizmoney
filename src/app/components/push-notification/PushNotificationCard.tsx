@@ -75,14 +75,13 @@ const PushNotificationCard: React.FC<PushNotificationCardProps> = ({
         limit: 1,
       });
 
-      if (response.result && response.result.totalCount !== undefined) {
-        const count = response.result.totalCount || 0;
+      if (response.result && response.result.pagination !== undefined) {
+        const count = response.result?.pagination?.totalItems || 0;
         setTotalNotifications(count);
       } else {
         const errorMsg =
           response.result?.message || 'Failed to fetch notification count';
         setError(errorMsg);
-        console.error('API response error:', response);
       }
     } catch (err) {
       setError('Network error - please check connection');
@@ -132,7 +131,7 @@ const PushNotificationCard: React.FC<PushNotificationCardProps> = ({
   return (
     <div className="w-full">
       <StatCard stat={stat} />
-      {error && <div className="mt-2 text-sm text-red-600">{error}</div>}
+      {/* {error && <div className="mt-2 text-sm text-red-600">{error}</div>} */}
     </div>
   );
 };
