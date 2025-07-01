@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import TimeRangeDropdown from '../common/TimeRangeDropdown';
 
-const options = ['This week', 'Last 30 days', 'Custom'];
+const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
 const PlayersHeader = () => {
-  const [selected, setSelected] = useState(options[0]);
+  const [selected, setSelected] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState(null);
 
   const handleSelect = (option) => {

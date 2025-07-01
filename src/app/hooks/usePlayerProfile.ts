@@ -56,14 +56,42 @@ export const usePlayerTransactions = (
   userId: string,
   options?: Partial<Omit<GetPlayerTransactionsRequest, 'userId'>>,
 ): UseQueryResult<PlayerTransactionsResponse['result'], Error> => {
+  const stableOptions = options
+    ? {
+        ...options,
+
+        dateRange: options.dateRange
+          ? {
+              start: options.dateRange.start,
+              end: options.dateRange.end,
+            }
+          : undefined,
+      }
+    : undefined;
+
   const requestParams: GetPlayerTransactionsRequest = {
     userId,
     ...DEFAULT_TRANSACTION_PARAMS,
-    ...options,
+    ...stableOptions,
   };
 
+  const queryKey = [
+    'playerTransactions',
+    userId,
+    {
+      page: requestParams.page,
+      limit: requestParams.limit,
+      type: requestParams.type,
+      status: requestParams.status,
+      search: requestParams.search,
+      dateRange: requestParams.dateRange
+        ? `${requestParams.dateRange.start}-${requestParams.dateRange.end}`
+        : undefined,
+    },
+  ];
+
   return useQuery({
-    queryKey: ['playerTransactions', userId, requestParams],
+    queryKey,
     queryFn: async (): Promise<PlayerTransactionsResponse['result']> => {
       try {
         const response = await PlayerApi.getPlayerTransactions(requestParams);
@@ -79,7 +107,7 @@ export const usePlayerTransactions = (
       }
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
     retry: 3,
   });
 };

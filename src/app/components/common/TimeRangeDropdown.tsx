@@ -91,7 +91,7 @@ const TimeRangeDropdown = ({
     e.stopPropagation();
     e.preventDefault();
     onCustomDateChange?.(null);
-    onSelect('This Week');
+    onSelect('All Time');
     setIsOpen(false);
   };
 

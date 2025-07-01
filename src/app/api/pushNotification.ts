@@ -1,5 +1,9 @@
 import { BASE_URL, getSessionTokenHeaders } from './userApi';
 
+export interface SendPushNotificationByIdRequest {
+  notificationId: string;
+}
+
 export interface SendToAllRequest {
   title: string;
   body: string;
@@ -20,7 +24,7 @@ export interface CreatePushNotificationRequest {
 export interface GetPushNotificationsRequest {
   page: number;
   limit: number;
-  searchTerm?: string; //  for server-side search
+  searchTerm?: string;
 }
 
 export interface UpdatePushNotificationRequest {
@@ -63,7 +67,7 @@ export interface PushNotificationFromAPI {
 export interface GetPushNotificationsResponse {
   message: string;
   pushNotifications: PushNotificationFromAPI[];
-  totalCount: number; // Made required for proper pagination
+  totalCount: number;
   pagination: UnknownObject;
 }
 
@@ -197,19 +201,18 @@ export const notificationService = {
     return response.json();
   },
 
-  sendToAll: async (data: SendToAllRequest): Promise<ApiResponse> => {
-    const response = await fetch(
-      `${BASE_URL}/sendAdminPushNotificationsToAll`,
-      {
-        method: 'POST',
-        headers: getSessionTokenHeaders(),
-        body: JSON.stringify(data),
-      },
-    );
+  sendPushNotificationById: async (
+    data: SendPushNotificationByIdRequest,
+  ): Promise<ApiResponse> => {
+    const response = await fetch(`${BASE_URL}/sendPushNotificationById`, {
+      method: 'POST',
+      headers: getSessionTokenHeaders(),
+      body: JSON.stringify(data),
+    });
 
     if (!response.ok) {
       throw new Error(
-        `Failed to send notification to all users: ${response.statusText}`,
+        `Failed to send push notification by ID: ${response.statusText}`,
       );
     }
 

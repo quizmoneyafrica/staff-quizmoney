@@ -29,7 +29,6 @@ type PlayerData = {
   };
 };
 
-// Separate interface for stats to avoid unnecessary re-renders
 type StatsData = {
   totalNoOfUsers: number;
   totalActiveUsers: number;
@@ -38,22 +37,19 @@ type StatsData = {
 
 interface PlayersState {
   playersData: PlayerData | null;
-
   statsData: StatsData | null;
-  isLoading: boolean; // only affects table loading
-  isStatsLoading: boolean; // Separate loading for stats
+  isLoading: boolean;
+  isStatsLoading: boolean;
+  isExporting: boolean;
   currentPage: number;
   itemsPerPage: number;
   searchQuery: string;
   selectedAccountType: string | null;
-
   dateRange: {
     start: string;
     end: string;
   } | null;
-
   selectedTimeRange: string;
-
   customDateRange: {
     start: string;
     end: string;
@@ -65,12 +61,13 @@ const initialState: PlayersState = {
   statsData: null,
   isLoading: false,
   isStatsLoading: false,
+  isExporting: false,
   currentPage: 1,
   itemsPerPage: 10,
   searchQuery: '',
   selectedAccountType: null,
   dateRange: null,
-  selectedTimeRange: 'This week', // Default selection
+  selectedTimeRange: 'All Time',
   customDateRange: null,
 };
 
@@ -80,9 +77,7 @@ const playersSlice = createSlice({
   reducers: {
     setPlayersData(state, action: PayloadAction<PlayerData>) {
       state.playersData = action.payload;
-
       state.currentPage = action.payload.pagination.currentPage;
-
       state.statsData = {
         totalNoOfUsers: action.payload.totalNoOfUsers,
         totalActiveUsers: action.payload.totalActiveUsers,
@@ -95,28 +90,37 @@ const playersSlice = createSlice({
         state.playersData.data = action.payload;
       }
     },
-    // Separate action for stats data
+
     setStatsData(state, action: PayloadAction<StatsData>) {
       state.statsData = action.payload;
     },
+
     setLoadingPlayers(state, action: PayloadAction<boolean>) {
       state.isLoading = action.payload;
     },
+
     setStatsLoading(state, action: PayloadAction<boolean>) {
       state.isStatsLoading = action.payload;
     },
+
+    setExportLoading(state, action: PayloadAction<boolean>) {
+      state.isExporting = action.payload;
+    },
+
     setCurrentPage(state, action: PayloadAction<number>) {
       state.currentPage = action.payload;
     },
+
     setSearchQuery(state, action: PayloadAction<string>) {
       state.searchQuery = action.payload;
       state.currentPage = 1;
     },
+
     setSelectedAccountType(state, action: PayloadAction<string | null>) {
       state.selectedAccountType = action.payload;
       state.currentPage = 1;
     },
-    // Use utility function to ensure proper serialization
+
     setDateRange(
       state,
       action: PayloadAction<{ start: string; end: string } | null>,
@@ -124,6 +128,7 @@ const playersSlice = createSlice({
       state.dateRange = serializeDateRange(action.payload);
       state.currentPage = 1;
     },
+
     setSelectedTimeRange(state, action: PayloadAction<string>) {
       state.selectedTimeRange = action.payload;
       state.currentPage = 1;
@@ -140,11 +145,12 @@ const playersSlice = createSlice({
       }
       state.currentPage = 1;
     },
+
     resetFilters(state) {
       state.searchQuery = '';
       state.selectedAccountType = null;
       state.dateRange = null;
-      state.selectedTimeRange = 'This week';
+      state.selectedTimeRange = 'All Time';
       state.customDateRange = null;
       state.currentPage = 1;
     },
@@ -154,6 +160,7 @@ const playersSlice = createSlice({
 export const {
   setLoadingPlayers,
   setStatsLoading,
+  setExportLoading,
   setPlayersData,
   setTableData,
   setStatsData,

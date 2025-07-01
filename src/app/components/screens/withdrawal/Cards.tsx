@@ -63,6 +63,8 @@ const WithdrawalCards: React.FunctionComponent<IDashboardCardsProps> = (
     if (!analytics) return null;
 
     const { percentage, period = 'this week' } = analytics;
+
+    const roundedPercentage = Math.round(Math.abs(percentage));
     const isPositive = percentage >= 0;
     const arrow = isPositive ? '↑' : '↓';
     const sign = isPositive ? '+' : '';
@@ -72,7 +74,7 @@ const WithdrawalCards: React.FunctionComponent<IDashboardCardsProps> = (
       <div className={`flex items-center gap-1 text-sm ${colorClass}`}>
         <span className="font-medium">
           {arrow} {sign}
-          {Math.abs(percentage)}%
+          {roundedPercentage}%
         </span>
         <span className="text-gray-500">{period}</span>
       </div>

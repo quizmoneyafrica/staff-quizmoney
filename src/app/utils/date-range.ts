@@ -1,14 +1,20 @@
 export const formatDateRange = (dateRange) => {
   if (!dateRange || !dateRange.startDate || !dateRange.endDate) return null;
 
-  const formatDate = (date) => {
+  const formatDate = (date, isEndOfDay = false) => {
     if (typeof date === 'string') return date;
-    return date.toISOString().split('T')[0];
+    const d = new Date(date);
+    if (isEndOfDay) {
+      d.setHours(23, 59, 59, 999);
+    } else {
+      d.setHours(0, 0, 0, 0);
+    }
+    return d.toISOString();
   };
 
   return {
     start: formatDate(dateRange.startDate),
-    end: formatDate(dateRange.endDate),
+    end: formatDate(dateRange.endDate, true),
   };
 };
 
@@ -17,10 +23,12 @@ export const calculateDateRange = (selectedOption, customDateRange) => {
     return formatDateRange(customDateRange);
   }
 
+  if (selectedOption === 'All Time') {
+    return null;
+  }
+
   const today = new Date();
-  const formatDate = (date) => {
-    return date.toISOString().split('T')[0];
-  };
+  today.setHours(23, 59, 59, 999);
 
   switch (selectedOption) {
     case 'This week': {
@@ -30,12 +38,9 @@ export const calculateDateRange = (selectedOption, customDateRange) => {
       startOfWeek.setDate(today.getDate() - daysFromMonday);
       startOfWeek.setHours(0, 0, 0, 0);
 
-      const endOfWeek = new Date(today);
-      endOfWeek.setHours(23, 59, 59, 999);
-
       return {
-        start: formatDate(startOfWeek),
-        end: formatDate(endOfWeek),
+        start: startOfWeek.toISOString(),
+        end: today.toISOString(),
       };
     }
 
@@ -44,12 +49,9 @@ export const calculateDateRange = (selectedOption, customDateRange) => {
       thirtyDaysAgo.setDate(today.getDate() - 30);
       thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-      const endDate = new Date(today);
-      endDate.setHours(23, 59, 59, 999);
-
       return {
-        start: formatDate(thirtyDaysAgo),
-        end: formatDate(endDate),
+        start: thirtyDaysAgo.toISOString(),
+        end: today.toISOString(),
       };
     }
 

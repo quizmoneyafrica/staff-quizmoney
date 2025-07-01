@@ -74,14 +74,6 @@ export default function PlayersParent() {
   ]);
 
   useEffect(() => {
-    // default date range to "This week" when component mounts
-    if (!dateRange) {
-      const defaultDateRange = calculateDateRange('This week', null);
-      store.dispatch(setDateRange(defaultDateRange));
-    }
-  }, [dateRange]);
-
-  useEffect(() => {
     fetchPlayersData();
   }, [fetchPlayersData]);
 

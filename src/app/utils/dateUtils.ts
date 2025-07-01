@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/**
- * Converts a Date object or date string to YYYY-MM-DD format
- * @param date - Date object, ISO string, or YYYY-MM-DD string
- * @returns YYYY-MM-DD formatted string or null if invalid
- */
+
 export const toDateString = (
   date: Date | string | null | undefined,
+  isEndOfDay = false,
 ): string | null => {
   if (!date) return null;
 
@@ -15,28 +12,28 @@ export const toDateString = (
     if (typeof date === 'string') {
       dateObj = new Date(date);
     } else if (date instanceof Date) {
-      dateObj = date;
+      dateObj = new Date(date);
     } else {
       return null;
     }
 
-    // Check if date is valid
     if (isNaN(dateObj.getTime())) {
       return null;
     }
 
-    return dateObj.toISOString().split('T')[0];
+    if (isEndOfDay) {
+      dateObj.setHours(23, 59, 59, 999);
+    } else {
+      dateObj.setHours(0, 0, 0, 0);
+    }
+
+    return dateObj.toISOString();
   } catch (error) {
     console.error('Error converting date to string:', error);
     return null;
   }
 };
 
-/**
- * Validates if a date range object has valid string dates
- * @param dateRange - Object with start and end properties
- * @returns boolean indicating if the date range is valid
- */
 export const isValidDateRange = (
   dateRange: { start: any; end: any } | null | undefined,
 ): dateRange is { start: string; end: string } => {
@@ -51,22 +48,40 @@ export const isValidDateRange = (
   );
 };
 
-/**
- * Safely converts any date range to serializable format
- * @param dateRange - Date range with potentially non-serializable values
- * @returns Serializable date range or null
- */
 export const serializeDateRange = (
   dateRange: { start: any; end: any } | null | undefined,
 ): { start: string; end: string } | null => {
   if (!dateRange) return null;
 
-  const startStr = toDateString(dateRange.start);
-  const endStr = toDateString(dateRange.end);
+  try {
+    const startDate =
+      typeof dateRange.start === 'string'
+        ? new Date(dateRange.start)
+        : dateRange.start;
 
-  if (startStr && endStr) {
-    return { start: startStr, end: endStr };
+    const endDate =
+      typeof dateRange.end === 'string'
+        ? new Date(dateRange.end)
+        : dateRange.end;
+
+    if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
+      return null;
+    }
+
+    startDate.setHours(0, 0, 0, 0);
+
+    endDate.setHours(23, 59, 59, 999);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return null;
+    }
+
+    return {
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+    };
+  } catch (error) {
+    console.error('Error serializing date range:', error);
+    return null;
   }
-
-  return null;
 };

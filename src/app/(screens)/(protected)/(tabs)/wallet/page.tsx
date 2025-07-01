@@ -33,9 +33,9 @@ function Page() {
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [transactionStats, setTransactionStats] = useState<any>(null);
 
-  const options = ['This week', 'Last 30 days', 'Custom'];
+  const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
-  const [selected, setSelected] = useState(options[0]);
+  const [selected, setSelected] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState(null);
 
   const handleSelect = (option) => {

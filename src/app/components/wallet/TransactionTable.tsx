@@ -113,7 +113,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const [sortBy, setSortBy] = useState<SortableTransactionKeys | ''>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  const [selected, setSelected] = useState('This week');
+  const [selected, setSelected] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState(null);
 
   const debouncedSearchTerm = useDebounce(searchTerm);
@@ -196,12 +196,10 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     setCurrentPage(1);
   };
 
-  const options = ['This week', 'Last 30 days', 'Custom'];
+  const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
-  const handleSelect = (option) => {
+  const handleTimeRangeSelect = (option: string) => {
     setSelected(option);
-    setCurrentPage(1);
-
     if (option !== 'Custom') {
       setCustomDateRange(null);
     }
@@ -209,7 +207,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   const handleCustomDateChange = (dateRange) => {
     setCustomDateRange(dateRange);
-    setCurrentPage(1);
   };
 
   const sortedData = React.useMemo(() => {
@@ -272,7 +269,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto ">
         <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
@@ -320,7 +317,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
             <TimeRangeDropdown
               options={options}
               selected={selected}
-              onSelect={handleSelect}
+              onSelect={handleTimeRangeSelect}
               customDateRange={customDateRange}
               onCustomDateChange={handleCustomDateChange}
             />
@@ -336,7 +333,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         {!isLoading && (
           <Table.Root
             variant="ghost"
-            className="min-w-full border-collapse text-sm"
+            className="min-h-[600px] min-w-full border-collapse text-sm"
           >
             <Table.Header className="bg-primary-50">
               <Table.Row>

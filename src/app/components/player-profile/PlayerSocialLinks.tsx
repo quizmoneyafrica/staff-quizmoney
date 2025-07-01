@@ -2,11 +2,14 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import CustomImage from '../CustomImage';
+import { TikTokIcon, FacebookBlueIcon, WhatsAppIcon } from '@/app/icons/icons';
 
 interface SocialData {
   twitter?: string;
   facebook?: string;
   instagram?: string;
+  tiktok?: string;
+  whatsapp?: string;
 }
 
 interface PlayerSocialLinksProps {
@@ -53,23 +56,46 @@ export default function PlayerSocialLinks({
   const socials = [
     {
       label: 'Facebook',
-      icon: '/icons/face.svg',
+      icon: <FacebookBlueIcon className="h-4 w-4 sm:h-5 sm:w-5" />,
       handle: sanitize(socialData.facebook),
       connected:
         !!socialData.facebook && sanitize(socialData.facebook) !== 'N/A',
     },
+    // {
+    //   label: 'Facebook',
+    //   icon: '/icons/face.svg',
+    //   handle: sanitize(socialData.facebook),
+    //   connected:
+    //     !!socialData.facebook && sanitize(socialData.facebook) !== 'N/A',
+    //   useCustomImage: true,
+    // },
     {
       label: 'Instagram',
       icon: '/icons/insta.svg',
       handle: sanitize(socialData.instagram),
       connected:
         !!socialData.instagram && sanitize(socialData.instagram) !== 'N/A',
+      useCustomImage: true,
     },
     {
       label: 'Twitter',
       icon: '/icons/x.svg',
       handle: sanitize(socialData.twitter),
       connected: !!socialData.twitter && sanitize(socialData.twitter) !== 'N/A',
+      useCustomImage: true,
+    },
+    {
+      label: 'TikTok',
+      icon: <TikTokIcon className="h-4 w-4 sm:h-5 sm:w-5" />,
+      handle: sanitize(socialData.tiktok),
+      connected: !!socialData.tiktok && sanitize(socialData.tiktok) !== 'N/A',
+    },
+    {
+      label: 'WhatsApp',
+      icon: <WhatsAppIcon className="h-4 w-4 sm:h-5 sm:w-5" />,
+      handle: sanitize(socialData.whatsapp),
+      connected:
+        !!socialData.whatsapp && sanitize(socialData.whatsapp) !== 'N/A',
     },
   ];
 
@@ -97,11 +123,15 @@ export default function PlayerSocialLinks({
             variants={itemVariants}
           >
             <div className="flex items-center gap-2 text-black sm:gap-3">
-              <CustomImage
-                alt={social.label}
-                src={social.icon}
-                className="h-4 w-4 sm:h-5 sm:w-5"
-              />
+              {social.useCustomImage ? (
+                <CustomImage
+                  alt={social.label}
+                  src={social.icon as string}
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                />
+              ) : (
+                social.icon
+              )}
               <span className="text-xs font-medium sm:text-sm">
                 {social.label}
               </span>

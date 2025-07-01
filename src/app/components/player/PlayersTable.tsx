@@ -19,9 +19,11 @@ import {
   setCustomDateRange,
   setDateRange,
   resetFilters,
+  setExportLoading,
 } from '@/app/store/playersSlice';
 import { formatDateTime } from '@/app/utils/utils';
 import { serializeDateRange, isValidDateRange } from '@/app/utils/dateUtils';
+import PlayersApi from '@/app/api/playersApi';
 
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
@@ -34,17 +36,74 @@ type SortField =
   | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 
+interface ExportParams {
+  accountType?: string;
+  search?: string;
+  dateRange?: { start: string; end: string } | null;
+}
+
 const PlayersTable = () => {
   const dispatch = useDispatch();
   const {
     playersData,
     isLoading,
+    isExporting,
     currentPage,
     searchQuery,
     selectedAccountType,
     selectedTimeRange,
     customDateRange,
   } = useSelector(selectPlayers);
+
+  const handleExportCSV = async () => {
+    try {
+      dispatch(setExportLoading(true));
+
+      const exportParams: ExportParams = {};
+
+      if (selectedAccountType) {
+        exportParams.accountType = selectedAccountType;
+      }
+
+      if (searchQuery) {
+        exportParams.search = searchQuery;
+      }
+
+      const currentDateRange =
+        customDateRange ||
+        (selectedTimeRange !== 'All Time'
+          ? calculateDateRange(selectedTimeRange, null)
+          : null);
+
+      if (currentDateRange) {
+        exportParams.dateRange = currentDateRange;
+      }
+
+      const response = await PlayersApi.exportPlayersData(exportParams);
+
+      if (response.data.result) {
+        const blob = new Blob([response.data.result.csvData], {
+          type: 'text/csv;charset=utf-8;',
+        });
+
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute(
+          'download',
+          response.data.result.filename || 'players_export.csv',
+        );
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+    } finally {
+      dispatch(setExportLoading(false));
+    }
+  };
 
   const players: Player[] = playersData?.data ?? [];
 
@@ -64,12 +123,12 @@ const PlayersTable = () => {
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  const timeRangeOptions = ['This week', 'Last 30 days', 'Custom'];
+  const timeRangeOptions = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
   useEffect(() => {
     dispatch(resetFilters());
-    const calculatedDateRange = calculateDateRange('This week', null);
-    dispatch(setDateRange(calculatedDateRange));
+    dispatch(setSelectedTimeRange('All Time'));
+    dispatch(setDateRange(null));
   }, [dispatch]);
 
   useEffect(() => {
@@ -347,14 +406,16 @@ const PlayersTable = () => {
             customDateRange={customDateRangeForDropdown}
             onCustomDateChange={handleCustomDateChange}
           />
+
           <button
+            onClick={handleExportCSV}
+            disabled={isLoading || isExporting}
             className={classNames(
               'cursor-pointer whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none',
-              isLoading && 'cursor-not-allowed opacity-50',
+              (isLoading || isExporting) && 'cursor-not-allowed opacity-50',
             )}
-            disabled={isLoading}
           >
-            Export CSV
+            {isExporting ? 'Exporting...' : 'Export CSV'}
           </button>
         </div>
       </div>

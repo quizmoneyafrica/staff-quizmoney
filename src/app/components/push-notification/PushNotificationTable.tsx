@@ -478,7 +478,9 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
     };
   }, [openDropdown]);
 
+  // selectedNotificationData for SendNotificationModal (id)
   const [selectedNotificationData, setSelectedNotificationData] = useState<{
+    id: string;
     title: string;
     body: string;
   } | null>(null);
@@ -490,6 +492,7 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
       const notification = notifications.find((n) => n.id === notificationId);
       if (notification) {
         setSelectedNotificationData({
+          id: notification.id,
           title: notification.Subject,
           body: notification.notificationBody,
         });
@@ -613,7 +616,6 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
         </div>
       )}
 
-      {/* Memoized Search Header */}
       <SearchHeader
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ListFilter,
   ChevronLeft,
@@ -12,6 +12,9 @@ import { usePlayerTransactions } from '@/app/hooks/usePlayerProfile';
 import CustomImage from '../CustomImage';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
 import { useRef, useEffect, useCallback } from 'react';
+import TimeRangeDropdown from '../common/TimeRangeDropdown';
+import { calculateDateRange } from '@/app/utils/date-range';
+import { serializeDateRange, isValidDateRange } from '@/app/utils/dateUtils';
 
 const getTransactionId = (transaction: Transaction) => {
   return transaction.transactionId || transaction.id || 'N/A';
@@ -200,9 +203,15 @@ export default function PlayerTransactionHistory({
     useState<Transaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const [selectedTimeRange, setSelectedTimeRange] =
+    useState<string>('All Time');
+  const [customDateRange, setCustomDateRange] = useState<{
+    start: string;
+    end: string;
+  } | null>(null);
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -211,6 +220,18 @@ export default function PlayerTransactionHistory({
   const getApiFilterStatus = (filter: string) => {
     return filter === 'All' ? undefined : filter.toLowerCase();
   };
+
+  const dateRange = useMemo(() => {
+    if (selectedTimeRange === 'Custom' && customDateRange) {
+      return customDateRange;
+    }
+
+    if (selectedTimeRange !== 'All Time') {
+      return calculateDateRange(selectedTimeRange, null);
+    }
+
+    return null;
+  }, [selectedTimeRange, customDateRange]);
 
   const {
     data: transactionResponse,
@@ -222,6 +243,7 @@ export default function PlayerTransactionHistory({
     limit: transactionLimit,
     status: getApiFilterStatus(selectedFilter),
     search: searchTerm.trim() || undefined,
+    dateRange: dateRange,
   });
 
   const transactions = transactionData || transactionResponse?.transactions;
@@ -266,7 +288,7 @@ export default function PlayerTransactionHistory({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedFilter, searchTerm]);
+  }, [selectedFilter, searchTerm, selectedTimeRange, dateRange]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -341,6 +363,39 @@ export default function PlayerTransactionHistory({
     setCurrentPage(1);
   };
 
+  const handleTimeRangeSelect = (option: string) => {
+    setSelectedTimeRange(option);
+    setCurrentPage(1);
+
+    if (option !== 'Custom') {
+      setCustomDateRange(null);
+    }
+  };
+
+  const handleCustomDateChange = (
+    dateRange: { startDate: Date; endDate: Date } | null,
+  ) => {
+    if (!dateRange) {
+      setCustomDateRange(null);
+      return;
+    }
+
+    const standardFormat = {
+      start: dateRange.startDate.toISOString(),
+      end: dateRange.endDate.toISOString(),
+    };
+
+    if (isValidDateRange(standardFormat)) {
+      const serializedRange = serializeDateRange(standardFormat);
+      setCustomDateRange(serializedRange);
+    } else {
+      console.error('Invalid date range received:', dateRange);
+      setCustomDateRange(null);
+    }
+
+    setCurrentPage(1);
+  };
+
   const formatAmount = (amount?: number, type?: string) => {
     if (!amount) return '₦0';
     const formattedAmount = new Intl.NumberFormat('en-NG', {
@@ -374,6 +429,15 @@ export default function PlayerTransactionHistory({
     return 'text-red-600';
   };
 
+  const timeRangeOptions = ['All Time', 'This week', 'Last 30 days', 'Custom'];
+
+  const customDateRangeForDropdown = customDateRange
+    ? {
+        startDate: new Date(customDateRange.start),
+        endDate: new Date(customDateRange.end),
+      }
+    : null;
+
   return (
     <div className="w-full" data-aos="fade-up" data-aos-duration="800">
       <div
@@ -382,7 +446,7 @@ export default function PlayerTransactionHistory({
         data-aos-delay="100"
       >
         <h2 className="font-bold">Transaction History</h2>
-        <div className="flex items-center gap-2 md:gap-5">
+        <div className="flex items-center gap-2 md:gap-3">
           {/* Search Input */}
           <div className="relative w-full rounded-md border border-[#F5F5F5] focus:border-[#F5F5F5] md:w-fit">
             <input
@@ -453,6 +517,14 @@ export default function PlayerTransactionHistory({
               </div>
             )}
           </div>
+
+          <TimeRangeDropdown
+            options={timeRangeOptions}
+            selected={selectedTimeRange}
+            onSelect={handleTimeRangeSelect}
+            customDateRange={customDateRangeForDropdown}
+            onCustomDateChange={handleCustomDateChange}
+          />
         </div>
       </div>
 

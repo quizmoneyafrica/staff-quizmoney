@@ -44,10 +44,22 @@ function Page() {
 
   const filterOptions = ['All', 'Resolved', 'Pending', 'Rejected'];
 
-  const options = ['This week', 'Last 30 days', 'Custom'];
+  const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
-  const [selected, setSelected] = useState(options[0]);
+  const [selected, setSelected] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState(null);
+
+  const handleSelect = (option) => {
+    setSelected(option);
+
+    if (option !== 'Custom') {
+      setCustomDateRange(null);
+    }
+  };
+
+  const handleCustomDateChange = (dateRange) => {
+    setCustomDateRange(dateRange);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -189,20 +201,6 @@ function Page() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  };
-
-  const handleSelect = (option) => {
-    setSelected(option);
-    setCurrentPage(1);
-
-    if (option !== 'Custom') {
-      setCustomDateRange(null);
-    }
-  };
-
-  const handleCustomDateChange = (dateRange) => {
-    setCustomDateRange(dateRange);
-    setCurrentPage(1);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

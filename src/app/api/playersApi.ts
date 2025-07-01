@@ -10,9 +10,18 @@ interface FetchPlayersParams {
     start: string;
     end: string;
   };
-  // sorting parameters if backend supports it
+
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+}
+
+interface ExportPlayersParams {
+  accountType?: string;
+  search?: string;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
 }
 
 interface User {
@@ -26,7 +35,7 @@ interface User {
     iso: string;
   };
   avatar?: string;
-  status: 'active' | 'inactive'; //
+  status: 'active' | 'inactive';
 }
 
 interface PaginatedUsersResponse {
@@ -53,6 +62,13 @@ interface AllUsersResponse {
   data: User[];
 }
 
+interface ExportPlayersResponse {
+  result: {
+    csvData: string;
+    filename: string;
+  };
+}
+
 const PlayersApi = {
   fetchPlayers(
     params: FetchPlayersParams,
@@ -67,7 +83,20 @@ const PlayersApi = {
     });
   },
 
-  // Fetch all users by paginating
+  exportPlayersData(
+    params: ExportPlayersParams = {},
+  ): Promise<AxiosResponse<ExportPlayersResponse>> {
+    const requestParams = {
+      ...(params.accountType && { accountType: params.accountType }),
+      ...(params.search && { search: params.search }),
+      ...(params.dateRange && { dateRange: params.dateRange }),
+    };
+
+    return axios.post(`${BASE_URL}/exportPlayersData`, requestParams, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
   async fetchAllUsers(
     accountType?: string,
     search?: string,
@@ -172,6 +201,8 @@ export type {
   FetchPlayersApiResponse,
   AllUsersResponse,
   FetchPlayersParams,
+  ExportPlayersParams,
+  ExportPlayersResponse,
 };
 
 export default PlayersApi;

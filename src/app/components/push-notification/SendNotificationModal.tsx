@@ -32,6 +32,7 @@ interface SendNotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
   notificationData?: {
+    id: string;
     title: string;
     body: string;
   };
@@ -184,15 +185,14 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
   };
 
   const handleSendToAll = async () => {
-    if (!notificationData) {
-      console.error('No notification data provided');
+    if (!notificationData || typeof notificationData.id !== 'string') {
+      console.error('No notification id provided');
       return;
     }
 
     try {
       await sendToAllMutation.mutateAsync({
-        title: notificationData.title,
-        body: notificationData.body,
+        notificationId: String(notificationData.id),
       });
 
       setSuccessData({
@@ -201,9 +201,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
         notificationTitle: notificationData.title,
       });
       setShowSuccessPopup(true);
-    } catch (error) {
-      console.error('Failed to send notification to all users:', error);
-    }
+    } catch (error) {}
   };
 
   const handleSendToSelected = async () => {
@@ -229,9 +227,7 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
         notificationTitle: notificationData.title,
       });
       setShowSuccessPopup(true);
-    } catch (error) {
-      console.error('Failed to send notification to selected users:', error);
-    }
+    } catch (error) {}
   };
 
   const handleSuccessPopupClose = () => {
@@ -644,17 +640,17 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                           undone.
                         </p>
                       </div>
-
-                      <NotificationSuccessPopup
-                        isOpen={showSuccessPopup}
-                        onClose={handleSuccessPopupClose}
-                        recipientCount={successData.recipientCount}
-                        isAllUsers={successData.isAllUsers}
-                        notificationTitle={successData.notificationTitle}
-                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                <NotificationSuccessPopup
+                  isOpen={showSuccessPopup}
+                  onClose={handleSuccessPopupClose}
+                  recipientCount={successData.recipientCount}
+                  isAllUsers={successData.isAllUsers}
+                  notificationTitle={successData.notificationTitle}
+                />
 
                 <Dialog.Close asChild>
                   <motion.button
