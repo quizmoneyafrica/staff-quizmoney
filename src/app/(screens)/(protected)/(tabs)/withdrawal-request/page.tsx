@@ -77,12 +77,13 @@ function Page() {
     debouncedSearchTerm,
     calculateDateRange(selected, customDateRange),
   );
+  console.log('data: ', data);
 
   const { data: statsData, isPending: fetchingStats } = useGetWithdrawalStats();
 
   const withdrawalData = useMemo(() => {
     if (data) {
-      return data?.withdrawalRequests ?? data?.results ?? data ?? [];
+      return data?.results ?? [];
     }
     return [];
   }, [data]);
@@ -92,9 +93,7 @@ function Page() {
       return {
         currentPage: data.pagination.currentPage,
         totalPages: data.pagination.totalPages,
-        totalCount: data.pagination.totalCount,
-        hasNext: data.pagination.hasNext,
-        hasPrevious: data.pagination.hasPrevious,
+        totalCount: data.pagination.totalItems,
       };
     }
 
@@ -102,10 +101,9 @@ function Page() {
       currentPage: currentPage,
       totalPages: 1,
       totalCount: withdrawalData.length,
-      hasNext: false,
-      hasPrevious: false,
     };
   }, [data, currentPage, withdrawalData.length]);
+  console.log('paginationInfo: ', paginationInfo);
 
   const shouldShowPagination = useMemo(() => {
     if (fetchingDashData) return false;
