@@ -98,8 +98,6 @@ export const useGetAllTransactionsWithStats = (
           throw error.response?.data || error;
         });
     },
-    staleTime: search ? 2 * 60 * 1000 : 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 };
 
@@ -115,7 +113,5 @@ export const useGetWalletStats = () => {
         .catch((error) => {
           throw error.response?.data || error;
         }),
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
   });
 };

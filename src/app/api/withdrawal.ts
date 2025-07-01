@@ -81,9 +81,6 @@ export const useGetWithdrawalRequests = (
           console.error('API Error:', error);
           throw error.response?.data || error;
         }),
-    staleTime: search ? 2 * 60 * 1000 : 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-
     placeholderData: (previousData) => previousData,
   });
 };
@@ -138,7 +135,5 @@ export const useGetWithdrawalStats = () => {
         .catch((error) => {
           throw error.response?.data || error;
         }),
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
   });
 };

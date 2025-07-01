@@ -46,9 +46,6 @@ export const usePlayerProfile = (
         throw error;
       }
     },
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
-    retry: 3,
   });
 };
 
@@ -106,9 +103,7 @@ export const usePlayerTransactions = (
         throw error;
       }
     },
-    enabled: !!userId,
-    staleTime: 30 * 1000,
-    retry: 3,
+    enabled: Boolean(userId),
   });
 };
 

@@ -79,8 +79,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
       return result.data;
     },
     enabled: showUserSelection,
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
       if ((error as AxiosError)?.code === 'ECONNABORTED') return false;
       return failureCount < 2;
@@ -103,7 +101,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
       return result.data;
     },
     enabled: isOpen && !showUserSelection,
-    staleTime: 5 * 60 * 1000,
     select: (data) => data.result,
   });
 
