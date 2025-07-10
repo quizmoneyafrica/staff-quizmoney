@@ -33,7 +33,7 @@ const TotalTransactionsTable = () => {
     salesData?.storeTransactions ?? [];
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
-  const filterOptions = ['All', 'Successful', 'Pending', 'Failed'];
+  const filterOptions = ['All', 'Completed', 'Pending', 'Failed'];
 
   // Time range dropdown options
   const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
@@ -134,13 +134,17 @@ const TotalTransactionsTable = () => {
   const getStatusClass = (status: string) => {
     const statusLower = status.toLowerCase();
 
-    if (statusLower === 'successful') {
+    if (statusLower === 'completed') {
       return 'bg-green-100 text-green-800';
     }
     if (statusLower === 'failed') {
       return 'bg-red-100 text-red-800';
     }
-    return 'bg-yellow-100 text-yellow-800';
+    if (statusLower === 'pending') {
+      return 'bg-yellow-100 text-yellow-800';
+    }
+    // Default fallback for any other status
+    return 'bg-gray-100 text-gray-800';
   };
 
   const handleFilterSelect = (filter: string) => {

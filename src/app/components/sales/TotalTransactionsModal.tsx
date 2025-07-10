@@ -132,15 +132,19 @@ const TotalTransactionModal: React.FC<TotalTransactionModalProps> = ({
   // };
 
   const getStatusClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'successful':
-        return 'bg-green-100 text-green-700';
-      case 'failed':
-        return 'bg-red-100 text-red-700';
-      case 'pending':
-      default:
-        return 'bg-yellow-100 text-yellow-700';
+    const statusLower = status.toLowerCase();
+
+    if (statusLower === 'completed') {
+      return 'bg-green-100 text-green-800';
     }
+    if (statusLower === 'failed') {
+      return 'bg-red-100 text-red-800';
+    }
+    if (statusLower === 'pending') {
+      return 'bg-yellow-100 text-yellow-800';
+    }
+
+    return 'bg-gray-100 text-gray-800';
   };
 
   return (
