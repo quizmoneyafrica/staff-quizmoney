@@ -12,6 +12,14 @@ import {
 } from '@/app/store/salesSlice';
 import SalesApi from '@/app/api/salesApi';
 import { store } from '@/app/store/store';
+import {
+  WalletIconBigGreen,
+  BigPurchasedIcon,
+  BigShop,
+  Shop,
+  WalletCardIconLightGreen,
+  PurchasedIcon,
+} from '@/app/icons/icons';
 
 type WalletStat = {
   title: string;
@@ -19,59 +27,36 @@ type WalletStat = {
   bgColor: string;
   showEye: boolean;
   icon: React.ReactNode;
+  bgImage?: React.ReactNode;
 };
 
 function SalesParent() {
   const { salesData } = useSelector(selectSales);
 
-  const OrderIcon = () => (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-    </svg>
-  );
-
-  const TransactionIcon = () => (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-    </svg>
-  );
-
   const walletStats: WalletStat[] = [
     {
-      title: 'Total Orders',
-      value: '₦500,000.00',
+      title: 'Users Purchased',
+      value: '5000',
       bgColor: 'blue',
-      showEye: true,
-      icon: <OrderIcon />,
+      icon: <Shop />,
+      bgImage: <BigShop />,
+      showEye: false,
     },
     {
-      title: 'Total Transactions',
-      value: '₦500,000.00',
-      bgColor: 'green',
+      title: 'Total Withdrawal',
+      value: '₦0.00',
+      bgColor: 'lightGreen',
+      icon: <WalletCardIconLightGreen />,
+      bgImage: <WalletIconBigGreen />,
       showEye: true,
-      icon: <TransactionIcon />,
     },
     {
-      title: 'Total Revenue',
-      value: '₦500,000.00',
+      title: 'Most Purchased',
+      value: 'Quick Fix Pack',
       bgColor: 'cyan',
-      showEye: true,
-      icon: <TransactionIcon />,
+      icon: <PurchasedIcon />,
+      bgImage: <BigPurchasedIcon />,
+      showEye: false,
     },
   ];
 

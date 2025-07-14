@@ -11,6 +11,11 @@ export type StoreTransaction = {
   avatar: string;
   amount: number;
   status: string;
+  userId?: string;
+  bankAccount?: {
+    bankName: string;
+    accountNumber: string;
+  };
   product: {
     productImage: {
       __type: 'File';
@@ -33,6 +38,7 @@ export type StoreTransaction = {
     className: 'Products';
   };
 };
+
 type Result = {
   message: string;
   storeTransactions: StoreTransaction[];
@@ -42,6 +48,7 @@ interface SalesState {
   salesData: Result | null;
   isLoading: boolean;
 }
+
 const initialState: SalesState = {
   salesData: null,
   isLoading: false,
