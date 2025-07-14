@@ -2,14 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
+import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  validateProductForm,
+  prepareProductData,
+  type ProductFormData,
+} from '@/app/components/products/productModal.schema';
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; price: number; quantity: number }) => void;
+  onSubmit: (data: {
+    name: string;
+    price: number;
+    quantity: number;
+    category?: string;
+    description?: string;
+  }) => void;
   loading?: boolean;
+}
+
+interface FormErrors {
+  name?: string;
+  price?: string;
+  quantity?: string;
+  category?: string;
+  description?: string;
 }
 
 const ProductModal: React.FC<ProductModalProps> = ({
@@ -18,9 +37,19 @@ const ProductModal: React.FC<ProductModalProps> = ({
   onSubmit,
   loading = false,
 }) => {
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('');
+  const [formData, setFormData] = useState<ProductFormData>({
+    name: '',
+    price: '',
+    quantity: '',
+    category: '',
+    description: '',
+  });
+
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    'idle' | 'success' | 'error'
+  >('idle');
 
   useEffect(() => {
     if (!isOpen) {
@@ -29,28 +58,67 @@ const ProductModal: React.FC<ProductModalProps> = ({
   }, [isOpen]);
 
   const resetForm = () => {
-    setName('');
-    setPrice('');
-    setQuantity('');
+    setFormData({
+      name: '',
+      price: '',
+      quantity: '',
+      category: '',
+      description: '',
+    });
+    setErrors({});
+    setSubmitStatus('idle');
+    setIsSubmitting(false);
   };
 
-  const handleSubmit = () => {
-    if (!name.trim() || !price.trim() || !quantity.trim()) return;
-    onSubmit({
-      name: name.trim(),
-      price: Number(price),
-      quantity: Number(quantity),
-    });
-    onClose();
-    resetForm();
+  const validateForm = (): boolean => {
+    const { isValid, errors: validationErrors } = validateProductForm(formData);
+    setErrors(validationErrors);
+    return isValid;
+  };
+
+  const handleInputChange = (field: keyof ProductFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+
+    try {
+      const submitData = prepareProductData(formData);
+      await onSubmit(submitData);
+
+      setSubmitStatus('success');
+
+      setTimeout(() => {
+        handleClose();
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
-    if (!loading) {
+    if (!loading && !isSubmitting) {
       resetForm();
       onClose();
     }
   };
+
+  const isFormValid =
+    formData.name.trim() &&
+    formData.price.trim() &&
+    formData.quantity.trim() &&
+    Object.keys(errors).length === 0;
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={handleClose}>
@@ -91,48 +159,77 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 >
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Product Name
+                      Product Name *
                     </label>
                     <input
                       type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter product name..."
-                      disabled={loading}
-                      className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Product Price
-                    </label>
-
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={price}
+                      value={formData.name}
                       onChange={(e) =>
-                        setPrice(e.target.value.replace(/\D/g, ''))
+                        handleInputChange('name', e.target.value)
                       }
-                      placeholder="Enter product price..."
-                      className="w-full appearance-none rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100"
+                      placeholder="Enter product name..."
+                      disabled={loading || isSubmitting}
+                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
+                        errors.name ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.name && (
+                      <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Product Quantity
+                      Product Price *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">
+                        ₦
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.price}
+                        onChange={(e) =>
+                          handleInputChange('price', e.target.value)
+                        }
+                        placeholder="0.00"
+                        disabled={loading || isSubmitting}
+                        className={`w-full rounded-md border py-3 pl-8 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
+                          errors.price ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                    </div>
+                    {errors.price && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.price}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Product Quantity *
                     </label>
                     <input
                       type="number"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
+                      min="0"
+                      value={formData.quantity}
+                      onChange={(e) =>
+                        handleInputChange('quantity', e.target.value)
+                      }
                       placeholder="Enter product quantity..."
-                      disabled={loading}
-                      className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100"
+                      disabled={loading || isSubmitting}
+                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
+                        errors.quantity ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.quantity && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.quantity}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
 
@@ -145,35 +242,57 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   <button
                     type="button"
                     onClick={handleSubmit}
-                    disabled={
-                      !name.trim() ||
-                      !price.trim() ||
-                      !quantity.trim() ||
-                      loading
-                    }
+                    disabled={!isFormValid || loading || isSubmitting}
                     className={`
-                      h-[53px] w-full rounded-[25px]
-                      bg-[#17478B]
-                      text-base font-semibold
-                      text-white transition
-                      duration-200 hover:bg-[#133a6e]
-                      disabled:cursor-not-allowed
-                      disabled:opacity-50 md:w-[538px]
+                      flex h-[53px] w-full
+                      items-center justify-center space-x-2
+                      rounded-[25px] bg-[#17478B] text-base 
+                      font-semibold text-white
+                      transition duration-200
+                      hover:bg-[#133a6e] disabled:cursor-not-allowed disabled:opacity-50 md:w-[538px]
                     `}
                     style={{
                       fontFamily: 'Space Grotesk, sans-serif',
                     }}
                   >
-                    Add Product +
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Creating Product...</span>
+                      </>
+                    ) : submitStatus === 'success' ? (
+                      <>
+                        <CheckCircle className="h-5 w-5" />
+                        <span>Product Created!</span>
+                      </>
+                    ) : submitStatus === 'error' ? (
+                      <>
+                        <AlertCircle className="h-5 w-5" />
+                        <span>Try Again</span>
+                      </>
+                    ) : (
+                      <span>Add Product +</span>
+                    )}
                   </button>
                 </motion.div>
+
+                {/* Status Messages */}
+                {submitStatus === 'error' && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mt-4 text-center text-sm text-red-600"
+                  >
+                    Failed to create product. Please try again.
+                  </motion.div>
+                )}
 
                 <Dialog.Close asChild>
                   <motion.button
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
-                    disabled={loading}
+                    disabled={loading || isSubmitting}
                     className="absolute right-4 top-4 rounded-full p-2 transition-colors hover:bg-gray-100 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={handleClose}
                   >
