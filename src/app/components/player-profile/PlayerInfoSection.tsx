@@ -2,6 +2,8 @@
 import React from 'react';
 import CustomImage from '../CustomImage';
 import { motion } from 'framer-motion';
+import { VerifiedIcon } from '@/app/icons/icons';
+import { Flag } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -35,6 +37,8 @@ interface ProfileData {
   countryFlag?: string;
   referredBy?: string;
   avatar?: string;
+  kycVerified?: boolean;
+  blacklisted?: boolean;
 }
 
 interface PlayerInfoSectionProps {
@@ -100,12 +104,22 @@ export default function PlayerInfoSection({
             className="absolute -bottom-12 left-6"
             variants={itemVariants}
           >
-            <div className="size-24 rounded-full bg-[#BCDDF4] p-6">
+            <div className="size-24 relative rounded-full bg-[#BCDDF4] p-6">
               <CustomImage
                 src={avatarUrl}
                 className="rounded-full"
                 alt={`${profileData.firstName} ${profileData.lastName}`}
               />
+              {profileData.kycVerified && (
+                <div className="absolute -right-3 top-0 rounded-full p-1">
+                  <VerifiedIcon />
+                </div>
+              )}
+              {profileData.blacklisted && (
+                <div className="absolute -right-3 bottom-0 rounded-full bg-red-500 p-1">
+                  <Flag className="h-3 w-3 text-white" fill="currentColor" />
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
