@@ -16,6 +16,8 @@ import TimeRangeDropdown from '../common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
 import { serializeDateRange, isValidDateRange } from '@/app/utils/dateUtils';
 
+import WalletDashboard from './WalletDashboardCards';
+
 const getTransactionId = (transaction: Transaction) => {
   return transaction.transactionId || transaction.id || 'N/A';
 };
@@ -440,6 +442,11 @@ export default function PlayerTransactionHistory({
 
   return (
     <div className="w-full" data-aos="fade-up" data-aos-duration="800">
+      {/* Wallet Dashboard */}
+      <div className=" bg-white">
+        <WalletDashboard />
+      </div>
+
       <div
         className="mb-4 flex items-center justify-between rounded-md bg-white px-5 py-5"
         data-aos="fade-up"

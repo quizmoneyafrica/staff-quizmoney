@@ -75,7 +75,11 @@ interface PlayerProfileData {
     referredBy?: string;
     avatar?: string;
     balance?: string;
+    coinBalance?: number;
     emailVerified?: boolean;
+    kycVerified?: boolean;
+    blacklisted?: boolean;
+    eraser?: number;
     createdAt?: {
       __type: string;
       iso: string;
@@ -112,6 +116,7 @@ interface PlayerProfileData {
     facebook?: string;
     instagram?: string;
   };
+  // bankAccounts?: any[];
   message: string;
 }
 
@@ -153,6 +158,52 @@ interface PlayerTransactionsResponse {
   };
 }
 
+interface FlagPlayerRequest {
+  userId: string;
+  flag: boolean;
+}
+
+interface FlagPlayerResponse {
+  result: {
+    message: string;
+    success: boolean;
+  };
+}
+
+interface UpdatePlayerPayload {
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  country?: string;
+  gender?: string;
+  dob?: string;
+  influencer?: boolean;
+  avatar?: string;
+  promotionalMails?: boolean;
+  kycVerified?: boolean;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  tiktok?: string;
+  bankDetails?: {
+    accountNumber?: string;
+    bankName?: string;
+    accountName?: string;
+  };
+}
+
+interface UpdatePlayerVerificationRequest {
+  userId: string;
+  kycVerified: boolean;
+}
+
+interface UpdatePlayerVerificationResponse {
+  result: {
+    message: string;
+    success: boolean;
+  };
+}
+
 const PlayerApi = {
   viewPlayerProfile(
     data: ViewPlayerProfileRequest,
@@ -177,6 +228,22 @@ const PlayerApi = {
       headers: getSessionTokenHeaders(),
     });
   },
+
+  updatePlayerVerification(
+    data: UpdatePlayerVerificationRequest,
+  ): Promise<AxiosResponse<UpdatePlayerVerificationResponse>> {
+    return axios.post(`${BASE_URL}/updatePlayer`, data, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  flagPlayer(
+    data: FlagPlayerRequest,
+  ): Promise<AxiosResponse<FlagPlayerResponse>> {
+    return axios.post(`${BASE_URL}/flagPlayer`, data, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
 };
 
 export default PlayerApi;
@@ -189,4 +256,9 @@ export type {
   // TransactionItem,
   GameStatsResponse,
   PlayerTransactionsResponse,
+  UpdatePlayerPayload,
+  UpdatePlayerVerificationRequest,
+  UpdatePlayerVerificationResponse,
+  FlagPlayerRequest,
+  FlagPlayerResponse,
 };
