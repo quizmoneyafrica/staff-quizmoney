@@ -63,6 +63,7 @@ export interface TransactionItem {
 }
 
 interface PlayerProfileData {
+  bankAccounts?: UnknownObject[];
   userDetails: {
     id: string;
     firstName: string;

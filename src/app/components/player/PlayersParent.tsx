@@ -7,13 +7,11 @@ import {
   selectPlayers,
   setLoadingPlayers,
   setPlayersData,
-  setDateRange,
 } from '@/app/store/playersSlice';
 import { store } from '@/app/store/store';
 import PlayersApi from '@/app/api/playersApi';
 import { useSelector } from 'react-redux';
 import { useDebounce } from '@/app/hooks/useDebounce';
-import { calculateDateRange } from '@/app/utils/date-range';
 
 export default function PlayersParent() {
   const {
@@ -53,7 +51,6 @@ export default function PlayersParent() {
         store.dispatch(
           setPlayersData({
             ...res.data.result,
-
             totalNoOfUsers: res.data.result.totalNoOfUsers,
             totalActiveUsers: res.data.result.totalActiveUsers,
             totalInactiveUsers: res.data.result.totalInactiveUsers,

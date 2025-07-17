@@ -13,7 +13,6 @@ import KYCDocumentSection from '@/app/components/player-profile/KYCDocumentSecti
 import ActionButtons from '@/app/components/player-profile/ActionButtons';
 import VerifyUserToggle from '@/app/components/player-profile/VerifyUserToggle';
 import FlagUserModal from '@/app/components/player-profile/FlagUserModal';
-
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { toast } from 'sonner';
 
@@ -135,7 +134,7 @@ export default function Page() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <SocialSection userId={userId} socialData={playerData.socials} />
-          <BankSection />
+          <BankSection bankDetails={playerData?.bankAccounts} />
         </div>
         <div className="space-y-6">
           <KYCDocumentSection />
