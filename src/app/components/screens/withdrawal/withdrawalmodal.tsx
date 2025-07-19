@@ -35,7 +35,6 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
   onClose,
   withdrawalData,
 }) => {
-  console.log('withdrawalData: ', withdrawalData);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [comment, setComment] = useState('');
 
