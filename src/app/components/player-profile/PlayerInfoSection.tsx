@@ -31,7 +31,7 @@ interface ProfileData {
   firstName: string;
   lastName: string;
   email: string;
-  dateOfBirth?: string;
+  dateOfBirth?: UnknownObject;
   gender?: string;
   country?: string;
   countryFlag?: string;
@@ -60,7 +60,7 @@ export default function PlayerInfoSection({
     {
       label: 'Date of Birth',
       value: profileData.dateOfBirth
-        ? new Date(profileData.dateOfBirth).toLocaleDateString('en-US', {
+        ? new Date(profileData.dateOfBirth?.iso).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',

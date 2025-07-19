@@ -143,6 +143,7 @@ export default function Page() {
           <ActionButtons
             onFlagClick={handleOpenFlagModal}
             isBlacklisted={isBlacklisted}
+            userId={userId}
           />
         </div>
       </div>

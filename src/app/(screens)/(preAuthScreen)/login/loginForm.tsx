@@ -4,7 +4,6 @@ import { useAuth } from '@/app/hooks/useAuth';
 import useFcmToken from '@/app/hooks/useFcmToken';
 import { EyeIcon, EyeSlash, MailIcon } from '@/app/icons/icons';
 import getDeviceId from '@/app/pwa/deviceId';
-
 import { encryptData } from '@/app/utils/crypto';
 import CustomButton from '@/app/utils/CustomBtn';
 import CustomTextField from '@/app/utils/CustomTextField';

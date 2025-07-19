@@ -1,6 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import { BASE_URL, getSessionTokenHeaders } from './userApi';
 import { ApiResponse } from './interface';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRequestInstance } from './config';
 
 interface GetAllTransactionsWithStatsRequest {
   page: number;
@@ -143,3 +145,50 @@ const WalletApi = {
 
 export default WalletApi;
 export type { GetAllTransactionsWithStatsRequest };
+
+export const useGetBanks = () => {
+  const request = useRequestInstance();
+
+  return useQuery({
+    queryKey: ['get_banks'],
+    queryFn: () =>
+      request
+        .post(`/listBanks`)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response?.data || error;
+        }),
+  });
+};
+
+export const useVerifyAccount = () => {
+  const request = useRequestInstance();
+
+  return useMutation({
+    mutationFn: (values: unknown) =>
+      request
+        .post(`/verifyAccount`, values)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response?.data || error;
+        }),
+  });
+};
+
+export const useUpdatePlayer = () => {
+  const request = useRequestInstance();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (values: unknown) =>
+      request
+        .post(`/updatePlayer`, values)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response?.data || error;
+        }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['playerProfile'] });
+    },
+  });
+};
