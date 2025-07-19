@@ -68,6 +68,8 @@ export default function PlayerGameHistorySection({
     enabled: !!userId,
   });
 
+  console.log('gameStatsData: ', gameStatsData);
+
   const gameHistoryData = gameStatsData?.data?.result?.gameHistory?.data || [];
   const pagination = gameStatsData?.data?.result?.gameHistory?.pagination;
 
@@ -133,7 +135,7 @@ export default function PlayerGameHistorySection({
       return String(value);
     };
 
-    const rewardAmount = game.reward || game.earnings || 0;
+    const rewardAmount = game.rewards || game.earnings || 0;
 
     return {
       id: safeToString(game.gameId || game.id || 'N/A'),

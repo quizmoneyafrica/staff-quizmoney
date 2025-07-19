@@ -48,7 +48,6 @@ interface PlayerInfoSectionProps {
 export default function PlayerInfoSection({
   profileData,
 }: PlayerInfoSectionProps) {
-  // Map API data to display format
   const profileDetails = [
     { label: 'First name', value: profileData.firstName || 'N/A' },
     { label: 'Last name', value: profileData.lastName || 'N/A' },
@@ -70,8 +69,8 @@ export default function PlayerInfoSection({
     { label: 'Gender', value: profileData.gender || 'N/A' },
     {
       label: 'Country',
-      value: profileData.country || 'N/A',
-      icon: profileData.countryFlag || '🌍',
+      value: profileData.country || 'Nigeria',
+      // icon: profileData.countryFlag || '🌍',
       hasIcon: true,
     },
     { label: 'Referred By', value: profileData.referredBy || 'N/A' },
@@ -143,9 +142,9 @@ export default function PlayerInfoSection({
                 detail.breakAll ? 'break-all' : ''
               } items-center gap-2 sm:flex sm:justify-end`}
             >
-              {detail.hasIcon && (
+              {/* {detail.hasIcon && (
                 <span className="text-lg sm:text-xl">{detail.icon}</span>
-              )}
+              )} */}
               {detail.value}
             </div>
           </motion.div>
