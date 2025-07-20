@@ -192,3 +192,107 @@ export const useUpdatePlayer = () => {
     },
   });
 };
+
+export const useUpdatePlayerErasers = () => {
+  const request = useRequestInstance();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (values: UnknownObject) =>
+      request
+        .post(`/updatePlayerErasers`, values)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response.data;
+        }),
+    onMutate: async (payload) => {
+      console.log('payload: ', payload);
+      await queryClient.cancelQueries({
+        queryKey: ['playerProfile', payload?.userId],
+      });
+
+      const previous = queryClient.getQueryData([
+        'playerProfile',
+        payload?.userId,
+      ]);
+
+      queryClient.setQueryData(
+        ['playerProfile', payload?.userId],
+        (old_payload: UnknownObject) => {
+          return {
+            ...old_payload,
+            userDetails: {
+              ...old_payload?.userDetails,
+              eraser: old_payload?.userDetails?.eraser + payload?.erasersCount,
+            },
+          };
+        },
+      );
+
+      return { previous };
+    },
+    onError: (error, _variables, context?: UnknownObject) => {
+      queryClient.setQueryData(
+        ['playerProfile', _variables?.userId],
+        context?.previous,
+      );
+    },
+    onSettled: (data, error, _variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['playerProfile', _variables?.userId],
+      });
+    },
+  });
+};
+
+export const useUpdatePlayerCoins = () => {
+  const request = useRequestInstance();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (values: UnknownObject) =>
+      request
+        .post(`/updatePlayerCoins`, values)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response.data;
+        }),
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({
+        queryKey: ['playerProfile', payload?.userId],
+      });
+
+      const previous = queryClient.getQueryData([
+        'playerProfile',
+        payload?.userId,
+      ]);
+
+      queryClient.setQueryData(
+        ['playerProfile', payload?.userId],
+        (old_payload: UnknownObject) => {
+          return {
+            ...old_payload,
+            userDetails: {
+              ...old_payload?.userDetails,
+              coinBalance:
+                old_payload?.userDetails?.coinBalance + payload?.coinsCount,
+            },
+          };
+        },
+      );
+
+      return { previous };
+    },
+    onError: (error, _variables, context?: UnknownObject) => {
+      queryClient.setQueryData(
+        ['playerProfile', _variables?.userId],
+        context?.previous,
+      );
+    },
+    onSettled: (data, error, _variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['playerProfile', _variables?.userId],
+      });
+    },
+  });
+};

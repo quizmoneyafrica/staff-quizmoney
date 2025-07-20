@@ -4,6 +4,8 @@ import { CoinIcon, ProductIcon, WalletHistoryIcon } from '@/app/icons/icons';
 import { useParams } from 'next/navigation';
 import { usePlayerProfile } from '@/app/hooks/usePlayerProfile';
 import { formatNaira } from '@/app/utils/utils';
+import { useUpdatePlayerErasers, useUpdatePlayerCoins } from '@/app/api/wallet';
+import { toast } from 'sonner';
 
 interface WalletCardProps {
   balance: string;
@@ -75,16 +77,76 @@ const WalletDashboard: React.FC = () => {
 
   const { data: playerData } = usePlayerProfile(userId);
 
-  const [eraserCount, setEraserCount] = React.useState(10);
-  const [coinCount, setCoinCount] = React.useState(1000);
+  const { mutateAsync: updateEraser } = useUpdatePlayerErasers();
+  const { mutateAsync: updateCoins } = useUpdatePlayerCoins();
 
-  const handleEraserIncrement = () => setEraserCount((prev) => prev + 1);
-  const handleEraserDecrement = () =>
-    setEraserCount((prev) => Math.max(0, prev - 1));
+  const handleEraserIncrement = async () => {
+    try {
+      const response = await updateEraser({
+        userId,
+        erasersCount: 1,
+      });
 
-  const handleCoinIncrement = () => setCoinCount((prev) => prev + 1);
-  const handleCoinDecrement = () =>
-    setCoinCount((prev) => Math.max(0, prev - 1));
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
+
+  const handleEraserDecrement = async () => {
+    try {
+      const response = await updateEraser({
+        userId,
+        erasersCount: -1,
+      });
+
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
+
+  const handleCoinIncrement = async () => {
+    try {
+      const response = await updateCoins({
+        userId,
+        coinsCount: 10,
+      });
+
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
+
+  const handleCoinDecrement = async () => {
+    try {
+      const response = await updateCoins({
+        userId,
+        coinsCount: -10,
+      });
+
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl p-6">
