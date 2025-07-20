@@ -118,7 +118,7 @@ const WalletDashboard: React.FC = () => {
     try {
       const response = await updateCoins({
         userId,
-        coinsCount: 10,
+        coinsCount: 100,
       });
 
       if (response?.result?.status === 'error') {
@@ -135,7 +135,7 @@ const WalletDashboard: React.FC = () => {
     try {
       const response = await updateCoins({
         userId,
-        coinsCount: -10,
+        coinsCount: -100,
       });
 
       if (response?.result?.status === 'error') {
