@@ -85,6 +85,7 @@ const WalletDashboard: React.FC = () => {
       const response = await updateEraser({
         userId,
         erasersCount: 1,
+        action: 'increment',
       });
 
       if (response?.result?.status === 'error') {
@@ -101,7 +102,8 @@ const WalletDashboard: React.FC = () => {
     try {
       const response = await updateEraser({
         userId,
-        erasersCount: -1,
+        erasersCount: 1,
+        action: 'decrement',
       });
 
       if (response?.result?.status === 'error') {
@@ -119,6 +121,7 @@ const WalletDashboard: React.FC = () => {
       const response = await updateCoins({
         userId,
         coinsCount: 100,
+        action: 'increment',
       });
 
       if (response?.result?.status === 'error') {
@@ -135,7 +138,8 @@ const WalletDashboard: React.FC = () => {
     try {
       const response = await updateCoins({
         userId,
-        coinsCount: -100,
+        coinsCount: 100,
+        action: 'decrement',
       });
 
       if (response?.result?.status === 'error') {
