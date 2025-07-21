@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import WithdrawalCards, {
@@ -24,8 +22,12 @@ import {
 } from '@/app/icons/icons';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
+import { VerifiedIcon } from '@/app/icons/icons';
+import { useRouter } from 'next/navigation';
 
 function Page() {
+  const router = useRouter();
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,7 +79,6 @@ function Page() {
     debouncedSearchTerm,
     calculateDateRange(selected, customDateRange),
   );
-  console.log('data: ', data);
 
   const { data: statsData, isPending: fetchingStats } = useGetWithdrawalStats();
 
@@ -103,7 +104,6 @@ function Page() {
       totalCount: withdrawalData.length,
     };
   }, [data, currentPage, withdrawalData.length]);
-  console.log('paginationInfo: ', paginationInfo);
 
   const shouldShowPagination = useMemo(() => {
     if (fetchingDashData) return false;
@@ -395,16 +395,28 @@ function Page() {
                         </div>
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                        <div
+                          className="flex cursor-pointer items-center gap-2"
+                          onClick={() => {
+                            router.push(
+                              `/players/player-profile/${item.userId}`,
+                            );
+                          }}
+                        >
+                          <div className="bg-primary-50 relative flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
                             <Avatar
-                              src=""
+                              src={item?.avatar || ''}
                               fallback={
                                 item.firstName?.charAt(0).toUpperCase() || 'U'
                               }
                               radius="full"
                               className="bg-primary-50"
                             />
+                            {item?.kycVerified && (
+                              <div className="absolute -right-2 top-0 rounded-full">
+                                <VerifiedIcon className="size-5" />
+                              </div>
+                            )}
                           </div>
                           <p className="text-primary-800 capitalize">
                             {item.firstName || 'Unknown'}

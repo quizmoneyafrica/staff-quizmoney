@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ProductsApi, {
-  Product,
   AuthenticationError,
-  ApiError,
   UpdateProductPayload,
 } from '@/app/api/productsApi';
 
@@ -57,7 +55,6 @@ export const useUpdateProduct = (
     mutationFn: async (updateData: UpdateProductPayload) => {
       try {
         setAuthError(null);
-        console.log('Mutation called with data:', updateData);
         const response = await ProductsApi.updateProduct(updateData);
         return response.data;
       } catch (error) {
@@ -68,8 +65,6 @@ export const useUpdateProduct = (
       }
     },
     onSuccess: () => {
-      console.log('Product updated successfully');
-
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 

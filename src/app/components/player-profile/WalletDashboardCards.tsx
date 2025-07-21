@@ -1,6 +1,11 @@
 import React from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { CoinIcon, ProductIcon, WalletHistoryIcon } from '@/app/icons/icons';
+import { useParams } from 'next/navigation';
+import { usePlayerProfile } from '@/app/hooks/usePlayerProfile';
+import { formatNaira } from '@/app/utils/utils';
+import { useUpdatePlayerErasers, useUpdatePlayerCoins } from '@/app/api/wallet';
+import { toast } from 'sonner';
 
 interface WalletCardProps {
   balance: string;
@@ -67,25 +72,92 @@ const CounterCard: React.FC<CounterCardProps> = ({
 );
 
 const WalletDashboard: React.FC = () => {
-  const [eraserCount, setEraserCount] = React.useState(10);
-  const [coinCount, setCoinCount] = React.useState(1000);
+  const params = useParams();
+  const userId = params.userId as string;
 
-  const handleEraserIncrement = () => setEraserCount((prev) => prev + 1);
-  const handleEraserDecrement = () =>
-    setEraserCount((prev) => Math.max(0, prev - 1));
+  const { data: playerData } = usePlayerProfile(userId);
 
-  const handleCoinIncrement = () => setCoinCount((prev) => prev + 1);
-  const handleCoinDecrement = () =>
-    setCoinCount((prev) => Math.max(0, prev - 1));
+  const { mutateAsync: updateEraser } = useUpdatePlayerErasers();
+  const { mutateAsync: updateCoins } = useUpdatePlayerCoins();
+
+  const handleEraserIncrement = async () => {
+    try {
+      const response = await updateEraser({
+        userId,
+        erasersCount: 1,
+      });
+
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
+
+  const handleEraserDecrement = async () => {
+    try {
+      const response = await updateEraser({
+        userId,
+        erasersCount: -1,
+      });
+
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
+
+  const handleCoinIncrement = async () => {
+    try {
+      const response = await updateCoins({
+        userId,
+        coinsCount: 100,
+      });
+
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
+
+  const handleCoinDecrement = async () => {
+    try {
+      const response = await updateCoins({
+        userId,
+        coinsCount: -100,
+      });
+
+      if (response?.result?.status === 'error') {
+        toast.error(response?.result?.message);
+      } else {
+        toast.success(response?.result?.message);
+      }
+    } catch (error) {
+      toast.error(error?.result?.message);
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl p-6">
       <div className="grid  grid-cols-1 gap-6 md:grid-cols-3">
-        <WalletCard balance="₦12,000.00" />
+        <WalletCard
+          balance={formatNaira(playerData?.userDetails?.balance ?? 0)}
+        />
 
         <CounterCard
           title="Erasers"
-          count={eraserCount}
+          count={playerData?.userDetails?.eraser ?? 0}
           icon={<ProductIcon className="h-5 w-5 text-[#17478B]" />}
           onIncrement={handleEraserIncrement}
           onDecrement={handleEraserDecrement}
@@ -93,7 +165,7 @@ const WalletDashboard: React.FC = () => {
 
         <CounterCard
           title="QM Coin"
-          count={coinCount}
+          count={playerData?.userDetails?.coinBalance ?? 0}
           icon={<CoinIcon className="h-5 w-5 text-yellow-500" />}
           onIncrement={handleCoinIncrement}
           onDecrement={handleCoinDecrement}

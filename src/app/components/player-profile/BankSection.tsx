@@ -24,19 +24,26 @@ const BankAccountCard: React.FC<BankAccountProps> = ({
       </div>
 
       <div className="xs:left-14 xs:right-12 xs:top-3 lg:left-18 xl:right-18 absolute left-12 right-10 top-2 transition-all duration-300 ease-in-out sm:left-14 sm:right-12 sm:top-3 md:left-16 md:right-14 md:top-4 lg:right-16 lg:top-5 xl:left-20">
-        <span
-          className="xs:text-sm xs:leading-6 block truncate text-xs font-bold leading-5 text-[#17478B] transition-all duration-300 ease-in-out sm:text-sm sm:leading-6 md:text-base md:leading-7 lg:text-lg lg:leading-8 xl:text-xl xl:leading-9"
+        <p
+          className="xs:text-sm xs:leading-6 block truncate text-xs font-bold leading-5 text-[#17478B] transition-all duration-300 ease-in-out sm:text-sm sm:leading-6 md:text-base md:leading-7 lg:text-lg lg:leading-8  xl:leading-9"
           style={{
             fontFamily: 'DM Sans',
             fontWeight: 700,
             letterSpacing: '0%',
           }}
         >
-          {accountHolder} - {accountNumber}
-        </span>
-      </div>
-
-      <div className="xs:left-14 xs:right-12 xs:top-8 lg:left-18 xl:right-18 absolute left-12 right-10 top-7 transition-all duration-300 ease-in-out sm:left-14 sm:right-12 sm:top-9 md:left-16 md:right-14 md:top-10 lg:right-16 lg:top-12 xl:left-20 xl:top-14">
+          {accountHolder}
+        </p>
+        <p
+          className="xs:text-sm xs:leading-6 block truncate text-xs font-bold leading-5 text-[#17478B] transition-all duration-300 ease-in-out sm:text-sm sm:leading-6 md:text-base md:leading-7 lg:text-lg lg:leading-8  xl:leading-9"
+          style={{
+            fontFamily: 'DM Sans',
+            fontWeight: 700,
+            letterSpacing: '0%',
+          }}
+        >
+          {accountNumber}
+        </p>
         <span
           className="xs:text-xs xs:leading-4 block truncate text-xs leading-3 text-[#000000CC] transition-all duration-300 ease-in-out sm:text-sm sm:leading-4 md:text-sm md:leading-5 lg:text-base lg:leading-5 xl:text-lg xl:leading-6"
           style={{
@@ -49,18 +56,18 @@ const BankAccountCard: React.FC<BankAccountProps> = ({
         </span>
       </div>
 
-      <button
+      {/* <button
         onClick={onDelete || handleDelete}
         className="xs:right-4 xs:top-7 xs:h-6 xs:w-6 absolute right-3 top-6 h-5 w-5 rounded-md p-1 text-red-500 transition-all duration-200 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:right-4 sm:top-8 sm:h-6 sm:w-6 md:right-5 md:top-9 md:h-7 md:w-7 lg:right-6 lg:top-10 lg:h-8 lg:w-8 xl:h-9 xl:w-9"
         aria-label="Delete bank account"
       >
         <Trash2 className="xs:h-4 xs:w-4 h-3 w-3 transition-all duration-300 ease-in-out sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-5 lg:w-5 xl:h-6 xl:w-6" />
-      </button>
+      </button> */}
     </div>
   );
 };
 
-const BankSection: React.FC = () => {
+const BankSection = ({ bankDetails }) => {
   const handleDelete = () => {};
 
   return (
@@ -73,13 +80,23 @@ const BankSection: React.FC = () => {
           Bank
         </h1>
 
-        <div className="xs:mt-5 xs:pb-5 mt-4 pb-4 transition-all duration-300 ease-in-out sm:mt-6 sm:pb-6 md:mt-6 md:pb-6 lg:mt-8 lg:pb-8 xl:mt-8 xl:pb-8">
-          <BankAccountCard
-            accountHolder="Joseph Micheal"
-            accountNumber="1234567890"
-            bankName="First Bank"
-            onDelete={handleDelete}
-          />
+        <div className="xs:mt-5 xs:pb-5 mt-4 space-y-3 pb-4 transition-all duration-300 ease-in-out sm:mt-6 sm:pb-6 md:mt-6 md:pb-6 lg:mt-8 lg:pb-8 xl:mt-8 xl:pb-8">
+          {bankDetails?.length === 0 && (
+            <div className="m-4 rounded-lg bg-gray-50 p-8 text-center">
+              <p className="text-gray-600">No bank account found.</p>
+            </div>
+          )}
+
+          {bankDetails?.length > 0 &&
+            bankDetails?.map((account, index) => (
+              <BankAccountCard
+                key={index}
+                accountHolder={account?.accountName}
+                accountNumber={account?.accountNumber}
+                bankName={account?.bankName}
+                onDelete={handleDelete}
+              />
+            ))}
         </div>
       </div>
     </div>

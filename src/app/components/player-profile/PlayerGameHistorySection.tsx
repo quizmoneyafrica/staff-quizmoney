@@ -8,6 +8,7 @@ import CustomImage from '../CustomImage';
 import * as Dialog from '@radix-ui/react-dialog';
 import GameHistoryModal from './GameHistoryModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
+import { formatNaira } from '@/app/utils/utils';
 
 type GameHistoryItem = {
   gameId?: string;
@@ -133,14 +134,14 @@ export default function PlayerGameHistorySection({
       return String(value);
     };
 
-    const rewardAmount = game.reward || game.earnings || 0;
+    const rewardAmount = game.rewards || game.earnings || 0;
 
     return {
       id: safeToString(game.gameId || game.id || 'N/A'),
       date: game.date || 'N/A',
       reward: {
         type: 'money',
-        value: `₦${Number(rewardAmount).toLocaleString()}`,
+        value: formatNaira(rewardAmount, true),
       },
       correctScore: Number(game.score) || 0,
       incorrectScore: 0,

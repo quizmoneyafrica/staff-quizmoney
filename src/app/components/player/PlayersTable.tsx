@@ -7,7 +7,6 @@ import { Avatar, Table } from '@radix-ui/themes';
 import classNames from 'classnames';
 import Link from 'next/link';
 import Pagination from '../leaderboard/Pagination';
-
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Player,
@@ -24,9 +23,9 @@ import {
 import { formatDateTime } from '@/app/utils/utils';
 import { serializeDateRange, isValidDateRange } from '@/app/utils/dateUtils';
 import PlayersApi from '@/app/api/playersApi';
-
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
+import { VerifiedIcon } from '@/app/icons/icons';
 
 type SortField =
   | 'objectId'
@@ -513,7 +512,7 @@ const PlayersTable = () => {
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                          <div className="bg-primary-50 relative flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
                             <Avatar
                               src={player.avatar || ''}
                               fallback={player.firstName
@@ -522,6 +521,11 @@ const PlayersTable = () => {
                               radius="full"
                               className="bg-primary-50"
                             />
+                            {player?.kycVerified && (
+                              <div className="absolute -right-2 top-0 rounded-full">
+                                <VerifiedIcon className="size-5" />
+                              </div>
+                            )}
                           </div>
                           <p className="text-primary-800 capitalize">
                             {player.firstName}

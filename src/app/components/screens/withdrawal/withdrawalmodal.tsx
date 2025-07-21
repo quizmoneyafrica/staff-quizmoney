@@ -5,14 +5,14 @@ import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
-// import { useApproveWithdrawal, useRejectWithdrawal } from '@/app/api';
 import {
   useApproveWithdrawal,
   useRejectWithdrawal,
 } from '@/app/api/withdrawal';
-
+import { VerifiedIcon } from '@/app/icons/icons';
 import { toast } from 'sonner';
 import { toastPosition } from '@/app/utils/utils';
+import { Flag } from 'lucide-react';
 
 interface ExtendedWithdrawalRequest
   extends Omit<WithdrawalRequest, 'bankAccount'> {
@@ -183,7 +183,7 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                       className="flex items-center gap-4 border-b border-gray-200 pb-6"
                       variants={itemVariants}
                     >
-                      <div className="h-12 w-12 flex-shrink-0">
+                      <div className="relative h-12 w-12 flex-shrink-0">
                         <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
                           <span className="text-primary-800 text-lg font-semibold">
                             {withdrawalData.firstName
@@ -191,6 +191,20 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                               .toUpperCase() || 'U'}
                           </span>
                         </div>
+                        {withdrawalData?.kycVerified && (
+                          <div className="absolute -right-2 top-0 rounded-full">
+                            <VerifiedIcon className="size-5" />
+                          </div>
+                        )}
+
+                        {withdrawalData?.blacklisted && (
+                          <div className="absolute -right-2 bottom-0 rounded-full">
+                            <Flag
+                              className={`h-4 w-4 text-red-600`}
+                              fill="currentColor"
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1">
                         <div className="text-lg font-semibold capitalize text-gray-900">
@@ -375,14 +389,16 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                           >
                             Reject
                           </button>
-                          <button
-                            type="button"
-                            onClick={handleApproveWithdrawal}
-                            disabled={isPending}
-                            className="rounded-md bg-green-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                          >
-                            Accept
-                          </button>
+                          {!withdrawalData?.blacklisted && (
+                            <button
+                              type="button"
+                              onClick={handleApproveWithdrawal}
+                              disabled={isPending}
+                              className="rounded-md bg-green-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                            >
+                              Accept
+                            </button>
+                          )}
                         </motion.div>
                       </motion.div>
                     )}

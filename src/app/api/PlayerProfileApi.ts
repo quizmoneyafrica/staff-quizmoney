@@ -63,12 +63,13 @@ export interface TransactionItem {
 }
 
 interface PlayerProfileData {
+  bankAccounts?: UnknownObject[];
   userDetails: {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
-    dateOfBirth?: string;
+    dateOfBirth?: UnknownObject;
     gender?: string;
     country?: string;
     countryFlag?: string;
@@ -115,6 +116,7 @@ interface PlayerProfileData {
     twitter?: string;
     facebook?: string;
     instagram?: string;
+    tiktok?: string;
   };
   // bankAccounts?: any[];
   message: string;

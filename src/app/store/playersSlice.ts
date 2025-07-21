@@ -14,6 +14,8 @@ export interface Player {
   };
   avatar?: string;
   status: string;
+  kycVerified?: boolean;
+  blacklisted?: boolean;
 }
 
 type PlayerData = {

@@ -79,7 +79,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
 
   useEffect(() => {
     if (productData && isOpen) {
-      console.log('Populating form with product data:', productData);
       setFormData({
         name: productData.productName || '',
         price: productData.productPrice?.toString() || '',
@@ -161,7 +160,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       description: formData.description.trim(),
     };
 
-    console.log('Submitting form with data:', submitData);
     updateProduct(submitData);
   };
 
