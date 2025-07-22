@@ -206,7 +206,6 @@ export const useUpdatePlayerErasers = () => {
           throw error.response.data;
         }),
     onMutate: async (payload) => {
-      console.log('payload: ', payload);
       await queryClient.cancelQueries({
         queryKey: ['playerProfile', payload?.userId],
       });

@@ -30,21 +30,19 @@ const LogoutDialog = ({ open, onOpenChange }: Props) => {
   };
 
   return (
-    <>
-      <Modal
-        open={open}
-        handleClose={onOpenChange}
-        redTitle
-        title="Confirm Logout"
-        actionBtnText="Log Out"
-        actionOnClick={handleLogout}
-        actionLoader={loading}
-      >
-        <div>
-          <p>Are you sure you want to log out of Quiz Money?</p>
-        </div>
-      </Modal>
-    </>
+    <Modal
+      open={open}
+      handleClose={onOpenChange}
+      redTitle
+      title="Confirm Logout"
+      actionBtnText="Log Out"
+      actionOnClick={handleLogout}
+      actionLoader={loading}
+    >
+      <div>
+        <p>Are you sure you want to log out of Quiz Money?</p>
+      </div>
+    </Modal>
   );
 };
 

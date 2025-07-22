@@ -1,5 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { BASE_URL, getSessionTokenHeaders } from './userApi';
+import { useRequestInstance } from './config';
+import { useMutation } from '@tanstack/react-query';
 
 interface FetchPlayersParams {
   page: number;
@@ -206,3 +208,17 @@ export type {
 };
 
 export default PlayersApi;
+
+export const useDeletePlayer = () => {
+  const request = useRequestInstance();
+
+  return useMutation({
+    mutationFn: (values: unknown) =>
+      request
+        .post(`/deletePlayer`, values)
+        .then((res) => res.data)
+        .catch((error) => {
+          throw error.response?.data || error;
+        }),
+  });
+};
