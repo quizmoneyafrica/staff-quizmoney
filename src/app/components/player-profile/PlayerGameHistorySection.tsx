@@ -9,6 +9,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import GameHistoryModal from './GameHistoryModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { formatNaira } from '@/app/utils/utils';
+import { useRouter } from 'next/navigation';
 
 type GameHistoryItem = {
   gameId?: string;
@@ -53,6 +54,14 @@ export default function PlayerGameHistorySection({
 }: PlayerGameHistorySectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
+  const router = useRouter();
+
+  const handleViewHistory = (gameId: string, status?: string) => {
+    const statusParam = status ? `?status=${encodeURIComponent(status)}` : '';
+    router.push(
+      `/players/player-profile/${userId}/game-history/${gameId}${statusParam}`,
+    );
+  };
   const {
     data: gameStatsData,
     isLoading,
@@ -317,14 +326,17 @@ export default function PlayerGameHistorySection({
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                        <Dialog.Root>
-                          <Dialog.Trigger asChild>
-                            <button className="text-primary-900 cursor-pointer">
-                              View
-                            </button>
-                          </Dialog.Trigger>
-                          <GameHistoryModal game={transformedGame as any} />
-                        </Dialog.Root>
+                        <button
+                          onClick={() =>
+                            handleViewHistory(
+                              transformedGame.id,
+                              transformedGame.status,
+                            )
+                          }
+                          className="text-primary-900 cursor-pointer"
+                        >
+                          View
+                        </button>
                       </td>
                     </tr>
                   );

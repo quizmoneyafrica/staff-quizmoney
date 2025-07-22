@@ -396,7 +396,7 @@ function Page() {
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <div
-                          className="flex cursor-pointer items-center gap-2"
+                          className="flex cursor-pointer items-center gap-3"
                           onClick={() => {
                             router.push(
                               `/players/player-profile/${item.userId}`,
@@ -418,11 +418,17 @@ function Page() {
                               </div>
                             )}
                           </div>
-                          <p className="text-primary-800 capitalize">
-                            {item.firstName || 'Unknown'}
-                          </p>
+                          <div>
+                            <p className="text-primary-800 capitalize">
+                              {item.firstName || 'Unknown'}
+                            </p>
+                            <span className="text-sm text-neutral-600">
+                              {item.email || 'Unknown'}
+                            </span>
+                          </div>
                         </div>
                       </Table.Cell>
+
                       <Table.Cell className="px-4 py-4">
                         {formatNaira(Number(item.balance || 0), true)}
                       </Table.Cell>
