@@ -236,6 +236,13 @@ export function formatTimeToMinutesAndSeconds(timeString: string): string {
   return formattedTime.trim(); // Trim any leading/trailing space just in case
 }
 
+export function formatNairaValue(value: string | number) {
+  if (typeof value === 'string' && value.startsWith('₦')) {
+    return formatNaira(parseFloat(value.replace(/[^\d.]/g, '')));
+  }
+  return formatNaira(value);
+}
+
 // import { format, isToday, isTomorrow, isPast, parseISO } from 'date-fns';
 
 // // export function isIosPwaInstalled(): boolean {

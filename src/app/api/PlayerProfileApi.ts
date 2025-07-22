@@ -1,3 +1,34 @@
+// --- GetPlayerGameDetails Types ---
+export interface PlayerGameQuestion {
+  questionNumber: string;
+  question: string;
+  correctAnswer: string;
+  userAnswer: string;
+  timeTaken: string;
+  createdAt: { iso: string };
+  usedEraser?: boolean;
+}
+
+export interface PlayerGameDetails {
+  gameId: string;
+  startDate: { iso: string };
+  totalQuestions: number;
+  status?: string;
+  totalEarned?: number | string;
+  totalTimeTaken?: string;
+  correctQuestionNumbers?: (number | string)[];
+  incorrectQuestionNumbers?: (number | string)[];
+  questions?: PlayerGameQuestion[];
+}
+
+export interface GetPlayerGameDetailsResult {
+  gameDetails: PlayerGameDetails;
+  totalEarned?: number | string;
+  totalTimeTaken?: string;
+  correctQuestionNumbers?: (number | string)[];
+  incorrectQuestionNumbers?: (number | string)[];
+  questions?: PlayerGameQuestion[];
+}
 import axios, { AxiosResponse } from 'axios';
 import { BASE_URL, getSessionTokenHeaders } from './userApi';
 
@@ -211,6 +242,15 @@ const PlayerApi = {
     data: ViewPlayerProfileRequest,
   ): Promise<AxiosResponse<{ result: PlayerProfileData }>> {
     return axios.post(`${BASE_URL}/getPlayerProfileDetails`, data, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  getPlayerGameDetails(data: {
+    userId: string;
+    gameId: string;
+  }): Promise<AxiosResponse<{ result: GetPlayerGameDetailsResult }>> {
+    return axios.post(`${BASE_URL}/getPlayerGameDetails/`, data, {
       headers: getSessionTokenHeaders(),
     });
   },

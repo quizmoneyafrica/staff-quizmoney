@@ -15,6 +15,8 @@ import VerifyUserToggle from '@/app/components/player-profile/VerifyUserToggle';
 import FlagUserModal from '@/app/components/player-profile/FlagUserModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { toast } from 'sonner';
+// import GameHistoryPage from './game-history/[game-id]/page';
+import GameHistoryPage from '@/app/(screens)/(protected)/(tabs)/players/player-profile/[userId]/game-history/[game-id]/page';
 
 export default function Page() {
   const params = useParams();
@@ -152,6 +154,7 @@ export default function Page() {
         transactionData={playerData.transactions}
         userId={userId}
       />
+      <GameHistoryPage />
 
       {isFlagModalOpen && (
         <FlagUserModal
