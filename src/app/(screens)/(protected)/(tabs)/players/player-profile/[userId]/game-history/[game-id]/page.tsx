@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import ProgressCircle from '@/app/components/player-profile/ProgressCircle';
 import GameHeader from '@/app/components/player-profile/game-history/GameHeader';
 import GameInfoSection from '@/app/components/player-profile/game-history/GameInfoSection';
@@ -9,6 +9,7 @@ import AnswersSection from '@/app/components/player-profile/game-history/Answers
 import QuestionsList from '@/app/components/player-profile/game-history/QuestionsList';
 import BackButton from '@/app/icons/BackButton';
 import GameHistoryActions from '@/app/components/player-profile/game-history/GameHistoryActions';
+import DeleteUserModal from '@/app/components/player-profile/DeleteUserModal';
 import { usePlayerGameDetails } from '@/app/hooks/usePlayerGameDetails';
 import FlagUserModal from '@/app/components/player-profile/FlagUserModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
@@ -16,11 +17,16 @@ import { toast } from 'sonner';
 
 const GameHistoryPage: React.FC = () => {
   const params = useParams();
+  const searchParams = useSearchParams();
   const userId = params.userId as string;
   const gameId = params['game-id'] as string;
+  const statusFromQuery = searchParams.get('status');
 
   const [isBlacklisted, setIsBlacklisted] = useState(false);
   const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const handleOpenDeleteModal = () => setIsDeleteModalOpen(true);
+  const handleCloseDeleteModal = () => setIsDeleteModalOpen(false);
 
   const { data, isLoading, isError } = usePlayerGameDetails(userId, gameId);
 
@@ -99,10 +105,14 @@ const GameHistoryPage: React.FC = () => {
           onFlagClick={handleOpenFlagModal}
           isBlacklisted={isBlacklisted}
           userId={userId}
+          onDeleteClick={handleOpenDeleteModal}
         />
+        {isDeleteModalOpen && (
+          <DeleteUserModal onClose={handleCloseDeleteModal} userId={userId} />
+        )}
       </div>
       <div className="mx-auto max-w-[1108px] rounded-[20px] bg-white p-6 md:p-8 lg:p-12">
-        <GameHeader status={gameDetails.status || 'N/A'} />
+        <GameHeader status={statusFromQuery ?? gameDetails.status ?? 'N/A'} />
 
         <GameInfoSection gameInfo={gameInfo} />
 

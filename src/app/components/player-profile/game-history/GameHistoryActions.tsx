@@ -8,12 +8,14 @@ interface GameHistoryActionsProps {
   onFlagClick: () => void;
   isBlacklisted: boolean;
   userId: string;
+  onDeleteClick?: () => void;
 }
 
 const GameHistoryActions: React.FC<GameHistoryActionsProps> = ({
   onFlagClick,
   isBlacklisted,
   userId,
+  onDeleteClick,
 }) => {
   const router = useRouter();
 
@@ -52,7 +54,10 @@ const GameHistoryActions: React.FC<GameHistoryActionsProps> = ({
         <span className="hidden sm:inline">Edit Profile</span>
       </button>
 
-      <button className="flex h-[35px] items-center justify-center gap-2 rounded-[5px] bg-gray-300 px-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-400 sm:px-3">
+      <button
+        className="flex h-[35px] items-center justify-center gap-2 rounded-[5px] bg-gray-300 px-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-400 sm:px-3"
+        onClick={onDeleteClick}
+      >
         <Trash2 className="h-3 w-3 text-gray-700" />
         <span className="hidden sm:inline">Delete User</span>
       </button>

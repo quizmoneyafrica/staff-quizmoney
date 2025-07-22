@@ -56,8 +56,11 @@ export default function PlayerGameHistorySection({
 
   const router = useRouter();
 
-  const handleViewHistory = (gameId: string) => {
-    router.push(`/players/player-profile/${userId}/game-history/${gameId}`);
+  const handleViewHistory = (gameId: string, status?: string) => {
+    const statusParam = status ? `?status=${encodeURIComponent(status)}` : '';
+    router.push(
+      `/players/player-profile/${userId}/game-history/${gameId}${statusParam}`,
+    );
   };
   const {
     data: gameStatsData,
@@ -324,7 +327,12 @@ export default function PlayerGameHistorySection({
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
                         <button
-                          onClick={() => handleViewHistory(transformedGame.id)}
+                          onClick={() =>
+                            handleViewHistory(
+                              transformedGame.id,
+                              transformedGame.status,
+                            )
+                          }
                           className="text-primary-900 cursor-pointer"
                         >
                           View
