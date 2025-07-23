@@ -123,7 +123,7 @@ const createApiClient = () => {
       payload: GetProductsPayload,
     ): Promise<AxiosResponse<ProductsApiResponse>> {
       try {
-        return await axios.post(`${BASE_URL}/getProducts`, payload, {
+        return await axios.post(`${BASE_URL}/getProductsAdmin`, payload, {
           headers: getSessionTokenHeaders(),
         });
       } catch (error) {
