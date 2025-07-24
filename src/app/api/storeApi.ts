@@ -4,7 +4,11 @@ import { ApiResponse } from './interface';
 
 const StoreAPI = {
   getProducts(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/getProducts`, {}, { headers: appHeaders });
+    return axios.post(
+      `${BASE_URL}/getProductsAdmin`,
+      {},
+      { headers: appHeaders },
+    );
   },
 
   getProductById(productId: string): Promise<AxiosResponse<ApiResponse>> {
