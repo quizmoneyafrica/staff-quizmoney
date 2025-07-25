@@ -1,67 +1,99 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { Search, ListFilter, ChevronDown, AlertCircle } from 'lucide-react';
 import classNames from 'classnames';
-import CustomImage from '@/app/components/CustomImage';
-
-import Pagination from '../leaderboard/Pagination';
-import { useSelector } from 'react-redux';
-import { selectSales, StoreTransaction } from '@/app/store/salesSlice';
 import { Avatar, Table } from '@radix-ui/themes';
-import { CaretSortIcon } from '@radix-ui/react-icons';
-import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
-import { formatDateTime } from '@/app/utils/utils';
+import { subDays, startOfDay, endOfDay, formatISO } from 'date-fns';
 
-import TotalTransactionModal from './TotalTransactionsModal';
+import CustomImage from '@/app/components/CustomImage';
+import Pagination from '../leaderboard/Pagination';
+import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
+import { formatDateTime, formatNaira } from '@/app/utils/utils';
+import SalesApi from '@/app/api/salesApi';
+import { VerifiedIcon } from '@/app/icons/icons';
+
+type CustomDateRange = { startDate: Date; endDate: Date } | null;
+
+const getDateRangeForFilter = (
+  selectedOption: string,
+  customRange: CustomDateRange,
+) => {
+  const now = new Date();
+  switch (selectedOption) {
+    case 'This week':
+      return { start: formatISO(subDays(now, 7)), end: formatISO(now) };
+    case 'Last 30 days':
+      return { start: formatISO(subDays(now, 30)), end: formatISO(now) };
+    case 'Custom':
+      if (customRange?.startDate && customRange?.endDate) {
+        return {
+          start: formatISO(startOfDay(customRange.startDate)),
+          end: formatISO(endOfDay(customRange.endDate)),
+        };
+      }
+      return undefined;
+    case 'All Time':
+    default:
+      return undefined;
+  }
+};
 
 const TotalTransactionsTable = () => {
+  const router = useRouter();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<string>('All');
-  const [sortBy, setSortBy] = useState<string>('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [selectedFilter, setSelectedFilter] = useState<
+    'All' | 'Completed' | 'Pending' | 'Failed'
+  >('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<StoreTransaction | null>(null);
 
-  const { salesData, isLoading: isSalesLoading } = useSelector(selectSales);
-  const totalTransactions: StoreTransaction[] =
-    salesData?.storeTransactions ?? [];
-
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const filterOptions = ['All', 'Completed', 'Pending', 'Failed'];
 
-  // Time range dropdown options
-  const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
-  const [selected, setSelected] = useState('All Time');
-  const [customDateRange, setCustomDateRange] = useState(null);
+  const [selectedTimeRange, setSelectedTimeRange] = useState('All Time');
 
-  const handleSelect = (option) => {
-    setSelected(option);
-    if (option !== 'Custom') {
-      setCustomDateRange(null);
-    }
-  };
+  const [customDateRange, setCustomDateRange] = useState<CustomDateRange>(null);
 
-  const handleCustomDateChange = (dateRange) => {
-    setCustomDateRange(dateRange);
-  };
-
-  // Debounced search effect
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
       setCurrentPage(1);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Filter dropdown click outside effect
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: [
+      'salesTransactions',
+      currentPage,
+      itemsPerPage,
+      debouncedSearchTerm,
+      selectedFilter,
+      selectedTimeRange,
+      customDateRange,
+    ],
+    queryFn: () => {
+      const statusForApi =
+        selectedFilter === 'All' ? '' : selectedFilter.toLowerCase();
+      const payload = {
+        page: currentPage,
+        limit: itemsPerPage,
+        search: debouncedSearchTerm,
+        status: statusForApi as 'completed' | 'pending' | 'failed' | '',
+        dateRange: getDateRangeForFilter(selectedTimeRange, customDateRange),
+      };
+      return SalesApi.getSalesTransactionsList(payload);
+    },
+    select: (res) => res.data.result,
+    placeholderData: keepPreviousData,
+  });
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -71,95 +103,16 @@ const TotalTransactionsTable = () => {
         setIsFilterOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter transactions based on search and filter
-  const filteredTransactions = useMemo(() => {
-    let filtered = totalTransactions;
-
-    // Apply search filter
-    if (debouncedSearchTerm) {
-      filtered = filtered.filter(
-        (transaction) =>
-          transaction.objectId
-            .toLowerCase()
-            .includes(debouncedSearchTerm.toLowerCase()) ||
-          transaction.firstName
-            .toLowerCase()
-            .includes(debouncedSearchTerm.toLowerCase()) ||
-          transaction.product.productName
-            .toLowerCase()
-            .includes(debouncedSearchTerm.toLowerCase()),
-      );
-    }
-
-    // Apply status filter
-    if (selectedFilter !== 'All') {
-      filtered = filtered.filter(
-        (transaction) =>
-          transaction.status.toLowerCase() === selectedFilter.toLowerCase(),
-      );
-    }
-
-    return filtered;
-  }, [totalTransactions, debouncedSearchTerm, selectedFilter]);
-
-  // Pagination calculations
-  const paginationInfo = useMemo(() => {
-    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentData = filteredTransactions.slice(startIndex, endIndex);
-
-    return {
-      currentPage,
-      totalPages,
-      totalCount: filteredTransactions.length,
-      startIndex,
-      endIndex,
-      currentData,
-    };
-  }, [filteredTransactions, currentPage, itemsPerPage]);
-
-  const shouldShowPagination = useMemo(() => {
-    if (isSalesLoading) return false;
-    return filteredTransactions.length > 0 || currentPage > 1;
-  }, [isSalesLoading, filteredTransactions.length, currentPage]);
-
-  const getStatusClass = (status: string) => {
-    const statusLower = status.toLowerCase();
-
-    if (statusLower === 'completed') {
-      return 'bg-green-100 text-green-800';
-    }
-    if (statusLower === 'failed') {
-      return 'bg-red-100 text-red-800';
-    }
-    if (statusLower === 'pending') {
-      return 'bg-yellow-100 text-yellow-800';
-    }
-    // Default fallback for any other status
-    return 'bg-gray-100 text-gray-800';
-  };
-
-  const handleFilterSelect = (filter: string) => {
+  const handleFilterSelect = (
+    filter: 'All' | 'Completed' | 'Pending' | 'Failed',
+  ) => {
     setSelectedFilter(filter);
     setCurrentPage(1);
     setIsFilterOpen(false);
-  };
-
-  const handleSort = (key: string) => {
-    if (sortBy === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(key);
-      setSortOrder('asc');
-    }
   };
 
   const handlePageChange = (page: number) => {
@@ -170,33 +123,22 @@ const TotalTransactionsTable = () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleViewDetails = (transaction: StoreTransaction) => {
-    setSelectedTransaction(transaction);
-    setIsModalOpen(true);
+  const handleViewProfile = (userId: string) => {
+    if (userId) {
+      router.push(`/players/player-profile/${userId}`);
+    }
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedTransaction(null);
+  const getStatusClass = (status: string) => {
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'completed') return 'bg-green-100 text-green-800';
+    if (statusLower === 'failed') return 'bg-red-100 text-red-800';
+    if (statusLower === 'pending') return 'bg-yellow-100 text-yellow-800';
+    return 'bg-gray-100 text-gray-800';
   };
 
-  const TableHeader = ({
-    label,
-    sortKey,
-  }: {
-    label: string;
-    sortKey: string;
-  }) => (
-    <Table.Cell
-      className="cursor-pointer px-4 py-2 text-left"
-      onClick={() => handleSort(sortKey)}
-    >
-      <div className="flex items-center gap-1">
-        <span>{label}</span>
-        <CaretSortIcon />
-      </div>
-    </Table.Cell>
-  );
+  const transactions = data?.results || [];
+  const pagination = data?.pagination;
 
   const EmptyState = () => (
     <Table.Row>
@@ -207,27 +149,7 @@ const TotalTransactionsTable = () => {
               <AlertCircle className="h-8 w-8 text-gray-400" />
             </div>
           </div>
-          <p className="font-bold">
-            {selectedFilter === 'All'
-              ? 'No Transactions Found'
-              : `No ${selectedFilter} Transactions Found`}
-          </p>
-          <p className="mx-auto max-w-sm text-center text-sm text-gray-500">
-            There are no transactions to display at the moment. Check back later
-            for updates.
-          </p>
-          {currentPage > 1 && (
-            <p className="text-sm text-gray-500">
-              You&apos;re on page {currentPage}. Try{' '}
-              <button
-                onClick={() => handlePageChange(1)}
-                className="text-primary-600 hover:text-primary-800 underline"
-              >
-                going to page 1
-              </button>{' '}
-              or adjusting your filters.
-            </p>
-          )}
+          <p className="font-bold">No Transactions Found</p>
         </div>
       </Table.Cell>
     </Table.Row>
@@ -239,13 +161,12 @@ const TotalTransactionsTable = () => {
         <h2 className="text-xl font-bold text-[#3B3B3B] sm:text-2xl">
           Total Transactions
         </h2>
-
-        <div className="flex items-center gap-4">
+        <div className="flex w-full flex-wrap items-center justify-start gap-4 md:w-auto md:flex-nowrap md:justify-end">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search by ID, Name, Product..."
               value={searchTerm}
               onChange={handleSearchChange}
               className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
@@ -253,48 +174,51 @@ const TotalTransactionsTable = () => {
           </div>
 
           <TimeRangeDropdown
-            options={options}
-            selected={selected}
-            onSelect={handleSelect}
+            options={['All Time', 'This week', 'Last 30 days', 'Custom']}
+            selected={selectedTimeRange}
+            onSelect={(option) => {
+              setSelectedTimeRange(option);
+              setCurrentPage(1);
+            }}
             customDateRange={customDateRange}
-            onCustomDateChange={handleCustomDateChange}
+            onCustomDateChange={(range) => {
+              setCustomDateRange(range);
+              setSelectedTimeRange('Custom');
+              setCurrentPage(1);
+            }}
           />
-
           <div className="relative" ref={filterDropdownRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="flex items-center gap-1 whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50"
             >
               <ListFilter className="size-5 text-[#1B212D]" />
-              <span className="hidden md:block">
-                {selectedFilter === 'All' ? 'Filter by' : selectedFilter}
-              </span>
+              <span className="hidden md:block">{selectedFilter}</span>
               <ChevronDown
                 className={`size-4 text-[#1B212D] transition-transform ${
                   isFilterOpen ? 'rotate-180' : ''
                 }`}
               />
             </button>
-
             {isFilterOpen && (
               <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-[#D9D9D9] bg-white shadow-lg">
                 <div className="py-2">
-                  {filterOptions.map((option, index) => (
-                    <React.Fragment key={option}>
-                      <button
-                        onClick={() => handleFilterSelect(option)}
-                        className={`w-full px-4 py-2 text-left transition-colors hover:bg-gray-50 ${
-                          selectedFilter === option
-                            ? 'bg-blue-50 font-medium text-blue-600'
-                            : 'text-gray-700'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                      {index < filterOptions.length - 1 && (
-                        <div className="mx-2 border-b border-gray-200"></div>
-                      )}
-                    </React.Fragment>
+                  {filterOptions.map((option) => (
+                    <button
+                      key={option}
+                      onClick={() =>
+                        handleFilterSelect(
+                          option as 'All' | 'Completed' | 'Pending' | 'Failed',
+                        )
+                      }
+                      className={`w-full px-4 py-2 text-left transition-colors hover:bg-gray-50 ${
+                        selectedFilter === option
+                          ? 'bg-blue-50 font-medium text-blue-600'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      {option}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -311,29 +235,45 @@ const TotalTransactionsTable = () => {
           >
             <Table.Header className="bg-primary-50">
               <Table.Row>
-                <TableHeader label="Transaction ID" sortKey="objectId" />
-                <TableHeader label="Username" sortKey="firstName" />
-                <TableHeader label="Transaction Type" sortKey="product" />
-                <TableHeader label="Amount" sortKey="amount" />
-                <TableHeader label="Transaction Status" sortKey="status" />
+                <Table.Cell className="px-4 py-2 text-left">
+                  Transaction ID
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Username
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Transaction Type
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">Amount</Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Transaction Status
+                </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {isSalesLoading ? (
+              {isLoading ? (
                 <Table.Row>
                   <Table.Cell colSpan={6} className="py-12 text-center">
                     Loading transactions...
                   </Table.Cell>
                 </Table.Row>
-              ) : paginationInfo.currentData.length > 0 ? (
-                paginationInfo.currentData.map((transaction, index) => {
+              ) : isError ? (
+                <Table.Row>
+                  <Table.Cell
+                    colSpan={6}
+                    className="py-12 text-center text-red-500"
+                  >
+                    Error: {error.message}
+                  </Table.Cell>
+                </Table.Row>
+              ) : transactions.length > 0 ? (
+                transactions.map((transaction) => {
                   const { time, fullDate } = formatDateTime(
-                    transaction.createdAt?.iso || new Date().toISOString(),
+                    transaction.createdAt.iso,
                   );
-
                   return (
-                    <Table.Row key={transaction.objectId || index}>
+                    <Table.Row key={transaction.id}>
                       <Table.Cell className="whitespace-nowrap px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
@@ -341,7 +281,7 @@ const TotalTransactionsTable = () => {
                           </div>
                           <div>
                             <p className="font-heading font-bold uppercase text-neutral-800">
-                              {transaction.objectId}
+                              {transaction.id}
                             </p>
                             <p className="text-xs text-neutral-500">
                               {fullDate} • {time}
@@ -351,32 +291,33 @@ const TotalTransactionsTable = () => {
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <div className="flex items-center gap-2">
-                          <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                          <div className="relative">
                             <Avatar
-                              src={transaction.avatar}
+                              src={transaction.user.avatar}
                               fallback={
-                                transaction.firstName
+                                transaction.user.firstName
                                   ?.charAt(0)
                                   .toUpperCase() || 'U'
                               }
                               radius="full"
-                              className="bg-primary-50"
+                              size="3"
                             />
+                            {transaction.user.kycVerified && (
+                              <div className="absolute -right-1 -top-1">
+                                <VerifiedIcon className="h-5 w-5" />
+                              </div>
+                            )}
                           </div>
                           <p className="text-primary-800 capitalize">
-                            {transaction.firstName || 'Unknown'}
+                            {transaction.user.firstName || 'Unknown'}
                           </p>
                         </div>
                       </Table.Cell>
-                      <Table.Cell className="px-4 py-4">
-                        <div className="text-sm text-gray-900">
-                          {transaction.product.productName}
-                        </div>
+                      <Table.Cell className="px-4 py-4 text-sm text-gray-900">
+                        {transaction.title}
                       </Table.Cell>
-                      <Table.Cell className="px-4 py-4">
-                        <div className="text-sm text-gray-900">
-                          ₦{transaction.amount.toFixed(2)}
-                        </div>
+                      <Table.Cell className="px-4 py-4 text-sm text-gray-900">
+                        {formatNaira(transaction.amount)}
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <p
@@ -390,10 +331,12 @@ const TotalTransactionsTable = () => {
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <button
-                          onClick={() => handleViewDetails(transaction)}
-                          className="hover:bg-primary-50 text-primary-900 border-primary-200 cursor-pointer rounded border px-3 py-2 text-sm font-medium transition-colors"
+                          onClick={() =>
+                            handleViewProfile(transaction.user.userId)
+                          }
+                          className="hover:bg-primary-800 bg-primary-900 cursor-pointer  rounded px-3 py-2 text-sm font-medium text-white transition-colors"
                         >
-                          View Details
+                          View Profile
                         </button>
                       </Table.Cell>
                     </Table.Row>
@@ -406,41 +349,24 @@ const TotalTransactionsTable = () => {
           </Table.Root>
         </div>
 
-        {shouldShowPagination && (
+        {pagination && pagination.totalItems > 0 && (
           <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
             <div className="text-sm text-gray-500">
-              {paginationInfo.totalCount > 0 ? (
-                <>
-                  Showing {paginationInfo.startIndex + 1} to{' '}
-                  {Math.min(paginationInfo.endIndex, paginationInfo.totalCount)}{' '}
-                  of {paginationInfo.totalCount} entries
-                </>
-              ) : (
-                `Page ${currentPage} of ${paginationInfo.totalPages}`
-              )}
-              {selectedFilter !== 'All' && ` (filtered by ${selectedFilter})`}
-              {debouncedSearchTerm && ` (search: "${debouncedSearchTerm}")`}
+              Showing {(pagination.currentPage - 1) * pagination.limit + 1} to{' '}
+              {Math.min(
+                pagination.currentPage * pagination.limit,
+                pagination.totalItems,
+              )}{' '}
+              of {pagination.totalItems} entries
             </div>
             <Pagination
-              currentPage={paginationInfo.currentPage}
-              totalPages={paginationInfo.totalPages}
+              currentPage={pagination.currentPage}
+              totalPages={pagination.totalPages}
               onPageChange={handlePageChange}
             />
           </div>
         )}
-
-        {isSalesLoading && (
-          <div className="mt-4 flex justify-center p-4">
-            <div className="text-sm text-gray-500">Loading...</div>
-          </div>
-        )}
       </div>
-
-      <TotalTransactionModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        transactionData={selectedTransaction}
-      />
     </div>
   );
 };

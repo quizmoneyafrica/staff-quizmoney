@@ -20,6 +20,43 @@ interface GetAllTransactionsWithStatsRequest {
   };
 }
 
+export interface WalletStatistics {
+  totalWalletBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalExpenses: number;
+  totalTransactions: number;
+}
+
+export interface WalletTransaction {
+  id: string;
+  createdAt: { __type: 'Date'; iso: string };
+  updatedAt: { __type: 'Date'; iso: string };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    blacklisted: boolean;
+    kycVerified: boolean;
+  };
+  title: string;
+  type: 'withdrawal' | 'deposit' | string;
+  amount: number;
+  status: 'completed' | 'pending' | 'failed';
+  description: string;
+}
+
+export interface WalletTransactionsListResponse {
+  transactions: WalletTransaction[];
+  pagination: {
+    currentPage: number;
+    limit: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
 const WalletApi = {
   fetchCustomerWallet(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
@@ -137,6 +174,31 @@ const WalletApi = {
   }): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/searchTransactions`,
+      { ...data },
+      { headers: getSessionTokenHeaders() },
+    );
+  },
+
+  getWalletTransactionStats(data: {
+    dateRange?: { start: string; end: string };
+  }): Promise<AxiosResponse<{ result: { statistics: WalletStatistics } }>> {
+    return axios.post(
+      `${BASE_URL}/getWalletTransactionStats`,
+      { ...data },
+      { headers: getSessionTokenHeaders() },
+    );
+  },
+
+  getWalletTransactionsList(data: {
+    page: number;
+    limit: number;
+    search?: string;
+    type?: string;
+    status?: string;
+    dateRange?: { start: string; end: string };
+  }): Promise<AxiosResponse<{ result: WalletTransactionsListResponse }>> {
+    return axios.post(
+      `${BASE_URL}/getWalletTransactionsList`,
       { ...data },
       { headers: getSessionTokenHeaders() },
     );

@@ -1,4 +1,3 @@
-// --- GetPlayerGameDetails Types ---
 export interface PlayerGameQuestion {
   questionNumber: string;
   question: string;

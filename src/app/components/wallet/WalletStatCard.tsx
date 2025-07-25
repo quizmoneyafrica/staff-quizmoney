@@ -50,6 +50,8 @@ const WalletStatCard: React.FunctionComponent<IDashboardCardsProps> = (
         return 'text-secondary-900';
       case 'yellow':
         return 'text-yellow-500';
+      case 'redError':
+        return 'text-error-800';
       default:
         return '';
     }
@@ -71,6 +73,8 @@ const WalletStatCard: React.FunctionComponent<IDashboardCardsProps> = (
         return 'bg-secondary-50';
       case 'yellow':
         return 'bg-yellow-50';
+      case 'redError':
+        return 'bg-error-50';
       default:
         return '';
     }
@@ -92,6 +96,8 @@ const WalletStatCard: React.FunctionComponent<IDashboardCardsProps> = (
         return 'bg-secondary-200';
       case 'yellow':
         return 'bg-yellow-100';
+      case 'redError':
+        return 'bg-error-100';
       default:
         return '';
     }
@@ -194,7 +200,6 @@ const WalletStatCard: React.FunctionComponent<IDashboardCardsProps> = (
               </button>
             )}
           </div>
-
           {analytics && <div className="mt-1">{formatAnalytics()}</div>}
         </div>
       </div>

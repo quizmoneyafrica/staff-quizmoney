@@ -1,134 +1,112 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import WalletStatCard from '@/app/components/wallet/WalletStatCard';
 import TransactionTable from '@/app/components/wallet/TransactionTable';
 import {
   WalletIconBig,
   WalletIconBigGreen,
+  WalletIconBigLightCyan,
   WalletCardIconLightBlue,
   WalletCardIconLightCyan,
-  WalletIconBigLightCyan,
   WalletCardIconLightGreen,
+  SmallRedWallet,
+  WalletIconBigRedError,
 } from '@/app/icons/icons';
-import { useGetAllTransactionsWithStats } from '@/app/hooks/useTransaction';
+
+import WalletApi from '@/app/api/wallet';
 import { formatNaira } from '@/app/utils/utils';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
-
-interface StaticTransactionData {
-  id: string;
-  date: string;
-  username: string;
-  avatarUrl: string;
-  transactionType: string;
-  transactionAmount: string;
-  transactionStatus: 'Pending' | 'Successful' | 'Failed';
-}
 
 function Page() {
   const [showTotalBalance, setShowTotalBalance] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdrawal, setShowWithdrawal] = useState(false);
-  const [transactionStats, setTransactionStats] = useState<any>(null);
-
-  const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
+  const [showTotalExpenses, setShowTotalExpenses] = useState(false);
 
   const [selected, setSelected] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState(null);
 
   const handleSelect = (option) => {
     setSelected(option);
-
-    if (option !== 'Custom') {
-      setCustomDateRange(null);
-    }
+    if (option !== 'Custom') setCustomDateRange(null);
   };
 
-  const handleCustomDateChange = (dateRange) => {
-    setCustomDateRange(dateRange);
-  };
+  const handleCustomDateChange = (dateRange) => setCustomDateRange(dateRange);
 
   const {
-    data: wallet,
-    isLoading: walletLoading,
-    error: walletError,
-  } = useGetAllTransactionsWithStats(
-    1,
-    10,
-    undefined,
-    undefined,
-    undefined,
-    undefined,
-    calculateDateRange(selected, customDateRange),
-  );
+    data: statsData,
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery({
+    queryKey: ['walletStats', selected, customDateRange],
+    queryFn: () => {
+      const dateRange = calculateDateRange(selected, customDateRange);
 
-  const handleStatsUpdate = (stats: any) => {
-    setTransactionStats(stats);
-  };
+      if (selected === 'Custom' && dateRange && dateRange.end) {
+        const endDate = new Date(dateRange.end);
+        endDate.setHours(23, 59, 59, 999);
+        dateRange.end = endDate.toISOString();
+      }
 
-  const getWalletStats = () => {
-    const defaultStats = [
-      {
-        title: 'Total Wallet Balance',
-        value: '₦0.00',
-        bgColor: 'lightBlue',
-        icon: <WalletCardIconLightBlue />,
-        bgImage: <WalletIconBig />,
-        showEye: true,
-        isValueVisible: showTotalBalance,
-        onEyeToggle: () => setShowTotalBalance(!showTotalBalance),
-      },
-      {
-        title: 'Total Deposit',
-        value: '₦0.00',
-        bgColor: 'lightCyan',
-        icon: <WalletCardIconLightCyan />,
-        bgImage: <WalletIconBigLightCyan />,
-        showEye: true,
-        isValueVisible: showDeposit,
-        onEyeToggle: () => setShowDeposit(!showDeposit),
-      },
-      {
-        title: 'Total Withdrawal',
-        value: '₦0.00',
-        bgColor: 'lightGreen',
-        icon: <WalletCardIconLightGreen />,
-        bgImage: <WalletIconBigGreen />,
-        showEye: true,
-        isValueVisible: showWithdrawal,
-        onEyeToggle: () => setShowWithdrawal(!showWithdrawal),
-      },
-    ];
+      const apiParams = dateRange && dateRange.start ? { dateRange } : {};
 
-    if (wallet?.statistics) {
-      const walletInfo = wallet?.statistics;
-      defaultStats[0].value = formatNaira(
-        Number(walletInfo?.totalWalletBalance),
-        true,
-      );
-      defaultStats[1].value = formatNaira(
-        Number(walletInfo?.totalDeposits),
-        true,
-      );
-      defaultStats[2].value = formatNaira(
-        Number(walletInfo?.totalWithdrawals),
-        true,
-      );
-    }
+      return WalletApi.getWalletTransactionStats(apiParams);
+    },
+    select: (res) => res.data.result.statistics,
+  });
 
-    return defaultStats;
-  };
-
-  const walletStats = getWalletStats();
+  const walletStats = [
+    {
+      title: 'Total Wallet Balance',
+      value: formatNaira(statsData?.totalWalletBalance || 0),
+      bgColor: 'lightBlue',
+      icon: <WalletCardIconLightBlue />,
+      bgImage: <WalletIconBig />,
+      showEye: true,
+      isValueVisible: showTotalBalance,
+      onEyeToggle: () => setShowTotalBalance(!showTotalBalance),
+    },
+    {
+      title: 'Total Deposit',
+      value: formatNaira(statsData?.totalDeposits || 0),
+      bgColor: 'lightCyan',
+      icon: <WalletCardIconLightCyan />,
+      bgImage: <WalletIconBigLightCyan />,
+      showEye: true,
+      isValueVisible: showDeposit,
+      onEyeToggle: () => setShowDeposit(!showDeposit),
+    },
+    {
+      title: 'Total Withdrawal',
+      value: formatNaira(statsData?.totalWithdrawals || 0),
+      bgColor: 'lightGreen',
+      icon: <WalletCardIconLightGreen />,
+      bgImage: <WalletIconBigGreen />,
+      showEye: true,
+      isValueVisible: showWithdrawal,
+      onEyeToggle: () => setShowWithdrawal(!showWithdrawal),
+    },
+    {
+      title: 'Total Expenses',
+      value: formatNaira(statsData?.totalExpenses || 0),
+      bgColor: 'redError',
+      icon: <SmallRedWallet />,
+      bgImage: <WalletIconBigRedError />,
+      showEye: true,
+      isValueVisible: showTotalExpenses,
+      onEyeToggle: () => setShowTotalExpenses(!showTotalExpenses),
+    },
+  ];
 
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
       <div className="flex items-center justify-between ">
         <h2 className="text-2xl font-semibold">Wallet Statistics</h2>
         <TimeRangeDropdown
-          options={options}
+          options={['All Time', 'This week', 'Last 30 days', 'Custom']}
           selected={selected}
           onSelect={handleSelect}
           customDateRange={customDateRange}
@@ -136,35 +114,26 @@ function Page() {
         />
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        {walletLoading ? (
-          Array.from({ length: 3 }).map((_, index) => (
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">
+        {statsLoading ? (
+          Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="animate-pulse rounded-lg border bg-white p-6"
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <div className="h-8 w-8 rounded bg-gray-300"></div>
-                <div className="h-4 w-16 rounded bg-gray-300"></div>
-              </div>
-              <div className="mb-2 h-6 w-24 rounded bg-gray-300"></div>
-              <div className="h-8 w-32 rounded bg-gray-400"></div>
-            </div>
+              className="h-[169px] animate-pulse rounded-lg bg-gray-200"
+            ></div>
           ))
-        ) : walletError ? (
-          <div className="col-span-full py-8 text-center">
-            <p className="mb-2 text-red-600">Failed to load wallet stats</p>
-            <p className="text-sm text-gray-500">Using default values</p>
+        ) : statsError ? (
+          <div className="col-span-full py-8 text-center text-red-600">
+            Failed to load wallet stats.
           </div>
-        ) : null}
-
-        {!walletLoading &&
+        ) : (
           walletStats.map((stat) => (
             <WalletStatCard key={stat.title} {...stat} />
-          ))}
+          ))
+        )}
       </div>
 
-      <TransactionTable onStatsUpdate={handleStatsUpdate} />
+      <TransactionTable />
     </div>
   );
 }
