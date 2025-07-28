@@ -1,143 +1,79 @@
 'use client';
+import React, { useState } from 'react';
+import { Avatar, Table } from '@radix-ui/themes';
+import PlayerProfileModal from './PlayerProfileModal';
 import CustomImage from '@/app/components/CustomImage';
 import { ListFilter } from 'lucide-react';
-import React, { useState } from 'react';
 import Pagination from './Pagination';
-import PlayerProfileModal from './PlayerProfileModal';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
+import { QmCoinIcon } from '@/app/icons/icons';
 
-const LeaderboardTable = () => {
-  const [currentPage, setCurrentPage] = useState(1);
+interface LeaderboardRowData {
+  id: string;
+  rank: number;
+  date: string;
+  username: string;
+  avatarUrl: string;
+  games: number;
+  price?: string;
+  coins?: number;
+}
+
+interface ILeaderboardTableProps {
+  data: LeaderboardRowData[];
+  isLoading: boolean;
+  activeTab: string;
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  onPageChange: (page: number) => void;
+}
+
+const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
+  data,
+  isLoading,
+  activeTab,
+  currentPage,
+  totalPages,
+  totalCount,
+  onPageChange,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPlayer, setSelectedPlayer] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const itemsPerPage = 5; // Show 5 items per page
+  const [selectedPlayer, setSelectedPlayer] =
+    useState<LeaderboardRowData | null>(null);
 
-  const exampleData = [
-    {
-      id: 1,
-      rank: 4,
-      date: '27/02/2024',
-      username: 'Joemicky',
-      games: 10,
-      price: '₦50,000',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 2,
-      rank: 5,
-      date: '25/02/2024',
-      username: 'Joemicky',
-      games: 10,
-      price: '₦50,000',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 3,
-      rank: 6,
-      date: '23/02/2024',
-      username: 'Inioluwa',
-      games: 10,
-      price: '₦50,000',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 4,
-      rank: 7,
-      date: '20/02/2024',
-      username: 'Inioluwa',
-      games: 10,
-      price: '₦50,000',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 5,
-      rank: 8,
-      date: '19/02/2024',
-      username: 'Inioluwa',
-      games: 10,
-      price: '₦50,000',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 6,
-      rank: 9,
-      date: '16/02/2024',
-      username: 'Inioluwa',
-      games: 10,
-      price: '₦50,000',
-      avatarUrl: 'https://github.com/shuding.png',
-    },
-    {
-      id: 7,
-      rank: 10,
-      date: '10/02/2024',
-      username: 'Inioluwa',
-      games: 10,
-      price: '₦50,000',
-      avatarUrl: 'https://github.com/shuding.png',
-    },
-    // Add more example data to demonstrate pagination
-    {
-      id: 8,
-      rank: 11,
-      date: '08/02/2024',
-      username: 'TestUser1',
-      games: 8,
-      price: '₦40,000',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-    {
-      id: 9,
-      rank: 12,
-      date: '05/02/2024',
-      username: 'TestUser2',
-      games: 12,
-      price: '₦35,000',
-      avatarUrl: 'https://github.com/shuding.png',
-    },
-    {
-      id: 10,
-      rank: 13,
-      date: '03/02/2024',
-      username: 'TestUser3',
-      games: 15,
-      price: '₦30,000',
-      avatarUrl: 'https://github.com/shadcn.png',
-    },
-  ];
-
-  // Calculate pagination
-  const totalPages = Math.ceil(exampleData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentData = exampleData.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const handleViewDetails = (
-    player: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-  ) => {
+  const handleViewDetails = (player: LeaderboardRowData) => {
     setSelectedPlayer(player);
     setIsModalOpen(true);
   };
 
-  const rowVariants = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    hover: { scale: 1.01, y: -2 }, // Slightly scale up and move up, removed background color
-  };
+  const SkeletonRow = () => (
+    <Table.Row className="h-20 border-b border-[#F2F2F2]">
+      <Table.Cell className="px-8 py-5">
+        <div className="h-6 w-8 rounded-full bg-gray-200"></div>
+      </Table.Cell>
+      <Table.Cell className="px-8 py-5">
+        <div className="h-4 w-20 rounded bg-gray-200"></div>
+      </Table.Cell>
+      <Table.Cell className="px-8 py-5">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 rounded-full bg-gray-200"></div>
+          <div className="h-4 w-24 rounded bg-gray-200"></div>
+        </div>
+      </Table.Cell>
+      <Table.Cell className="px-8 py-5">
+        <div className="h-4 w-20 rounded bg-gray-200"></div>
+      </Table.Cell>
+      <Table.Cell className="px-8 py-5">
+        <div className="h-4 w-16 rounded bg-gray-200"></div>
+      </Table.Cell>
+      <Table.Cell className="px-8 py-5">
+        <div className="h-4 w-16 rounded bg-gray-200"></div>
+      </Table.Cell>
+    </Table.Row>
+  );
 
-  const rowTransition = {
-    duration: 0.5, // Default duration for initial/animate
-    hover: {
-      duration: 0.2, // Faster transition for hover
-    },
-  };
+  const startEntry = data.length > 0 ? data[0].rank : 0;
+  const endEntry = data.length > 0 ? data[data.length - 1].rank : 0;
 
   return (
     <div className="w-full">
@@ -148,7 +84,6 @@ const LeaderboardTable = () => {
             placeholder="Search"
             className="focus:ring-primary-900 w-full rounded-md border-none py-2  pl-10 pr-4 outline-none focus:ring-0 "
           />
-          {/* Add search icon */}
           <svg
             className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-500"
             fill="none"
@@ -165,101 +100,120 @@ const LeaderboardTable = () => {
           </svg>
         </div>
         <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#F5F5F5] px-4  py-2 outline-none">
-          {/* Add filter icon */}
           <ListFilter className=" size-5 text-[#1B212D]" />
           <span className=" hidden md:block  ">Filter by</span>
         </button>
       </div>
-      <div className="w-full max-w-full overflow-x-auto   rounded-lg">
-        <table className="min-w-full">
-          <thead className="bg-inherit">
-            <tr>
-              <th className="min-w-[80px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+
+      <div className="w-full max-w-full overflow-x-auto bg-white">
+        <Table.Root variant="ghost" className="min-w-full text-sm">
+          <Table.Header className="bg-primary-50">
+            <Table.Row>
+              <Table.Cell className="min-w-[100px] px-8 py-2 text-left">
                 Rank
-              </th>
-              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              </Table.Cell>
+              <Table.Cell className="min-w-[120px] px-8 py-2 text-left">
                 Date
-              </th>
-              <th className="min-w-[150px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              </Table.Cell>
+              <Table.Cell className="min-w-[200px] px-8 py-2 text-left">
                 Username
-              </th>
-              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              </Table.Cell>
+              <Table.Cell className="min-w-[150px] px-8 py-2 text-left">
                 Games Played
-              </th>
-              <th className="min-w-[100px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                Price
-              </th>
-              <th className="min-w-[120px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+              </Table.Cell>
+              <Table.Cell className="min-w-[120px] px-8 py-2 text-left">
+                Prize
+              </Table.Cell>
+              <Table.Cell className="min-w-[120px] px-8 py-2 text-left">
                 Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
-            {currentData.map((row) => (
-              <motion.tr
-                key={row.id}
-                variants={rowVariants}
-                initial="initial"
-                animate="animate"
-                whileHover="hover"
-                transition={rowTransition}
-                className="cursor-pointer"
-              >
-                <td className="whitespace-nowrap px-6 py-4">
-                  <div className=" flex items-center gap-8">
-                    <input type="checkbox" className="form-checkbox size-5" />
-                    <div className=" size-8 flex items-center justify-center rounded-full bg-[#F9F9F9] p-1">
+              </Table.Cell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {isLoading ? (
+              Array.from({ length: 7 }).map((_, i) => <SkeletonRow key={i} />)
+            ) : data.length > 0 ? (
+              data.map((row) => (
+                <Table.Row
+                  key={row.id}
+                  className="h-20 border-b border-[#F2F2F2]"
+                >
+                  <Table.Cell className="px-8 py-5">
+                    <div className="size-8 flex items-center justify-center rounded-full bg-[#F9F9F9] p-1 font-medium text-[#3B3B3B]">
                       {row.rank}
                     </div>
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                  {row.date}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                  <div className="text-primary-900 flex items-center">
-                    <Image
-                      src={row.avatarUrl}
-                      alt={`${row.username}'s avatar`}
-                      className=" mr-2 h-10  w-10 rounded-full"
-                      width={40}
-                      height={40}
-                    />
-                    {row.username}
-                  </div>
-                </td>
-
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-                  <div className=" flex items-center gap-3">
-                    <CustomImage alt="" src={'/icons/game.svg'} />
-                    {row.games} games
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                  {row.price}
-                </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                  <button
-                    onClick={() => handleViewDetails(row)}
-                    className="text-primary-900 hover:text-primary-900"
-                  >
-                    View Details
-                  </button>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+                  </Table.Cell>
+                  <Table.Cell className="px-8 py-5 text-sm font-medium leading-tight text-[#1B1B1B]">
+                    {row.date}
+                  </Table.Cell>
+                  <Table.Cell className="px-8 py-5">
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        src={row.avatarUrl}
+                        fallback={row.username?.charAt(0).toUpperCase() || 'P'}
+                        radius="full"
+                        size="3"
+                      />
+                      <span className="text-base font-medium leading-6 text-[#2364AA]">
+                        {row.username}
+                      </span>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell className="px-8 py-5 text-sm text-gray-900">
+                    <div className="flex items-center gap-2">
+                      <CustomImage alt="game icon" src={'/icons/game.svg'} />
+                      <span>{row.games} games</span>
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell className="px-8 py-5 text-sm font-semibold">
+                    {activeTab === 'Last Game leaderboard' && row.coins ? (
+                      <div className="flex items-center gap-1">
+                        <QmCoinIcon className="h-4 w-4" />
+                        <span className="text-base font-medium leading-5 text-[#00B23D]">
+                          {row.coins.toLocaleString()}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-900">{row.price}</span>
+                    )}
+                  </Table.Cell>
+                  <Table.Cell className="px-8 py-5 text-sm font-medium">
+                    <button
+                      onClick={() => handleViewDetails(row)}
+                      className="text-primary-800 hover:text-primary-900 cursor-pointer transition-colors"
+                    >
+                      View Details
+                    </button>
+                  </Table.Cell>
+                </Table.Row>
+              ))
+            ) : (
+              <Table.Row>
+                <Table.Cell
+                  colSpan={6}
+                  className="py-12 text-center font-bold text-gray-500"
+                >
+                  No players found.
+                </Table.Cell>
+              </Table.Row>
+            )}
+          </Table.Body>
+        </Table.Root>
       </div>
 
-      {/* Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+      {!isLoading && totalCount > 0 && (
+        <div className="mt-4 flex flex-col items-center gap-4 rounded-md bg-white p-4 md:flex-row md:justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {startEntry} to {endEntry} of {totalCount} entries
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
 
-      {/* Player Profile Modal */}
       <PlayerProfileModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

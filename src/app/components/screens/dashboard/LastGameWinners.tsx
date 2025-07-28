@@ -18,7 +18,19 @@ const LastGameWinners: React.FunctionComponent = () => {
     setFetching(true);
     try {
       const res = await LeaderboardAPI.getLastGameLeaderboard();
-      dispatch(setLastGameLeaderboard(res.data.result.rankings));
+
+      const transformedData = res.data.result.rankings.map((ranking) => ({
+        ...ranking,
+        totalTime: '0',
+        totalCorrect: 0,
+        user: {
+          ...ranking.user,
+          facebook: '',
+          twitter: '',
+          instagram: '',
+        },
+      }));
+      dispatch(setLastGameLeaderboard(transformedData));
       setFetching(false);
     } catch {
       toast.error('Error loading Last Game Winners, please refresh');
