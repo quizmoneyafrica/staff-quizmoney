@@ -11,6 +11,8 @@ import {
   GameIconSP,
   WithdrawalIcon,
   AdminManagementIcon,
+  QmCoinNavIcon,
+  MissedQuestionIcon,
 } from '../icons/icons';
 import { ROUTES } from '@/app/utils';
 
@@ -54,6 +56,16 @@ export const navs = [
     icon: <CupIcon />,
     path: ROUTES.LEADERBOARD,
     name: 'Leaderboard',
+  },
+  {
+    icon: <MissedQuestionIcon />,
+    path: ROUTES.TOP_MISSED_QUESTION,
+    name: 'Top missed Question',
+  },
+  {
+    icon: <QmCoinNavIcon />,
+    path: ROUTES.QM_COINS,
+    name: 'QM Coins',
   },
   {
     icon: <AdminManagementIcon />,

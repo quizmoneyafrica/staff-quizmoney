@@ -9,6 +9,8 @@ export const ROUTES = {
   WALLET: '/wallet',
   WITHDRAWAL_REQUEST: '/withdrawal-request',
   LEADERBOARD: '/leaderboard',
+  TOP_MISSED_QUESTION: '/top-missed-question',
+  QM_COINS: '/qm-coins',
   ADMIN_MANAGEMENT: '/admin-management',
   PUSH_NOTIFICATION: '/push-notification',
   SETTINGS: '/settings',

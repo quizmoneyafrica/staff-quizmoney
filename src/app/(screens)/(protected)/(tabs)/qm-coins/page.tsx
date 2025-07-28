@@ -1,0 +1,60 @@
+'use client';
+
+import React, { useState } from 'react';
+import { ArrowRightLeft, Wallet } from 'lucide-react';
+import QmCoinStatCard from '@/app/components/leaderboard/qm-coins/QmCoinStatCard';
+import QmCoinsTabs from '@/app/components/leaderboard/qm-coins/QmCoinsTabs';
+import UsersWithCoinsTable from '@/app/components/leaderboard/qm-coins/UsersWithCoinsTable';
+import RedemptionHistoryTable from '@/app/components/leaderboard/qm-coins/RedemptionHistoryTable';
+
+import QmCoinSettings from '@/app/components/leaderboard/qm-coins/QmCoinSettings';
+
+function QmCoinsPage() {
+  const [activeTab, setActiveTab] = useState('Settings');
+
+  const cardData = {
+    totalEarned: '1,500,000',
+    totalRedeemed: '1,500,000',
+  };
+
+  return (
+    <div className="flex w-full max-w-full flex-col gap-6 overflow-x-hidden py-6">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+        <QmCoinStatCard
+          title="Total Earned Coin"
+          value={cardData.totalEarned}
+          bgColor="lightCyan"
+          icon={<Wallet size={20} className="text-cyan-700" />}
+        />
+        <QmCoinStatCard
+          title="Total Redeemed"
+          value={cardData.totalRedeemed}
+          bgColor="lightBlue"
+          icon={<Wallet size={20} className="text-blue-800" />}
+        />
+        <QmCoinStatCard
+          title="Conversion rate"
+          bgColor="redError"
+          icon={<ArrowRightLeft size={20} className="text-black" />}
+        >
+          <div className="text-error-800 flex flex-col gap-1 text-sm font-medium">
+            <p>1500 = 1 free game & 1 eraser</p>
+            <p>3000 = 2 free game & 2 eraser</p>
+          </div>
+        </QmCoinStatCard>
+      </div>
+
+      <div className="mt-4">
+        <QmCoinsTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <div className="mt-6">
+          {activeTab === 'Users with Coins' && <UsersWithCoinsTable />}
+          {activeTab === 'Redemption History' && <RedemptionHistoryTable />}
+
+          {activeTab === 'Settings' && <QmCoinSettings />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default QmCoinsPage;
