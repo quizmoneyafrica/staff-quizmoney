@@ -6,7 +6,7 @@ import { QmCoinIcon } from '@/app/icons/icons';
 import classNames from 'classnames';
 import ActionDropdown from '@/app/components/ui/ActionDropdown';
 
-import Pagination from '../Pagination';
+import Pagination from '../leaderboard/Pagination';
 
 type RedemptionRowData = {
   id: string;

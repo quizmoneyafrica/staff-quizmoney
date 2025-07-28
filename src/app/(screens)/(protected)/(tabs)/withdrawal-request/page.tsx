@@ -5,7 +5,7 @@ import WithdrawalCards, {
 } from '@/app/components/screens/withdrawal/Cards';
 import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal';
 import Pagination from '@/app/components/leaderboard/Pagination';
-import { Search, ListFilter, ChevronDown } from 'lucide-react';
+import { Search, ListFilter, ChevronDown, UserCheck } from 'lucide-react';
 import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
@@ -29,7 +29,9 @@ function Page() {
   const router = useRouter();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isKycFilterOpen, setIsKycFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
+  const [selectedKycFilter, setSelectedKycFilter] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<
     UnknownObject | WithdrawalRequest | null
@@ -43,8 +45,10 @@ function Page() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  const kycFilterDropdownRef = useRef<HTMLDivElement>(null);
 
   const filterOptions = ['All', 'Resolved', 'Pending', 'Rejected'];
+  const kycFilterOptions = ['All', 'Verified', 'Unverified'];
 
   const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
@@ -72,12 +76,19 @@ function Page() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  const kycVerifiedParam = useMemo(() => {
+    if (selectedKycFilter === 'Verified') return true;
+    if (selectedKycFilter === 'Unverified') return false;
+    return undefined;
+  }, [selectedKycFilter]);
+
   const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
     currentPage,
     itemsPerPage,
     selectedFilter?.toLowerCase(),
     debouncedSearchTerm,
     calculateDateRange(selected, customDateRange),
+    kycVerifiedParam,
   );
 
   const { data: statsData, isPending: fetchingStats } = useGetWithdrawalStats();
@@ -164,6 +175,12 @@ function Page() {
       ) {
         setIsFilterOpen(false);
       }
+      if (
+        kycFilterDropdownRef.current &&
+        !kycFilterDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsKycFilterOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -186,6 +203,12 @@ function Page() {
     setSelectedFilter(filter);
     setCurrentPage(1);
     setIsFilterOpen(false);
+  };
+
+  const handleKycFilterSelect = (filter: string) => {
+    setSelectedKycFilter(filter);
+    setCurrentPage(1);
+    setIsKycFilterOpen(false);
   };
 
   const handleSort = (key: string) => {
@@ -265,7 +288,6 @@ function Page() {
             title="Total Pending Request"
             value={withdrawalStats.pendingRequests.toString()}
             bgColor="yellow"
-            // showEye={true}
             isValueVisible={showPendingAmount}
             onEyeToggle={() => setShowPendingAmount(!showPendingAmount)}
             icon={<WalletCardIconDarkYellow />}
@@ -334,6 +356,48 @@ function Page() {
                       </button>
 
                       {index < filterOptions.length - 1 && (
+                        <div className="mx-2 border-b border-gray-200"></div>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative" ref={kycFilterDropdownRef}>
+            <button
+              onClick={() => setIsKycFilterOpen(!isKycFilterOpen)}
+              className="flex items-center gap-1 whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50"
+            >
+              <UserCheck className="size-5 text-[#1B212D]" />
+              <span className="hidden md:block">
+                {selectedKycFilter === 'All' ? 'KYC Status' : selectedKycFilter}
+              </span>
+              <ChevronDown
+                className={`size-4 text-[#1B212D] transition-transform ${
+                  isKycFilterOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+
+            {isKycFilterOpen && (
+              <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-[#D9D9D9] bg-white shadow-lg">
+                <div className="py-2">
+                  {kycFilterOptions.map((option, index) => (
+                    <React.Fragment key={option}>
+                      <button
+                        onClick={() => handleKycFilterSelect(option)}
+                        className={`w-full px-4 py-2 text-left transition-colors hover:bg-gray-50 ${
+                          selectedKycFilter === option
+                            ? 'bg-blue-50 font-medium text-blue-600'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {option}
+                      </button>
+
+                      {index < kycFilterOptions.length - 1 && (
                         <div className="mx-2 border-b border-gray-200"></div>
                       )}
                     </React.Fragment>
@@ -480,9 +544,15 @@ function Page() {
                   >
                     <div className="space-y-2">
                       <p className="font-bold">
-                        {selectedFilter === 'All'
+                        {selectedFilter === 'All' && selectedKycFilter === 'All'
                           ? 'No Withdrawal Requests Found'
-                          : `No ${selectedFilter} Withdrawal Requests Found`}
+                          : `No ${
+                              selectedFilter !== 'All' ? selectedFilter : ''
+                            } ${
+                              selectedKycFilter !== 'All'
+                                ? selectedKycFilter
+                                : ''
+                            } Withdrawal Requests Found`}
                       </p>
                       {currentPage > 1 && (
                         <p className="text-sm text-gray-500">
@@ -521,6 +591,7 @@ function Page() {
                 `Page ${currentPage} of ${paginationInfo.totalPages}`
               )}
               {selectedFilter !== 'All' && ` (filtered by ${selectedFilter})`}
+              {selectedKycFilter !== 'All' && ` (KYC: ${selectedKycFilter})`}
               {debouncedSearchTerm && ` (search: "${debouncedSearchTerm}")`}
             </div>
             <Pagination

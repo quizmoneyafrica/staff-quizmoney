@@ -2,12 +2,11 @@
 
 import React, { useState } from 'react';
 import { ArrowRightLeft, Wallet } from 'lucide-react';
-import QmCoinStatCard from '@/app/components/leaderboard/qm-coins/QmCoinStatCard';
-import QmCoinsTabs from '@/app/components/leaderboard/qm-coins/QmCoinsTabs';
-import UsersWithCoinsTable from '@/app/components/leaderboard/qm-coins/UsersWithCoinsTable';
-import RedemptionHistoryTable from '@/app/components/leaderboard/qm-coins/RedemptionHistoryTable';
-
-import QmCoinSettings from '@/app/components/leaderboard/qm-coins/QmCoinSettings';
+import QmCoinStatCard from '@/app/components/qm-coins/QmCoinStatCard';
+import QmCoinsTabs from '@/app/components/qm-coins/QmCoinsTabs';
+import UsersWithCoinsTable from '@/app/components/qm-coins/UsersWithCoinsTable';
+import RedemptionHistoryTable from '@/app/components/qm-coins/RedemptionHistoryTable';
+import QmCoinSettings from '@/app/components/qm-coins/QmCoinSettings';
 
 function QmCoinsPage() {
   const [activeTab, setActiveTab] = useState('Settings');

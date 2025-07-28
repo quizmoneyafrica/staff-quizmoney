@@ -13,6 +13,7 @@ interface WithdrawalRequestPayload {
   status?: string;
   search?: string;
   dateRange?: DateRange;
+  kycVerified?: boolean;
 }
 
 interface WithdrawalResponse {
@@ -32,6 +33,7 @@ export const useGetWithdrawalRequests = (
   filter: string,
   search = '',
   dateRange: DateRange | null = null,
+  kycVerified?: boolean,
 ) => {
   const request = useRequestInstance();
 
@@ -58,6 +60,10 @@ export const useGetWithdrawalRequests = (
       };
     }
 
+    if (kycVerified !== undefined) {
+      payload.kycVerified = kycVerified;
+    }
+
     return payload;
   };
 
@@ -70,6 +76,7 @@ export const useGetWithdrawalRequests = (
       search,
       dateRange?.start,
       dateRange?.end,
+      kycVerified,
     ],
     queryFn: () =>
       request
