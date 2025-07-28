@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
@@ -6,6 +8,7 @@ import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WalletTransaction } from '@/app/api/wallet';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
+import { VerifiedIcon } from '@/app/icons/icons';
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
@@ -86,7 +89,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                     className="flex items-center gap-4 border-b border-gray-200 pb-6"
                     variants={itemVariants}
                   >
-                    <div className="h-12 w-12 flex-shrink-0">
+                    <div className="relative h-12 w-12 flex-shrink-0">
                       <CustomImage
                         className="h-12 w-12 rounded-full"
                         src={transactionData.user.avatar}
@@ -94,6 +97,11 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                         width={48}
                         height={48}
                       />
+                      {transactionData.user.kycVerified && (
+                        <div className="absolute -right-1 -top-0.5">
+                          <VerifiedIcon className="h-5 w-5" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="text-lg font-semibold capitalize text-gray-900">
@@ -150,35 +158,10 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                       className="flex items-center justify-between"
                     >
                       <div className="text-sm font-medium text-gray-600">
-                        Transaction Method
-                      </div>
-                      {/* <div className="text-sm font-semibold text-gray-900">
-
-                        Bank Transfer
-                      </div> */}
-                    </motion.div>
-
-                    <motion.div
-                      variants={itemVariants}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="text-sm font-medium text-gray-600">
                         Transaction Date
                       </div>
                       <div className="text-sm font-semibold text-gray-900">
-                        {fullDate}
-                      </div>
-                    </motion.div>
-
-                    <motion.div
-                      variants={itemVariants}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="text-sm font-medium text-gray-600">
-                        Transaction Time
-                      </div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {time}
+                        {fullDate} • {time}
                       </div>
                     </motion.div>
 

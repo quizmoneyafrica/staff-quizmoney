@@ -241,11 +241,12 @@ const TransactionTable: React.FC = () => {
                           </div>
                         </div>
                       </Table.Cell>
+
                       <Table.Cell className="px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className="relative">
                             <Avatar
-                              src={tx.user.avatar}
+                              src={tx.user.avatar || undefined}
                               fallback={tx.user.name?.charAt(0).toUpperCase()}
                               radius="full"
                               size="3"

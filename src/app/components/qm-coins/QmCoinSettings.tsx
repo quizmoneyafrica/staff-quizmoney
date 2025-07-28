@@ -8,7 +8,6 @@ const FormField = ({
   label,
   placeholder,
   type = 'text',
-  infoText,
   isSelect = false,
   options = [],
   size = 'standard',
@@ -16,7 +15,6 @@ const FormField = ({
   label: string;
   placeholder: string;
   type?: string;
-  infoText?: string;
   isSelect?: boolean;
   options?: string[];
   size?: 'standard' | 'long';
@@ -67,7 +65,6 @@ const FormField = ({
               }`}
             />
           </button>
-
           {isOpen && (
             <div className="absolute right-0 top-full z-10 mt-2 w-full rounded-lg border border-[#E9E9E9] bg-white shadow-[4px_16px_40px_-4px_rgba(0,0,0,0.15)]">
               <div className="flex flex-col">
@@ -89,7 +86,6 @@ const FormField = ({
             </div>
           )}
         </div>
-        {infoText && <p className="text-xs text-red-600">{infoText}</p>}
       </div>
     );
   }
@@ -104,7 +100,6 @@ const FormField = ({
         placeholder={placeholder}
         className={`${baseClasses} ${sizeClasses}`}
       />
-      {infoText && <p className="text-xs text-red-600">{infoText}</p>}
     </div>
   );
 };
@@ -178,52 +173,66 @@ const QmCoinSettings = () => {
         title="QM Coin settings"
         subtitle="Manage all QM coin Configuration"
       >
-        <div className="space-y-6">
-          <div>
-            <h4 className="font-semibold text-gray-800">Set Conversion rate</h4>
-            <p className="mb-4 text-xs text-red-600">
-              (1500 = 1 free game & 1 eraser) (3000 = 2 free game & 2 eraser)
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <FormField
-                label="Enter Points"
-                placeholder="Enter points"
-                size="standard"
-              />
-              <FormField
-                label="Free Game"
-                placeholder="Select no of free game"
-                isSelect
-                options={['1 Free Game', '2 Free Games', '3 Free Games']}
-                size="standard"
-              />
-              <FormField
-                label="Free Eraser"
-                placeholder="Select no of free Eraser"
-                isSelect
-                options={['1 Free Eraser', '2 Free Erasers', '3 Free Erasers']}
-                size="standard"
-              />
+        <div className="rounded-lg bg-[#F9FAFB] p-6">
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-baseline gap-2">
+                <h4 className="font-semibold text-gray-800">
+                  Set Conversion rate
+                </h4>
+                <p className="text-xs text-red-600">
+                  (1500 = 1 free game & 1 eraser) (3000 = 2 free game & 2
+                  eraser)
+                </p>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-4">
+                <FormField
+                  label="Enter Points"
+                  placeholder="Enter points"
+                  size="standard"
+                />
+                <FormField
+                  label="Free Game"
+                  placeholder="Select no of free game"
+                  isSelect
+                  options={['1 Free Game', '2 Free Games', '3 Free Games']}
+                  size="standard"
+                />
+                <FormField
+                  label="Free Eraser"
+                  placeholder="Select no of free Eraser"
+                  isSelect
+                  options={[
+                    '1 Free Eraser',
+                    '2 Free Erasers',
+                    '3 Free Erasers',
+                  ]}
+                  size="standard"
+                />
+              </div>
             </div>
-          </div>
 
-          <FormField
-            label="Set Monthly Game participation Target"
-            placeholder="Enter percentage"
-            infoText="User must complete 70% of games in a month to redeem QM coin."
-            size="long"
-          />
+            <div>
+              <h4 className="font-semibold text-gray-800">
+                Set Monthly Game participation Target
+              </h4>
+              <p className="mb-4 text-xs text-red-600">
+                User must complete 70% of games in a month to redeem QM coin.
+              </p>
+              <FormField label="" placeholder="Enter percentage" size="long" />
+            </div>
 
-          <FormField
-            label="Max Coins Redeemable per User (Monthly)"
-            placeholder="Enter Maximum Coin"
-            size="long"
-          />
+            <FormField
+              label="Max Coins Redeemable per User (Monthly)"
+              placeholder="Enter Maximum Coin"
+              size="long"
+            />
 
-          <div className="flex justify-start pt-4">
-            <button className="rounded-lg bg-[#2364AA] px-6 py-3 font-bold text-white transition-colors hover:bg-[#1a4a8a]">
-              Save Changes
-            </button>
+            <div className="flex justify-start  pt-4">
+              <button className="bg-primary-900 hover:bg-primary-800 rounded-full px-6 py-3 font-bold text-white transition-colors">
+                Save Changes
+              </button>
+            </div>
           </div>
         </div>
       </SettingsCard>

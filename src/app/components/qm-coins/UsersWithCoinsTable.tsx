@@ -5,7 +5,7 @@ import { Search, ListFilter } from 'lucide-react';
 import { QmCoinIcon } from '@/app/icons/icons';
 import ActionDropdown from '@/app/components/ui/ActionDropdown';
 
-import Pagination from '../Pagination';
+import Pagination from '../leaderboard/Pagination';
 
 interface UserWithCoinsRowData {
   id: string;
