@@ -1,5 +1,6 @@
 'use client';
-import React, { JSX, useState } from 'react';
+
+import React, { JSX, useMemo } from 'react';
 import TimeRangeDropdown from '../common/TimeRangeDropdown';
 import {
   BarChart,
@@ -15,54 +16,66 @@ import type {
   ValueType,
   NameType,
 } from 'recharts/types/component/DefaultTooltipContent';
+import { format } from 'date-fns';
+import { SalesChartData } from '@/app/api/salesApi';
 
-// Data type definition
-type SalesData = {
-  name: string;
-  value: number;
+import { formatNaira } from '@/app/utils/utils';
+
+type TotalSalesCardProps = {
+  chartData: SalesChartData[];
+  selectedPeriod: string;
+  setSelectedPeriod: (period: string) => void;
 };
 
-const data: SalesData[] = [
-  { name: 'Monday', value: 600000 },
-  { name: 'Tuesday', value: 100000 },
-  { name: 'Wednesday', value: 75000 },
-  { name: 'Thursday', value: 1000000 },
-  { name: 'Friday', value: 400000 },
-  { name: 'Saturday', value: 300000 },
-  { name: 'Sunday', value: 50000 },
-];
-
-// Y-axis tick formatter
 const formatYAxis = (tick: number): string => {
   if (tick >= 1000000) return `${tick / 1000000}M`;
   if (tick >= 1000) return `${tick / 1000}k`;
   return tick.toString();
 };
 
-// Custom Tooltip with proper TypeScript types
 const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
   active,
   payload,
 }) => {
   if (active && payload && payload.length) {
     const value = Number(payload[0].value);
-    let label = '';
-    if (value >= 1000000) label = `${value / 1000000}M made`;
-    else if (value >= 1000) label = `${value / 1000}k made`;
-    else label = `${value} made`;
+
+    const formattedValue = formatNaira(value);
 
     return (
       <div className="rounded-md border border-[#3A93DB] bg-white px-3 py-1 text-[#3A93DB] shadow">
-        <span className="text-sm">{label}</span>
+        <span className="text-sm">{`${formattedValue} made`}</span>
       </div>
     );
   }
   return null;
 };
 
-export default function TotalSalesCard(): JSX.Element {
+export default function SalesChart({
+  chartData,
+  selectedPeriod,
+  setSelectedPeriod,
+}: TotalSalesCardProps): JSX.Element {
   const periodOptions = ['Weeks', 'Months', 'Years'];
-  const [selectedPeriod, setSelectedPeriod] = useState(periodOptions[0]);
+
+  const formattedData = useMemo(() => {
+    return chartData.map((item) => ({
+      name:
+        selectedPeriod === 'Years'
+          ? format(new Date(item.date), 'MMM')
+          : format(new Date(item.date), 'EEE'),
+
+      value: item.amount,
+    }));
+  }, [chartData, selectedPeriod]);
+
+  const yAxisMax = useMemo(() => {
+    const maxAmount = Math.max(...formattedData.map((item) => item.value), 0);
+
+    return maxAmount > 0
+      ? Math.ceil(maxAmount / 100000) * 100000 + 100000
+      : 100000;
+  }, [formattedData]);
 
   return (
     <div className="w-full rounded-2xl bg-white">
@@ -95,7 +108,7 @@ export default function TotalSalesCard(): JSX.Element {
             className="sm:h-[340px]"
           >
             <BarChart
-              data={data}
+              data={formattedData}
               margin={{ top: 20, right: 20, left: 10, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -110,11 +123,7 @@ export default function TotalSalesCard(): JSX.Element {
                 tick={{ fontSize: 12, fill: '#3B3B3B' }}
                 axisLine={false}
                 tickLine={false}
-                domain={[0, 1000000]}
-                ticks={[
-                  0, 100000, 200000, 300000, 400000, 500000, 600000, 700000,
-                  800000, 900000, 1000000,
-                ]}
+                domain={[0, yAxisMax]}
               />
               <Tooltip
                 content={<CustomTooltip />}
@@ -125,14 +134,13 @@ export default function TotalSalesCard(): JSX.Element {
                 fill="#3A93DB"
                 radius={[8, 8, 8, 8]}
                 barSize={40}
-                className="sm:barSize-60"
               />
             </BarChart>
           </ResponsiveContainer>
 
           <div className="mt-2 flex justify-end p-4 sm:p-6">
             <span className="text-primary-900 text-xs font-medium sm:text-sm">
-              Days
+              {selectedPeriod === 'Years' ? 'Months' : 'Days'}
             </span>
           </div>
         </div>

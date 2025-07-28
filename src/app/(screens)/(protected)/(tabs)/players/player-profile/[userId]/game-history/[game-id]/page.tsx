@@ -52,7 +52,6 @@ const GameHistoryPage: React.FC = () => {
     time: new Date(gameDetails.startDate.iso).toLocaleTimeString(),
     playTime: totalTimeTaken,
     totalEarned: `${totalEarned}`,
-    // totalEarned: `₦${totalEarned}`,
   };
 
   const correctAnswers = Array.isArray(correctQuestionNumbers)

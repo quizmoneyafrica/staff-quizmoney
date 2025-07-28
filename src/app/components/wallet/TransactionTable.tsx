@@ -1,117 +1,34 @@
 'use client';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@radix-ui/react-dropdown-menu';
-import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
+
+import React, { useState } from 'react';
+
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Avatar, Table } from '@radix-ui/themes';
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ListFilter, Loader2 } from 'lucide-react';
+import { Search, ListFilter, Loader2, ReceiptText } from 'lucide-react';
+
 import { calculateDateRange } from '@/app/utils/date-range';
 import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
-import { useGetAllTransactionsWithStats } from '@/app/hooks/useTransaction';
+
+import WalletApi, {
+  WalletTransaction,
+  WalletTransactionsListResponse,
+} from '@/app/api/wallet';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
-import { formatDateTime } from '@/app/utils/utils';
+import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { useDebounce } from '@/app/hooks/useDebounce';
+import { VerifiedIcon } from '@/app/icons/icons';
 
-interface TransactionStats {
-  totalWalletBalance: number;
-  totalSuccessfulTransactions: number;
-  totalFailedTransactions: number;
-  totalPendingTransactions: number;
-}
-
-interface RawTransaction {
-  id: string;
-  createdAt: { iso: string } | string;
-  user?: {
-    name?: string;
-    avatar?: string;
-  };
-  type?: string;
-  amount: number | string;
-  status: string;
-}
-
-interface StaticTransactionData {
-  id: string;
-  createdAt: string;
-  date: string;
-  time: string;
-  username: string;
-  avatarUrl: string;
-  transactionType: string;
-  transactionAmount: string;
-  transactionStatus: 'Pending' | 'Successful' | 'Failed';
-}
-
-interface PaginationData {
-  totalItems: number;
-  totalPages: number;
-  currentPage: number;
-  itemsPerPage: number;
-}
-
-interface ApiResponse {
-  transactions: RawTransaction[];
-  stats: TransactionStats;
-  pagination: PaginationData;
-}
-
-interface TransactionTableProps {
-  data?: StaticTransactionData[];
-  onStatsUpdate?: (stats: TransactionStats) => void;
-}
-
-const formatStatus = (status: string): 'Pending' | 'Successful' | 'Failed' => {
-  switch (status?.toLowerCase()) {
-    case 'completed':
-    case 'successful':
-      return 'Successful';
-    case 'pending':
-      return 'Pending';
-    case 'failed':
-    default:
-      return 'Failed';
-  }
-};
-
-const transformTransaction = (tx: RawTransaction): StaticTransactionData => {
-  const createdAtString =
-    typeof tx.createdAt === 'string' ? tx.createdAt : tx.createdAt.iso;
-  const { time, fullDate } = formatDateTime(createdAtString);
-
-  return {
-    id: tx.id,
-    createdAt: createdAtString,
-    date: fullDate,
-    time: time,
-    username: tx.user?.name || 'Unknown',
-    avatarUrl: tx.user?.avatar || '',
-    transactionType: tx.type || 'N/A',
-    transactionAmount: `₦${Number(tx.amount).toLocaleString()}`,
-    transactionStatus: formatStatus(tx.status),
-  };
-};
-
-const TransactionTable: React.FC<TransactionTableProps> = ({
-  data,
-  onStatsUpdate,
-}) => {
+const TransactionTable: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
-    useState<StaticTransactionData | null>(null);
+    useState<WalletTransaction | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
-    'All' | 'Successful' | 'Pending' | 'Failed'
+    'All' | 'Completed' | 'Pending' | 'Failed'
   >('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<SortableTransactionKeys | ''>('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const [selected, setSelected] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState(null);
@@ -119,76 +36,62 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const debouncedSearchTerm = useDebounce(searchTerm);
   const itemsPerPage = 10;
 
-  type SortableTransactionKeys =
-    | 'id'
-    | 'username'
-    | 'transactionAmount'
-    | 'transactionType'
-    | 'transactionStatus'
-    | 'date';
+  const { data, isLoading, error, refetch } = useQuery<
+    WalletTransactionsListResponse,
+    Error
+  >({
+    queryKey: [
+      'walletTransactions',
+      currentPage,
+      debouncedSearchTerm,
+      statusFilter,
+      selected,
+      customDateRange,
+      itemsPerPage,
+    ],
+    queryFn: () => {
+      const apiStatus =
+        statusFilter === 'All' ? '' : statusFilter.toLowerCase();
+      const payload = {
+        page: currentPage,
+        limit: itemsPerPage,
+        search: debouncedSearchTerm,
+        status: apiStatus as 'completed' | 'pending' | 'failed' | '',
+        dateRange: calculateDateRange(selected, customDateRange),
+      };
 
-  const {
-    data: apiResponse,
-    isLoading,
-    error,
-    refetch,
-  } = useGetAllTransactionsWithStats(
-    currentPage,
-    itemsPerPage,
-    undefined,
-    debouncedSearchTerm || undefined,
-    statusFilter !== 'All' ? statusFilter : undefined,
-    calculateDateRange(selected, customDateRange),
-    undefined,
-  ) as {
-    data: ApiResponse | undefined;
-    isLoading: boolean;
-    error: Error | null;
-    refetch: () => void;
-  };
+      return WalletApi.getWalletTransactionsList(payload).then(
+        (res) => res.data.result,
+      );
+    },
 
-  const transactions =
-    apiResponse?.transactions?.map(transformTransaction) || [];
-  const stats = apiResponse?.stats || null;
+    placeholderData: keepPreviousData,
+  });
 
-  const pagination = apiResponse?.pagination;
+  const transactions = data?.transactions || [];
+  const pagination = data?.pagination;
   const totalCount = pagination?.totalItems || 0;
-  const totalPages = pagination?.totalPages || 1;
 
-  useEffect(() => {
-    if (stats && onStatsUpdate) {
-      onStatsUpdate(stats);
-    }
-  }, [stats, onStatsUpdate]);
-
-  const tableData = data || transactions;
+  const totalPages =
+    pagination && pagination.totalItems
+      ? Math.ceil(pagination.totalItems / itemsPerPage)
+      : 1;
 
   const handleFilterSelect = (
-    status: 'All' | 'Successful' | 'Pending' | 'Failed',
+    status: 'All' | 'Completed' | 'Pending' | 'Failed',
   ) => {
     setStatusFilter(status);
     setIsFilterOpen(false);
     setCurrentPage(1);
   };
 
-  const handleSort = (key: SortableTransactionKeys) => {
-    if (sortBy === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(key);
-      setSortOrder('asc');
-    }
-  };
-
-  const handleRowClick = (transaction: StaticTransactionData) => {
+  const handleViewDetailsClick = (transaction: WalletTransaction) => {
     setSelectedTransaction(transaction);
     setIsModalOpen(true);
   };
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,60 +99,21 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     setCurrentPage(1);
   };
 
-  const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
-
   const handleTimeRangeSelect = (option: string) => {
     setSelected(option);
-    if (option !== 'Custom') {
-      setCustomDateRange(null);
-    }
+    if (option !== 'Custom') setCustomDateRange(null);
   };
-
-  const handleCustomDateChange = (dateRange) => {
-    setCustomDateRange(dateRange);
-  };
-
-  const sortedData = React.useMemo(() => {
-    if (!sortBy || !tableData) return tableData;
-
-    return [...tableData].sort((a, b) => {
-      const order = sortOrder === 'asc' ? 1 : -1;
-      const aValue = a[sortBy] as string;
-      const bValue = b[sortBy] as string;
-
-      if (aValue < bValue) return -1 * order;
-      if (aValue > bValue) return 1 * order;
-      return 0;
-    });
-  }, [tableData, sortBy, sortOrder]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (isFilterOpen && !target.closest('.relative')) {
-        setIsFilterOpen(false);
-      }
-    };
-
-    if (isFilterOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isFilterOpen]);
 
   const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'Successful':
+    switch (status?.toLowerCase()) {
+      case 'completed':
         return 'bg-[#D4F9E4] text-[#006E2D]';
-      case 'Failed':
+      case 'failed':
         return 'bg-[#FFEDED] text-[#E11C25]';
-      case 'Pending':
+      case 'pending':
         return 'bg-[#FFF8DB] text-[#A16207]';
       default:
-        return '';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -269,19 +133,18 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   return (
     <>
-      <div className="overflow-x-auto ">
+      <div className="overflow-x-auto">
         <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Search by name, email, etc."
               value={searchTerm}
               onChange={handleSearchChange}
               className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
             />
           </div>
-
           <div className="flex items-center gap-4">
             <div className="relative">
               <button
@@ -292,127 +155,141 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 <span className="hidden md:block">Filter by</span>
               </button>
               {isFilterOpen && (
-                <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
+                <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border bg-white shadow-lg">
                   <div className="py-1">
-                    {['All', 'Successful', 'Pending', 'Failed'].map(
-                      (status) => (
-                        <button
-                          key={status}
-                          onClick={() =>
-                            handleFilterSelect(status as typeof statusFilter)
-                          }
-                          className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                            statusFilter === status ? 'bg-gray-50' : ''
-                          }`}
-                        >
-                          {status} Status
-                        </button>
-                      ),
-                    )}
+                    {['All', 'Completed', 'Pending', 'Failed'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() =>
+                          handleFilterSelect(
+                            status as
+                              | 'All'
+                              | 'Completed'
+                              | 'Pending'
+                              | 'Failed',
+                          )
+                        }
+                        className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                          statusFilter === status ? 'bg-gray-50' : ''
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
-
             <TimeRangeDropdown
-              options={options}
+              options={['All Time', 'This week', 'Last 30 days', 'Custom']}
               selected={selected}
               onSelect={handleTimeRangeSelect}
               customDateRange={customDateRange}
-              onCustomDateChange={handleCustomDateChange}
+              onCustomDateChange={setCustomDateRange}
             />
           </div>
         </div>
 
-        {isLoading && (
+        {isLoading && !data ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Loading transactions...</span>
           </div>
-        )}
-        {!isLoading && (
+        ) : (
           <Table.Root
             variant="ghost"
-            className="min-h-[600px] min-w-full border-collapse text-sm"
+            className="min-h-[600px] min-w-full text-sm"
           >
             <Table.Header className="bg-primary-50">
               <Table.Row>
-                <Th label="Transaction ID" onClick={() => handleSort('id')} />
-                <Th label="Users" onClick={() => handleSort('username')} />
-                <Th
-                  label="Transaction Type"
-                  onClick={() => handleSort('transactionType')}
-                />
-                <Th
-                  label="Transaction Amount"
-                  onClick={() => handleSort('transactionAmount')}
-                />
-                <Th
-                  label="Transaction Status"
-                  onClick={() => handleSort('transactionStatus')}
-                />
+                <Table.Cell className="px-4 py-2 text-left">
+                  Transaction ID
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">Users</Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Transaction Type
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Transaction Amount
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Transaction Status
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">Actions</Table.Cell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {sortedData && sortedData?.length > 0 ? (
-                sortedData.map((item, index) => (
-                  <Table.Row
-                    key={item.id}
-                    className="cursor-pointer border-b border-gray-100 hover:bg-gray-50"
-                    onClick={() => handleRowClick(item)}
-                  >
-                    <Table.Cell className="whitespace-nowrap px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                          {(currentPage - 1) * itemsPerPage + index + 1}
+              {transactions.length > 0 ? (
+                transactions.map((tx) => {
+                  const { time, fullDate } = formatDateTime(tx.createdAt.iso);
+                  return (
+                    <Table.Row
+                      key={tx.id}
+                      className="border-b hover:bg-gray-50"
+                    >
+                      <Table.Cell className="whitespace-nowrap px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-50">
+                            <ReceiptText className="h-6 w-6 text-gray-500" />
+                          </div>
+                          <div>
+                            <p className="font-bold uppercase text-neutral-800">
+                              {tx.id}
+                            </p>
+                            <p className="text-xs text-neutral-500">
+                              {fullDate} • {time}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-heading font-bold uppercase text-neutral-800">
-                            {item.id}
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {item.date} • {item.time}
-                          </p>
+                      </Table.Cell>
+                      <Table.Cell className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <Avatar
+                              src={tx.user.avatar}
+                              fallback={tx.user.name?.charAt(0).toUpperCase()}
+                              radius="full"
+                              size="3"
+                            />
+                            {tx.user.kycVerified && (
+                              <div className="absolute -right-1 -top-1">
+                                <VerifiedIcon className="h-5 w-5" />
+                              </div>
+                            )}
+                          </div>
+                          <p className="capitalize">{tx.user.name}</p>
                         </div>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
-                          <Avatar
-                            src={item.avatarUrl}
-                            fallback={item.username?.charAt(0).toUpperCase()}
-                            radius="full"
-                            className="bg-primary-50"
-                          />
-                        </div>
-                        <p className="text-primary-800 capitalize">
-                          {item.username}
+                      </Table.Cell>
+                      <Table.Cell className="px-4 py-4 capitalize">
+                        {tx.title}
+                      </Table.Cell>
+                      <Table.Cell className="px-4 py-4 font-semibold">
+                        {formatNaira(tx.amount)}
+                      </Table.Cell>
+                      <Table.Cell className="px-4 py-4">
+                        <p
+                          className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusClass(
+                            tx.status,
+                          )}`}
+                        >
+                          {tx.status}
                         </p>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4 capitalize">
-                      {item.transactionType}
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4 font-semibold">
-                      {item.transactionAmount}
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <p
-                        className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusClass(
-                          item.transactionStatus,
-                        )}`}
-                      >
-                        {item.transactionStatus}
-                      </p>
-                    </Table.Cell>
-                  </Table.Row>
-                ))
+                      </Table.Cell>
+                      <Table.Cell className="px-4 py-4">
+                        <button
+                          onClick={() => handleViewDetailsClick(tx)}
+                          className="hover:bg-primary-50 text-primary-900 border-primary-200 cursor-pointer rounded border px-3 py-2 text-sm font-medium transition-colors"
+                        >
+                          View Details
+                        </button>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })
               ) : (
                 <Table.Row>
                   <Table.Cell
                     colSpan={6}
-                    className="text-error-500 py-12 text-center font-bold"
+                    className="py-12 text-center font-bold"
                   >
                     No Transactions Found
                   </Table.Cell>
@@ -423,20 +300,20 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         )}
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
-        <div className="text-sm text-gray-500">
-          Showing data {(currentPage - 1) * itemsPerPage + 1} to{' '}
-          {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
-          entries
-          {selected !== 'This week' && ` (${selected})`}
-          {statusFilter !== 'All' && ` • Filtered by ${statusFilter}`}
+      {pagination && totalCount > 0 && (
+        <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
+            {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
+            entries
+          </div>
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      </div>
+      )}
 
       <TransactionDetailsModal
         isOpen={isModalOpen}
@@ -448,17 +325,3 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 };
 
 export default TransactionTable;
-
-interface ThProps {
-  label: string;
-  onClick: () => void;
-}
-
-const Th: React.FC<ThProps> = ({ label, onClick }) => (
-  <Table.Cell className="cursor-pointer px-4 py-2 text-left" onClick={onClick}>
-    <div className="flex items-center gap-1">
-      <span>{label}</span>
-      <CaretSortIcon />
-    </div>
-  </Table.Cell>
-);
