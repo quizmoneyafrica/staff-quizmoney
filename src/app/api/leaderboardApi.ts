@@ -1,47 +1,75 @@
 import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getAuthUser, getSessionTokenHeaders } from './userApi';
-import { ApiResponse } from './interface';
+import { BASE_URL, getSessionTokenHeaders } from './userApi';
 
-interface LastGameRankingUser {
+interface LeaderboardUser {
   userId: string;
   firstName: string;
   lastName: string;
   avatar: string | null;
-  noOfGamesPlayed: number;
+  kycVerified: boolean;
+  blacklisted: boolean;
 }
 
-export interface LastGameRanking {
+export interface LastGameAdminRanking {
   position: number;
   prize: number;
   coins: number;
-  user: LastGameRankingUser;
+  noOfGamesPlayed: number;
+  user: LeaderboardUser;
 }
 
-export interface GetLastGameLeaderboardResponse {
+export interface GetLastGameLeaderboardAdminResponse {
   msg: string;
-  rankings: LastGameRanking[];
-  createdAt: {
-    __type: string;
-    iso: string;
+  gameId: string;
+  data: LastGameAdminRanking[];
+  pagination: {
+    currentPage: number;
+    limit: number;
+    totalPages: number;
+    totalItems: number;
   };
 }
 
-const user = getAuthUser();
+export interface AllTimeAdminRanking {
+  overallRank: number;
+  amountWon: number;
+  noOfGamesPlayed: number;
+  coins?: number;
+  user: LeaderboardUser;
+}
+
+export interface GetAllTimeLeaderboardAdminResponse {
+  msg: string;
+  data: AllTimeAdminRanking[];
+  pagination: {
+    currentPage: number;
+    limit: number;
+    totalPages: number;
+    totalItems: number;
+  };
+}
+
 const LeaderboardAPI = {
-  getAllTimeLeaderboard(page?: number): Promise<AxiosResponse<ApiResponse>> {
+  getLastGameLeaderboardAdmin(
+    page: number,
+    limit: number,
+    search: string,
+  ): Promise<AxiosResponse<{ result: GetLastGameLeaderboardAdminResponse }>> {
     return axios.post(
-      `${BASE_URL}/getAllTimeLeaderboard`,
-      { page: page ?? 1 },
+      `${BASE_URL}/getLastGameLeaderboardAdmin`,
+      { page, limit, search },
       { headers: getSessionTokenHeaders() },
     );
   },
 
-  getLastGameLeaderboard(): Promise<
-    AxiosResponse<{ result: GetLastGameLeaderboardResponse }>
-  > {
+  getAllTimeLeaderboardAdmin(
+    page: number,
+    limit: number,
+    search: string,
+  ): Promise<AxiosResponse<{ result: GetAllTimeLeaderboardAdminResponse }>> {
     return axios.post(
-      `${BASE_URL}/getLastGameLeaderboard`,
-      { userId: user?.objectId },
+      `${BASE_URL}/getAllTimeLeaderboardAdmin`,
+      { page, limit, search },
       { headers: getSessionTokenHeaders() },
     );
   },

@@ -3,19 +3,20 @@ import React, { useState } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
 import PlayerProfileModal from './PlayerProfileModal';
 import CustomImage from '@/app/components/CustomImage';
-import { ListFilter } from 'lucide-react';
+import { ListFilter, Search } from 'lucide-react';
 import Pagination from './Pagination';
-import { QmCoinIcon } from '@/app/icons/icons';
+import { QmCoinIcon, VerifiedIcon } from '@/app/icons/icons';
 
 interface LeaderboardRowData {
   id: string;
   rank: number;
   date: string;
   username: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
   games: number;
   price?: string;
   coins?: number;
+  kycVerified: boolean;
 }
 
 interface ILeaderboardTableProps {
@@ -26,16 +27,20 @@ interface ILeaderboardTableProps {
   totalPages: number;
   totalCount: number;
   onPageChange: (page: number) => void;
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
 }
 
 const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
   data,
   isLoading,
-  activeTab,
+  // activeTab,
   currentPage,
   totalPages,
   totalCount,
   onPageChange,
+  searchTerm,
+  onSearchChange,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] =
@@ -47,9 +52,9 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
   };
 
   const SkeletonRow = () => (
-    <Table.Row className="h-20 border-b border-[#F2F2F2]">
+    <Table.Row className="h-20 animate-pulse border-b border-[#F2F2F2]">
       <Table.Cell className="px-8 py-5">
-        <div className="h-6 w-8 rounded-full bg-gray-200"></div>
+        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
       </Table.Cell>
       <Table.Cell className="px-8 py-5">
         <div className="h-4 w-20 rounded bg-gray-200"></div>
@@ -72,34 +77,23 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
     </Table.Row>
   );
 
-  const startEntry = data.length > 0 ? data[0].rank : 0;
-  const endEntry = data.length > 0 ? data[data.length - 1].rank : 0;
+  const startEntry = (currentPage - 1) * 10 + 1;
+  const endEntry = startEntry + data.length - 1;
 
   return (
     <div className="w-full">
-      <div className="mb-4 flex items-center gap-2 rounded-md bg-white px-5 py-5 md:gap-5">
-        <div className="relative w-full rounded-md border border-[#F5F5F5] focus:border-[#F5F5F5] md:w-fit">
+      <div className="mb-4 flex items-center justify-between gap-2 rounded-md bg-white px-5 py-5 md:gap-5">
+        <div className="relative w-full max-w-xs rounded-md">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
           <input
             type="text"
-            placeholder="Search"
-            className="focus:ring-primary-900 w-full rounded-md border-none py-2  pl-10 pr-4 outline-none focus:ring-0 "
+            placeholder="Search by name..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
           />
-          <svg
-            className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
-          </svg>
         </div>
-        <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#F5F5F5] px-4  py-2 outline-none">
+        <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4 py-2 outline-none">
           <ListFilter className=" size-5 text-[#1B212D]" />
           <span className=" hidden md:block  ">Filter by</span>
         </button>
@@ -131,7 +125,7 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
           </Table.Header>
           <Table.Body>
             {isLoading ? (
-              Array.from({ length: 7 }).map((_, i) => <SkeletonRow key={i} />)
+              Array.from({ length: 10 }).map((_, i) => <SkeletonRow key={i} />)
             ) : data.length > 0 ? (
               data.map((row) => (
                 <Table.Row
@@ -148,12 +142,21 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
                   </Table.Cell>
                   <Table.Cell className="px-8 py-5">
                     <div className="flex items-center gap-2">
-                      <Avatar
-                        src={row.avatarUrl}
-                        fallback={row.username?.charAt(0).toUpperCase() || 'P'}
-                        radius="full"
-                        size="3"
-                      />
+                      <div className="relative">
+                        <Avatar
+                          src={row.avatarUrl || undefined}
+                          fallback={
+                            row.username?.charAt(0).toUpperCase() || 'P'
+                          }
+                          radius="full"
+                          size="3"
+                        />
+                        {row.kycVerified && (
+                          <div className="absolute -right-1 -top-1">
+                            <VerifiedIcon className="h-5 w-5" />
+                          </div>
+                        )}
+                      </div>
                       <span className="text-base font-medium leading-6 text-[#2364AA]">
                         {row.username}
                       </span>
@@ -166,16 +169,19 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
                     </div>
                   </Table.Cell>
                   <Table.Cell className="px-8 py-5 text-sm font-semibold">
-                    {activeTab === 'Last Game leaderboard' && row.coins ? (
-                      <div className="flex items-center gap-1">
-                        <QmCoinIcon className="h-4 w-4" />
-                        <span className="text-base font-medium leading-5 text-[#00B23D]">
-                          {row.coins.toLocaleString()}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-900">{row.price}</span>
-                    )}
+                    <div className="flex flex-col items-start gap-1">
+                      {row.price && (
+                        <span className="text-gray-900">{row.price}</span>
+                      )}
+                      {row.coins && row.coins > 0 && (
+                        <div className="flex items-center gap-1">
+                          <QmCoinIcon className="h-4 w-4" />
+                          <span className="text-base font-medium leading-5 text-[#00B23D]">
+                            {row.coins.toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </Table.Cell>
                   <Table.Cell className="px-8 py-5 text-sm font-medium">
                     <button
