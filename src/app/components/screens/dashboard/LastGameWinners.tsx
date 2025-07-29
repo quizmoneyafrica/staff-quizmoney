@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
@@ -17,23 +19,30 @@ const LastGameWinners: React.FunctionComponent = () => {
     if (lastGame.length > 0) return;
     setFetching(true);
     try {
-      const res = await LeaderboardAPI.getLastGameLeaderboard();
+      const res = await LeaderboardAPI.getLastGameLeaderboardAdmin(1, 5, '');
 
-      const transformedData = res.data.result.rankings.map((ranking) => ({
-        ...ranking,
+      const transformedData = res.data.result.data.map((ranking) => ({
+        position: ranking.position,
+        prize: ranking.prize,
+        coins: ranking.coins,
+
         totalTime: '0',
         totalCorrect: 0,
+
         user: {
           ...ranking.user,
+          noOfGamesPlayed: ranking.noOfGamesPlayed,
           facebook: '',
           twitter: '',
           instagram: '',
         },
       }));
+
       dispatch(setLastGameLeaderboard(transformedData));
-      setFetching(false);
-    } catch {
+    } catch (error) {
+      console.error('Failed to fetch last game winners:', error);
       toast.error('Error loading Last Game Winners, please refresh');
+    } finally {
       setFetching(false);
     }
   }, [dispatch, lastGame]);
@@ -52,33 +61,31 @@ const LastGameWinners: React.FunctionComponent = () => {
   }
 
   return (
-    <>
-      <motion.div className="order-2 h-[323px] w-full rounded-lg bg-white p-4 lg:order-1 lg:col-span-1">
-        <div className="flex items-center justify-between">
-          <p>Last Game Winners</p>
-          <Link
-            href="/leaderboard"
-            className="font-heading text-secondary-900 underline"
-          >
-            Show all
-          </Link>
-        </div>
+    <motion.div className="order-2 h-[323px] w-full rounded-lg bg-white p-4 lg:order-1 lg:col-span-1">
+      <div className="flex items-center justify-between">
+        <p>Last Game Winners</p>
+        <Link
+          href="/leaderboard"
+          className="font-heading text-secondary-900 underline"
+        >
+          Show all
+        </Link>
+      </div>
 
-        <div className="mt-3 space-y-4">
-          {lastGame.slice(0, 5).map((item, index) => {
-            return (
-              <UserTable
-                key={index}
-                num={item.position}
-                image={item.user.avatar}
-                name={item.user.firstName}
-                amount={item.prize}
-              />
-            );
-          })}
-        </div>
-      </motion.div>
-    </>
+      <div className="mt-3 space-y-4">
+        {lastGame.slice(0, 5).map((item, index) => {
+          return (
+            <UserTable
+              key={index}
+              num={item.position}
+              image={item.user.avatar}
+              name={item.user.firstName}
+              amount={item.prize}
+            />
+          );
+        })}
+      </div>
+    </motion.div>
   );
 };
 
@@ -86,7 +93,7 @@ export default LastGameWinners;
 
 interface UserTableProp {
   num: number;
-  image: string;
+  image: string | null;
   name: string;
   amount: number;
 }
@@ -102,7 +109,7 @@ const UserTable: React.FunctionComponent<UserTableProp> = ({
         <p className="font-heading text-neutral-900">{num}</p>
         <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full">
           <Avatar
-            src={image}
+            src={image || undefined}
             fallback={name?.charAt(0).toUpperCase()}
             radius="full"
             className="bg-primary-50"
