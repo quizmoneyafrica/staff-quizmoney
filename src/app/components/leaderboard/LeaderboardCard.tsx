@@ -4,12 +4,14 @@ import classNames from 'classnames';
 import React from 'react';
 import { motion } from 'framer-motion';
 
+import ordinalize from 'ordinalize';
+
 interface LeaderboardCardProps {
   rank: number;
   playerName: string;
   gamesPlayed: number;
-  prize: string;
-  avatarUrl: string; // Assuming avatar is an image
+  prize?: string;
+  avatarUrl: string;
 }
 
 const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
@@ -50,7 +52,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
         transition={{ duration: 0.5, delay: rank * 0.1 + 0.2 }}
         className={`absolute left-0 mb-4 ml-5 text-4xl font-bold ${rankStyles}`}
       >
-        {rank}st
+        {ordinalize(rank)}
       </motion.div>
       <motion.div
         initial={{ scale: 0 }}
@@ -86,7 +88,6 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
           }}
           className="absolute bottom-3 right-0 -mr-4 rounded-full bg-inherit"
         >
-          {/* Ribbon/Badge icon based on rank */}
           {rank === 1 && (
             <CustomImage
               src="/assets/images/first.svg"
@@ -133,15 +134,17 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
         >
           {gamesPlayed} games
         </span>
-        <span
-          className={classNames(
-            'rounded-full px-3 py-1 text-sm',
-            prizeStyle,
-            nameStyles,
-          )}
-        >
-          {prize}
-        </span>
+        {prize && (
+          <span
+            className={classNames(
+              'rounded-full px-3 py-1 text-sm',
+              prizeStyle,
+              nameStyles,
+            )}
+          >
+            {prize}
+          </span>
+        )}
       </motion.div>
     </motion.div>
   );
