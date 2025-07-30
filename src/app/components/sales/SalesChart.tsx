@@ -1,7 +1,9 @@
 'use client';
 
 import React, { JSX, useMemo } from 'react';
-import TimeRangeDropdown from '../common/TimeRangeDropdown';
+
+import { ChartPeriodPicker } from '../ui/month-range-picker';
+import { DateRange } from 'react-day-picker';
 import {
   BarChart,
   Bar,
@@ -16,15 +18,16 @@ import type {
   ValueType,
   NameType,
 } from 'recharts/types/component/DefaultTooltipContent';
-import { format } from 'date-fns';
+import { format, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { SalesChartData } from '@/app/api/salesApi';
-
 import { formatNaira } from '@/app/utils/utils';
 
 type TotalSalesCardProps = {
   chartData: SalesChartData[];
   selectedPeriod: string;
   setSelectedPeriod: (period: string) => void;
+  monthRange: DateRange | undefined;
+  onMonthRangeChange: (range: DateRange | undefined) => void;
 };
 
 const formatYAxis = (tick: number): string => {
@@ -39,9 +42,7 @@ const CustomTooltip: React.FC<TooltipProps<ValueType, NameType>> = ({
 }) => {
   if (active && payload && payload.length) {
     const value = Number(payload[0].value);
-
     const formattedValue = formatNaira(value);
-
     return (
       <div className="rounded-md border border-[#3A93DB] bg-white px-3 py-1 text-[#3A93DB] shadow">
         <span className="text-sm">{`${formattedValue} made`}</span>
@@ -55,23 +56,43 @@ export default function SalesChart({
   chartData,
   selectedPeriod,
   setSelectedPeriod,
+  monthRange,
+  onMonthRangeChange,
 }: TotalSalesCardProps): JSX.Element {
-  const periodOptions = ['Weeks', 'Months', 'Years'];
+  const filteredChartData = useMemo(() => {
+    if (!monthRange?.from || !monthRange?.to) {
+      return chartData;
+    }
+
+    return chartData.filter((item) => {
+      const itemDate = new Date(item.date);
+      return isWithinInterval(itemDate, {
+        start: startOfDay(monthRange.from!),
+        end: endOfDay(monthRange.to!),
+      });
+    });
+  }, [chartData, monthRange]);
 
   const formattedData = useMemo(() => {
-    return chartData.map((item) => ({
-      name:
-        selectedPeriod === 'Years'
-          ? format(new Date(item.date), 'MMM')
-          : format(new Date(item.date), 'EEE'),
+    return filteredChartData.map((item) => {
+      const date = new Date(item.date);
+      let name: string;
 
-      value: item.amount,
-    }));
-  }, [chartData, selectedPeriod]);
+      if (selectedPeriod === 'Years') {
+        name = format(date, 'MMM yyyy');
+      } else {
+        name = format(date, 'do MMM');
+      }
+
+      return {
+        name,
+        value: item.amount,
+      };
+    });
+  }, [filteredChartData, selectedPeriod]);
 
   const yAxisMax = useMemo(() => {
     const maxAmount = Math.max(...formattedData.map((item) => item.value), 0);
-
     return maxAmount > 0
       ? Math.ceil(maxAmount / 100000) * 100000 + 100000
       : 100000;
@@ -94,11 +115,11 @@ export default function SalesChart({
             <span className="text-primary-900 mb-2 text-sm font-semibold sm:mb-0 sm:text-base">
               Revenue Chart
             </span>
-
-            <TimeRangeDropdown
-              options={periodOptions}
-              selected={selectedPeriod}
-              onSelect={setSelectedPeriod}
+            <ChartPeriodPicker
+              period={selectedPeriod}
+              onPeriodChange={setSelectedPeriod}
+              range={monthRange}
+              onRangeChange={onMonthRangeChange}
             />
           </div>
 

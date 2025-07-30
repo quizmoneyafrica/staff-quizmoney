@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Search, ListFilter, ChevronDown, AlertCircle } from 'lucide-react';
 import classNames from 'classnames';
 import { Avatar, Table } from '@radix-ui/themes';
-import { subDays, startOfDay, endOfDay, formatISO } from 'date-fns';
+import { subDays } from 'date-fns';
 
 import CustomImage from '@/app/components/CustomImage';
 import Pagination from '../leaderboard/Pagination';
@@ -21,17 +21,29 @@ const getDateRangeForFilter = (
   selectedOption: string,
   customRange: CustomDateRange,
 ) => {
+  const toApiStart = (date: Date) => {
+    const d = new Date(date);
+    d.setUTCHours(23, 0, 0, 0);
+    return d.toISOString();
+  };
+  const toApiEnd = (date: Date) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + 1);
+    d.setUTCHours(22, 59, 59, 999);
+    return d.toISOString();
+  };
+
   const now = new Date();
   switch (selectedOption) {
     case 'This week':
-      return { start: formatISO(subDays(now, 7)), end: formatISO(now) };
+      return { start: toApiStart(subDays(now, 7)), end: toApiEnd(now) };
     case 'Last 30 days':
-      return { start: formatISO(subDays(now, 30)), end: formatISO(now) };
+      return { start: toApiStart(subDays(now, 30)), end: toApiEnd(now) };
     case 'Custom':
       if (customRange?.startDate && customRange?.endDate) {
         return {
-          start: formatISO(startOfDay(customRange.startDate)),
-          end: formatISO(endOfDay(customRange.endDate)),
+          start: toApiStart(customRange.startDate),
+          end: toApiEnd(customRange.endDate),
         };
       }
       return undefined;
