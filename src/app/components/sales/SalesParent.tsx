@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { DateRange } from 'react-day-picker';
 import WalletStatCard, {
   WalletStatCardsLoading,
 } from '@/app/components/wallet/WalletStatCard';
@@ -16,8 +17,7 @@ import {
   WalletCardIconLightGreen,
   PurchasedIcon,
 } from '@/app/icons/icons';
-import { sub, formatISO, startOfYear, endOfYear } from 'date-fns';
-
+import { sub } from 'date-fns';
 import { formatNaira } from '@/app/utils/utils';
 
 type WalletStat = {
@@ -31,41 +31,42 @@ type WalletStat = {
   onEyeToggle?: () => void;
 };
 
-const getDateRange = (period: string) => {
-  const now = new Date();
-  let startDate,
-    endDate = now;
+const chartTypeMap: { [key: string]: 'month' | 'year' } = {
+  Months: 'month',
+  Years: 'year',
+};
 
-  switch (period.toLowerCase()) {
-    case 'years':
-      startDate = startOfYear(now);
-      endDate = endOfYear(now);
-      break;
-    case 'months':
-      startDate = sub(now, { months: 1 });
-      break;
-    case 'weeks':
-    default:
-      startDate = sub(now, { weeks: 1 });
-      break;
+const getDateRangeForApi = (period: string, monthRange?: DateRange) => {
+  const toApiStart = (date: Date) => {
+    const d = new Date(date);
+    d.setUTCHours(23, 0, 0, 0);
+    return d.toISOString();
+  };
+  const toApiEnd = (date: Date) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + 1);
+    d.setUTCHours(22, 59, 59, 999);
+    return d.toISOString();
+  };
+
+  if (monthRange?.from && monthRange?.to) {
+    return {
+      start: toApiStart(monthRange.from),
+      end: toApiEnd(monthRange.to),
+    };
   }
 
-  return {
-    start: formatISO(startDate),
-    end: formatISO(endDate),
-  };
+  const now = new Date();
+  if (period === 'Months') {
+    const start = sub(now, { months: 1 });
+    return { start: toApiStart(start), end: toApiEnd(now) };
+  }
 };
 
 function SalesParent() {
-  const [selectedPeriod, setSelectedPeriod] = useState('Weeks');
+  const [selectedPeriod, setSelectedPeriod] = useState('Months');
   const [isWithdrawalVisible, setIsWithdrawalVisible] = useState(false);
-
-  const chartTypeMap: { [key: string]: 'month' | 'year' } = {
-    Weeks: 'month',
-    Months: 'month',
-    Years: 'year',
-  };
-  const chartType = chartTypeMap[selectedPeriod];
+  const [monthRange, setMonthRange] = useState<DateRange | undefined>();
 
   const {
     data: salesData,
@@ -73,24 +74,24 @@ function SalesParent() {
     isError,
     error,
   } = useQuery({
-    queryKey: ['salesStats', selectedPeriod, chartType],
+    queryKey: ['salesStats', selectedPeriod, monthRange],
     queryFn: () => {
       const payload = {
-        chartType: chartType,
-        dateRange: getDateRange(selectedPeriod),
+        chartType: chartTypeMap[selectedPeriod],
+        dateRange: getDateRangeForApi(selectedPeriod, monthRange),
       };
       return SalesApi.getSalesTransactionsChartStats(payload);
     },
     select: (res) => res.data.result,
+    enabled:
+      selectedPeriod !== 'Years' ||
+      (selectedPeriod === 'Years' && !!monthRange?.from && !!monthRange?.to),
   });
 
-  const toggleWithdrawalVisibility = () => {
-    setIsWithdrawalVisible((prevState) => !prevState);
-  };
+  const toggleWithdrawalVisibility = () => setIsWithdrawalVisible((p) => !p);
 
   const walletStats: WalletStat[] = useMemo(() => {
     if (!salesData) return [];
-
     const { statistics } = salesData;
     return [
       {
@@ -103,7 +104,6 @@ function SalesParent() {
       },
       {
         title: 'Total Withdrawal',
-
         value: formatNaira(statistics.totalAmount),
         bgColor: 'lightGreen',
         icon: <WalletCardIconLightGreen />,
@@ -124,7 +124,7 @@ function SalesParent() {
   }, [salesData, isWithdrawalVisible]);
 
   if (isError) {
-    return <div>Error fetching data: {error.message}</div>;
+    return <div>Error fetching data: {error?.message}</div>;
   }
 
   return (
@@ -147,6 +147,8 @@ function SalesParent() {
         chartData={salesData?.chartData || []}
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={setSelectedPeriod}
+        monthRange={monthRange}
+        onMonthRangeChange={setMonthRange}
       />
 
       <TotalTransactionsTable />
