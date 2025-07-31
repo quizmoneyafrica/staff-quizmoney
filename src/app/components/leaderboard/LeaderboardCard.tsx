@@ -3,10 +3,12 @@ import CustomImage from '@/app/components/CustomImage';
 import classNames from 'classnames';
 import React from 'react';
 import { motion } from 'framer-motion';
-
 import ordinalize from 'ordinalize';
 
+import { useRouter } from 'next/navigation';
+
 interface LeaderboardCardProps {
+  playerId: string;
   rank: number;
   playerName: string;
   gamesPlayed: number;
@@ -15,12 +17,19 @@ interface LeaderboardCardProps {
 }
 
 const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
+  playerId,
   rank,
   playerName,
   gamesPlayed,
   prize,
   avatarUrl,
 }) => {
+  const router = useRouter();
+
+  const handleNavigate = () => {
+    router.push(`/players/player-profile/${playerId}`);
+  };
+
   const cardStyles =
     rank === 1 ? 'bg-[#E4F1FA]' : rank === 2 ? 'bg-[#E7FEED]' : 'bg-[#FFFCE7]';
   const rankStyles =
@@ -54,7 +63,9 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
       >
         {ordinalize(rank)}
       </motion.div>
+
       <motion.div
+        onClick={handleNavigate}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{
@@ -63,7 +74,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
           damping: 20,
           delay: rank * 0.1 + 0.3,
         }}
-        className="relative mb-2"
+        className="relative mb-2 cursor-pointer"
       >
         <div
           className={classNames(
@@ -111,14 +122,17 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
           )}
         </motion.div>
       </motion.div>
+
       <motion.div
+        onClick={handleNavigate}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: rank * 0.1 + 0.5 }}
-        className={`mb-2 text-lg font-semibold ${nameStyles}`}
+        className={`mb-2 cursor-pointer text-lg font-semibold hover:underline ${nameStyles}`}
       >
         {playerName}
       </motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

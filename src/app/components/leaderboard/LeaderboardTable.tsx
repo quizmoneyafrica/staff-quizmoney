@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
 import PlayerProfileModal from './PlayerProfileModal';
 import CustomImage from '@/app/components/CustomImage';
-import { ListFilter, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import Pagination from './Pagination';
 import { QmCoinIcon, VerifiedIcon } from '@/app/icons/icons';
+import { useRouter } from 'next/navigation';
 
 interface LeaderboardRowData {
   id: string;
@@ -42,6 +43,7 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
   searchTerm,
   onSearchChange,
 }) => {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] =
     useState<LeaderboardRowData | null>(null);
@@ -49,6 +51,10 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
   const handleViewDetails = (player: LeaderboardRowData) => {
     setSelectedPlayer(player);
     setIsModalOpen(true);
+  };
+
+  const handleUsernameClick = (userId: string) => {
+    router.push(`/players/player-profile/${userId}`);
   };
 
   const SkeletonRow = () => (
@@ -93,10 +99,6 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
             className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
           />
         </div>
-        <button className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4 py-2 outline-none">
-          <ListFilter className=" size-5 text-[#1B212D]" />
-          <span className=" hidden md:block  ">Filter by</span>
-        </button>
       </div>
 
       <div className="w-full max-w-full overflow-x-auto bg-white">
@@ -141,7 +143,10 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
                     {row.date}
                   </Table.Cell>
                   <Table.Cell className="px-8 py-5">
-                    <div className="flex items-center gap-2">
+                    <div
+                      className="group flex cursor-pointer items-center gap-2"
+                      onClick={() => handleUsernameClick(row.id)}
+                    >
                       <div className="relative">
                         <Avatar
                           src={row.avatarUrl || undefined}
@@ -207,18 +212,20 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
         </Table.Root>
       </div>
 
-      {!isLoading && totalCount > 0 && (
-        <div className="mt-4 flex flex-col items-center gap-4 rounded-md bg-white p-4 md:flex-row md:justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {startEntry} to {endEntry} of {totalCount} entries
-          </div>
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-          />
+      <div className="mt-4 flex flex-col items-center gap-4 rounded-md bg-white p-4 md:flex-row md:justify-between">
+        <div className="text-sm text-gray-500">
+          {isLoading
+            ? 'Loading entries...'
+            : totalCount > 0
+            ? `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`
+            : 'No players found.'}
         </div>
-      )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+        />
+      </div>
 
       <PlayerProfileModal
         isOpen={isModalOpen}

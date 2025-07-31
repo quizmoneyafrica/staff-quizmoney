@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import LeaderboardAPI, {
   LastGameAdminRanking,
@@ -25,7 +25,6 @@ interface NormalizedPlayer {
   date: string;
   kycVerified: boolean;
 }
-
 interface QueryResultData {
   data: NormalizedPlayer[];
   pagination: {
@@ -35,7 +34,6 @@ interface QueryResultData {
     totalItems: number;
   };
 }
-
 const normalizeLeaderboardData = (
   player: LastGameAdminRanking | AllTimeAdminRanking,
   type: 'lastGame' | 'allTime',
@@ -68,7 +66,6 @@ const normalizeLeaderboardData = (
     };
   }
 };
-
 const LeaderboardTabs = ({
   activeTab,
   setActiveTab,
@@ -76,6 +73,7 @@ const LeaderboardTabs = ({
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }) => {
+  // ...
   const tabs = ['Last Game leaderboard', 'All time Leaderboard'];
   return (
     <div className="mx-auto my-8 flex max-w-[1106px] rounded-[24px] bg-[#E4F1FA] p-1">
@@ -91,7 +89,8 @@ const LeaderboardTabs = ({
             },
           )}
         >
-          {tab}
+          {' '}
+          {tab}{' '}
         </button>
       ))}
     </div>
@@ -106,61 +105,66 @@ function Page() {
 
   const itemsPerPage = 10;
 
-  const {
-    data: lastGameData,
-    isLoading: isLastGameLoading,
-    isError: isLastGameError,
-  } = useQuery<QueryResultData, Error>({
-    queryKey: [
-      'lastGameLeaderboardAdmin',
-      currentPage,
-      debouncedSearchTerm,
-      itemsPerPage,
-    ],
+  const { data: topThreeData, isLoading: isTopThreeLoading } = useQuery<
+    NormalizedPlayer[],
+    Error
+  >({
+    queryKey: ['leaderboardTopThree', activeTab],
     queryFn: async () => {
-      const res = await LeaderboardAPI.getLastGameLeaderboardAdmin(
-        currentPage,
-        itemsPerPage,
-        debouncedSearchTerm,
+      const apiCall =
+        activeTab === 'Last Game leaderboard'
+          ? LeaderboardAPI.getLastGameLeaderboardAdmin(1, 3, '')
+          : LeaderboardAPI.getAllTimeLeaderboardAdmin(1, 3, '');
+
+      const res = await apiCall;
+      return res.data.result.data.map((p) =>
+        normalizeLeaderboardData(
+          p,
+          activeTab === 'Last Game leaderboard' ? 'lastGame' : 'allTime',
+        ),
       );
-      const normalizedData = res.data.result.data.map((p) =>
-        normalizeLeaderboardData(p, 'lastGame'),
-      );
-      return {
-        data: normalizedData,
-        pagination: res.data.result.pagination,
-      };
     },
-    enabled: activeTab === 'Last Game leaderboard',
     placeholderData: keepPreviousData,
   });
 
   const {
-    data: allTimeData,
-    isLoading: isAllTimeLoading,
-    isError: isAllTimeError,
+    data: tableApiData,
+    isLoading: isTableLoading,
+    isError,
   } = useQuery<QueryResultData, Error>({
     queryKey: [
-      'allTimeLeaderboardAdmin',
+      'leaderboardTable',
+      activeTab,
       currentPage,
       debouncedSearchTerm,
       itemsPerPage,
     ],
     queryFn: async () => {
-      const res = await LeaderboardAPI.getAllTimeLeaderboardAdmin(
-        currentPage,
-        itemsPerPage,
-        debouncedSearchTerm,
-      );
+      const apiCall =
+        activeTab === 'Last Game leaderboard'
+          ? LeaderboardAPI.getLastGameLeaderboardAdmin(
+              currentPage,
+              itemsPerPage,
+              debouncedSearchTerm,
+            )
+          : LeaderboardAPI.getAllTimeLeaderboardAdmin(
+              currentPage,
+              itemsPerPage,
+              debouncedSearchTerm,
+            );
+
+      const res = await apiCall;
       const normalizedData = res.data.result.data.map((p) =>
-        normalizeLeaderboardData(p, 'allTime'),
+        normalizeLeaderboardData(
+          p,
+          activeTab === 'Last Game leaderboard' ? 'lastGame' : 'allTime',
+        ),
       );
       return {
         data: normalizedData,
         pagination: res.data.result.pagination,
       };
     },
-    enabled: activeTab === 'All time Leaderboard',
     placeholderData: keepPreviousData,
   });
 
@@ -174,69 +178,53 @@ function Page() {
     setCurrentPage(1);
   };
 
-  const isLoading = isLastGameLoading || isAllTimeLoading;
-  const isError = isLastGameError || isAllTimeError;
-  const activeData =
-    activeTab === 'Last Game leaderboard' ? lastGameData : allTimeData;
-
-  const { topThree, tableData, totalPages, totalCount } = useMemo(() => {
-    const data = activeData?.data || [];
-    const pagination = activeData?.pagination;
-
-    const playersArray = Array.isArray(data) ? data : [];
-
-    const topThree = currentPage === 1 ? playersArray.slice(0, 3) : [];
-    const tableData = currentPage === 1 ? playersArray.slice(3) : playersArray;
-
-    return {
-      topThree,
-      tableData,
-      totalPages: pagination?.totalPages || 1,
-      totalCount: pagination?.totalItems || 0,
-    };
-  }, [activeData, currentPage]);
+  const topThree = topThreeData || [];
+  const tableData = tableApiData?.data || [];
+  const pagination = tableApiData?.pagination;
+  // const isLoading = isTopThreeLoading || isTableLoading;
 
   return (
     <div className="w-full max-w-full overflow-x-hidden py-6">
       <LeaderboardTabs activeTab={activeTab} setActiveTab={handleTabChange} />
 
-      {isLoading && currentPage === 1 && (
+      {isTopThreeLoading ? (
         <div className="mb-8 grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
           <WalletStatCardsLoading />
           <WalletStatCardsLoading />
           <WalletStatCardsLoading />
         </div>
-      )}
-
-      {!isLoading && currentPage === 1 && topThree.length > 0 && (
-        <div className="mb-8 grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-          {topThree.map((data) => (
-            <LeaderboardCard
-              key={data.id}
-              rank={data.rank}
-              playerName={data.username}
-              gamesPlayed={data.games}
-              prize={data.price}
-              avatarUrl={data.avatarUrl}
-            />
-          ))}
-        </div>
+      ) : (
+        topThree.length > 0 && (
+          <div className="mb-8 grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+            {topThree.map((data) => (
+              <LeaderboardCard
+                key={data.id}
+                playerId={data.id}
+                rank={data.rank}
+                playerName={data.username}
+                gamesPlayed={data.games}
+                prize={data.price}
+                avatarUrl={data.avatarUrl}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {isError && (
         <div className="text-center text-red-500">
-          Failed to load leaderboard data. Please try again.
+          Failed to load leaderboard data.
         </div>
       )}
 
       <div className="mt-8">
         <LeaderboardTable
           data={tableData}
-          isLoading={isLoading}
+          isLoading={isTableLoading}
           activeTab={activeTab}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalCount={totalCount}
+          currentPage={pagination?.currentPage || 1}
+          totalPages={pagination?.totalPages || 1}
+          totalCount={pagination?.totalItems || 0}
           onPageChange={setCurrentPage}
           searchTerm={searchTerm}
           onSearchChange={handleSearchChange}
