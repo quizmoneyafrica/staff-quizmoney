@@ -4,30 +4,38 @@ import React, { useState } from 'react';
 import { ArrowRightLeft, Wallet } from 'lucide-react';
 import QmCoinStatCard from '@/app/components/qm-coins/QmCoinStatCard';
 import QmCoinsTabs from '@/app/components/qm-coins/QmCoinsTabs';
-import UsersWithCoinsTable from '@/app/components/qm-coins/UsersWithCoinsTable';
+import { UsersWithCoinsTable } from '@/app/components/qm-coins/UsersWithCoinsTable';
 import RedemptionHistoryTable from '@/app/components/qm-coins/RedemptionHistoryTable';
 import QmCoinSettings from '@/app/components/qm-coins/QmCoinSettings';
+
+import { useQuery } from '@tanstack/react-query';
+import QmCoinsApi from '@/app/api/QmCoinsApi';
 
 function QmCoinsPage() {
   const [activeTab, setActiveTab] = useState('Settings');
 
-  const cardData = {
-    totalEarned: '1,500,000',
-    totalRedeemed: '1,500,000',
-  };
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['qm-coin-stats'],
+    queryFn: () =>
+      QmCoinsApi.getCoinStatsAdmin().then((res) => res.data.result.stats),
+  });
 
   return (
     <div className="flex w-full max-w-full flex-col gap-6 overflow-x-hidden py-6">
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
         <QmCoinStatCard
           title="Total Earned Coin"
-          value={cardData.totalEarned}
+          value={
+            statsLoading ? '...' : statsData?.totalEarned?.toLocaleString()
+          }
           bgColor="lightCyan"
           icon={<Wallet size={20} className="text-cyan-700" />}
         />
         <QmCoinStatCard
           title="Total Redeemed"
-          value={cardData.totalRedeemed}
+          value={
+            statsLoading ? '...' : statsData?.totalRedeemed?.toLocaleString()
+          }
           bgColor="lightBlue"
           icon={<Wallet size={20} className="text-blue-800" />}
         />
@@ -48,7 +56,6 @@ function QmCoinsPage() {
         <div className="mt-6">
           {activeTab === 'Users with Coins' && <UsersWithCoinsTable />}
           {activeTab === 'Redemption History' && <RedemptionHistoryTable />}
-
           {activeTab === 'Settings' && <QmCoinSettings />}
         </div>
       </div>
