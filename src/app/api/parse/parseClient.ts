@@ -5,7 +5,7 @@ Parse.initialize(
   process.env.NEXT_PUBLIC_XParseApplicationId!,
   process.env.NEXT_PUBLIC_XParseJSAPIKey!,
 );
-Parse.serverURL = process.env.NEXT_PUBLIC_BASE_URL!;
+Parse.serverURL = process.env.NEXT_PUBLIC_PARSE_SERVER_BASE_URL!;
 
 // LiveQuery setup
 export const liveQueryClient = new Parse.LiveQueryClient({

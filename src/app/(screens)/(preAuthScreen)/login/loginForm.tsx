@@ -49,44 +49,35 @@ const LoginForm = ({ loading, setLoading }: Props) => {
       setLoading(false);
       return;
     }
-    const deviceId = getDeviceId();
+    // const deviceId = getDeviceId();
     const newValues = {
-      email: email.toLowerCase().trim(),
+      username: email.toLowerCase().trim(),
       password: password,
       deviceToken: token || '',
-      deviceId: deviceId,
+      // deviceId: deviceId,
     };
     try {
       const response = await UserAPI.login(newValues);
-      const userData = response.data.result;
+      const userData = response.data.data;
 
-      if (userData?.emailVerified) {
-        if (userData?.admin) {
-          // Encrypt the user data
-          const encryptedUser = encryptData(userData);
+      // Encrypt the user data
+      const encryptedUser = encryptData(userData);
 
-          // Dispatch to Redux
-          loginUser(encryptedUser);
+      // Dispatch to Redux
+      loginUser(encryptedUser);
 
-          router.replace('/dashboard');
+      router.replace('/dashboard');
 
-          toast.success(
-            `Welcome Back ${capitalizeFirstLetter(userData?.firstName)}`,
-            {
-              position: 'top-center',
-            },
-          );
-        } else {
-          toast.error(`You are not authorized to access.`, {
-            position: toastPosition,
-          });
-          setLoading(false);
-        }
-      }
+      toast.success(
+        `Welcome Back ${capitalizeFirstLetter(userData?.user?.firstName)}`,
+        {
+          position: 'top-center',
+        },
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setLoading(false);
-      toast.error(`${err.response.data.error}`, {
+      toast.error(`${err.response.data.message}`, {
         position: toastPosition,
       });
     }
