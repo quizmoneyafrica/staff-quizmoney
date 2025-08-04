@@ -59,11 +59,12 @@ function Page() {
       });
     }
   };
+
   const handleResendOTP = async () => {
     setCountdown(resendTimer);
     setCanResend(false);
     try {
-      await UserAPI.forgotPassword(email || '');
+      await UserAPI.resendPassword(email || '');
       toast.success('OTP Reset Successfully', {
         position: toastPosition,
       });
