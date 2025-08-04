@@ -19,19 +19,20 @@ const XParseRESTAPIKey = process.env.NEXT_PUBLIC_XParseRESTAPIKey;
 const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY!;
 
 const appHeaders = {
-  'X-Parse-Application-Id': XParseApplicationId,
-  'X-Parse-REST-API-Key': XParseRESTAPIKey,
+  // 'X-Parse-Application-Id': XParseApplicationId,
+  // 'X-Parse-REST-API-Key': XParseRESTAPIKey,
   'Content-Type': 'application/json',
 };
+
 const getSessionTokenHeaders = () => {
   const encrypted = store.getState().auth.userEncryptedData;
   const user = encrypted ? decryptData(encrypted) : null;
-  const sessionToken = user?.sessionToken;
+  const sessionToken = user?.accessToken;
 
   return {
-    'X-Parse-Application-Id': process.env.NEXT_PUBLIC_XParseApplicationId!,
-    'X-Parse-REST-API-Key': process.env.NEXT_PUBLIC_XParseRESTAPIKey!,
-    'X-Parse-Session-Token': sessionToken,
+    // 'X-Parse-Application-Id': process.env.NEXT_PUBLIC_XParseApplicationId!,
+    // 'X-Parse-REST-API-Key': process.env.NEXT_PUBLIC_XParseRESTAPIKey!,
+    Authorization: `Bearer ${sessionToken}`,
     'Content-Type': 'application/json',
   };
 };
@@ -39,12 +40,12 @@ const getSessionTokenHeaders = () => {
 const getAuthUser = () => {
   const encrypted = store.getState().auth.userEncryptedData;
   const user = encrypted ? decryptData(encrypted) : null;
-  return user;
+  return user?.user;
 };
 
 const UserAPI = {
   login(form: LoginForm): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/login`, form, {
+    return axios.post(`${BASE_URL}/auth/login`, form, {
       headers: appHeaders,
     });
   },
@@ -70,7 +71,7 @@ const UserAPI = {
 
   forgotPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
-      `${BASE_URL}/forgotPassword`,
+      `${BASE_URL}/auth/password/forgot`,
       { email },
       {
         headers: appHeaders,

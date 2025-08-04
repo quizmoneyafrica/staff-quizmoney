@@ -72,7 +72,7 @@ function Page() {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      toast.error(`${err.response.data.error}`, {
+      toast.error(`${err.response.data.message}`, {
         position: toastPosition,
       });
     } finally {

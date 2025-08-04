@@ -79,7 +79,7 @@ function AppHeader() {
     return Array.isArray(list) ? list.filter((n) => !n.read).length : 0;
   });
 
-  const user = encrypted ? decryptData(encrypted) : null;
+  const { user } = encrypted ? decryptData(encrypted) : null;
 
   const fetchNotifications = useCallback(async () => {
     try {

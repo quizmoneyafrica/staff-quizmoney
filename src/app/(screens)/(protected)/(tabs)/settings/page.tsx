@@ -31,13 +31,13 @@ const initialForm = {
 
 const Page = () => {
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
-  const user: User | null = encrypted ? decryptData(encrypted) : null;
+  const user = encrypted ? decryptData(encrypted) : null;
   const formattedDOB = new Date(user?.dob?.iso ?? '')
     .toISOString()
     .split('T')[0];
   const [formData, setFormData] = useState({
     ...initialForm,
-    ...user,
+    ...user?.user,
     dob: formattedDOB,
   });
   const authUser = getAuthUser();
