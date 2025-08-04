@@ -68,10 +68,18 @@ const UserAPI = {
       },
     );
   },
-
   forgotPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/auth/password/forgot`,
+      { email },
+      {
+        headers: appHeaders,
+      },
+    );
+  },
+  resendPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
+    return axios.post(
+      `${BASE_URL}/auth/resend`,
       { email },
       {
         headers: appHeaders,
