@@ -28,11 +28,6 @@ export const useProduct = (
       }
     },
     enabled: !!productId && enabled,
-    staleTime: 5 * 60 * 1000,
-    retry: (failureCount, error) => {
-      if (error instanceof AuthenticationError) return false;
-      return failureCount < 3;
-    },
   });
 
   const clearAuthError = () => setAuthError(null);
@@ -121,11 +116,6 @@ export const useProducts = (payload: {
         }
         throw error;
       }
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: (failureCount, error) => {
-      if (error instanceof AuthenticationError) return false;
-      return failureCount < 3;
     },
   });
 

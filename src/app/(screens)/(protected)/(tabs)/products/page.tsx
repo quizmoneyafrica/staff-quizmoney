@@ -75,13 +75,6 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: (failureCount, error) => {
-      if (error instanceof AuthenticationError) return false;
-      return failureCount < 3;
-    },
-    refetchOnWindowFocus: false,
   });
 
   const createProductMutation = useMutation({
