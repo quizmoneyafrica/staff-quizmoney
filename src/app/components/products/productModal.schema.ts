@@ -12,7 +12,7 @@ export interface ProductSubmitData {
   name: string;
   price: number;
   quantity: number;
-  category?: string;
+  productCategory: string;
   description?: string;
 }
 
@@ -60,7 +60,10 @@ export const productValidationSchema = Joi.object({
       'number.nonNegative': 'Quantity must be a non-negative number',
     }),
 
-  category: Joi.string().trim().allow('').optional(),
+  category: Joi.string().trim().required().messages({
+    'string.empty': 'Product category is required',
+    'any.required': 'Product category is required',
+  }),
 
   description: Joi.string().trim().allow('').optional(),
 });
@@ -99,7 +102,7 @@ export const prepareProductData = (
     name: formData.name.trim(),
     price: parseFloat(formData.price),
     quantity: parseInt(formData.quantity),
-    category: formData.category || 'general',
-    description: formData.description.trim(),
+    productCategory: formData.category || 'ERASER',
+    description: formData.description?.trim(),
   };
 };
