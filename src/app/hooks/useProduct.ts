@@ -19,7 +19,7 @@ export const useProduct = (
       try {
         setAuthError(null);
         const response = await ProductsApi.getProductById(productId);
-        return response.data.result;
+        return response.data.data;
       } catch (error) {
         if (error instanceof AuthenticationError) {
           setAuthError(error.message);
@@ -52,10 +52,19 @@ export const useUpdateProduct = (
   const [authError, setAuthError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async (updateData: UpdateProductPayload) => {
+    mutationFn: async (updateData: Omit<UpdateProductPayload, 'productId'>) => {
+      if (!productId) throw new Error('Product ID is required');
       try {
         setAuthError(null);
-        const response = await ProductsApi.updateProduct(updateData);
+        const response = await ProductsApi.updateProduct({
+          ...updateData,
+          productId,
+        });
+
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Failed to update product');
+        }
+
         return response.data;
       } catch (error) {
         if (error instanceof AuthenticationError) {
@@ -64,13 +73,15 @@ export const useUpdateProduct = (
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 
-      setTimeout(() => {
-        onSuccess?.();
-      }, 1500);
+      if (data.success) {
+        setTimeout(() => {
+          onSuccess?.();
+        }, 1000);
+      }
     },
     onError: (error) => {
       console.error('Error updating product:', error);
@@ -87,10 +98,9 @@ export const useUpdateProduct = (
 };
 
 export const useProducts = (payload: {
-  search: string;
-  page: number;
-  limit: number;
-  dateRange: { start: string; end: string };
+  searchText?: string;
+  pageNumber: number;
+  pageSize: number;
 }) => {
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -99,7 +109,11 @@ export const useProducts = (payload: {
     queryFn: async () => {
       try {
         setAuthError(null);
-        const response = await ProductsApi.getProducts(payload);
+        const response = await ProductsApi.getProducts({
+          searchText: payload.searchText,
+          pageNumber: payload.pageNumber,
+          pageSize: payload.pageSize,
+        });
         return response.data;
       } catch (error) {
         if (error instanceof AuthenticationError) {
@@ -174,6 +188,9 @@ export const useDeleteProduct = (onSuccess?: () => void) => {
       try {
         setAuthError(null);
         const response = await ProductsApi.deleteProduct(productId);
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Failed to delete product');
+        }
         return response.data;
       } catch (error) {
         if (error instanceof AuthenticationError) {
@@ -182,9 +199,11 @@ export const useDeleteProduct = (onSuccess?: () => void) => {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      onSuccess?.();
+    onSuccess: (data) => {
+      if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+        onSuccess?.();
+      }
     },
     onError: (error) => {
       console.error('Error deleting product:', error);

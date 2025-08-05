@@ -9,50 +9,42 @@ export interface ProductImage {
 }
 
 export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  category: string;
   productImage?: ProductImage;
-  productDescription: string;
-  productName: string;
-  productPrice: number;
-  productQuantity: number;
-  productCategory: string;
-  stock: string;
-  bonus: number;
-  totalEraser: number;
-  createdAt: string;
-  updatedAt: string;
-  type: string;
-  objectId: string;
-  __type: 'Object';
-  className: 'Products';
 }
 
-export interface PaginationInfo {
-  currentPage: number;
-  limit: number;
+export interface PaginatedResponse<T> {
+  content: T[];
+  pageNo: number;
+  pageSize: number;
+  totalElements: number;
   totalPages: number;
-  totalItems: number;
+  last: boolean;
 }
 
 export interface ProductsApiResponse {
-  result: {
-    message: string;
-    data: Product[];
-    pagination: PaginationInfo;
-  };
+  success: boolean;
+  code: string;
+  message: string;
+  data: PaginatedResponse<Product>;
 }
 
 export interface SingleProductApiResponse {
-  result: Product;
+  success: boolean;
+  code: string;
+  message: string;
+  data: Product;
 }
 
 export interface GetProductsPayload {
-  search: string;
-  page: number;
-  limit: number;
-  dateRange: {
-    start: string;
-    end: string;
-  };
+  searchText?: string;
+  pageNumber: number;
+  pageSize: number;
 }
 
 export interface CreateProductPayload {
@@ -68,8 +60,6 @@ export interface UpdateProductPayload {
   name?: string;
   price?: number;
   quantity?: number;
-  category?: string;
-  description?: string;
 }
 
 export interface DeleteProductPayload {
@@ -123,7 +113,14 @@ const createApiClient = () => {
       payload: GetProductsPayload,
     ): Promise<AxiosResponse<ProductsApiResponse>> {
       try {
-        return await axios.post(`${BASE_URL}/getProductsAdmin`, payload, {
+        const params = {
+          searchText: payload.searchText || '',
+          pageNumber: payload.pageNumber,
+          pageSize: payload.pageSize,
+        };
+
+        return await axios.get(`${BASE_URL}/products/filter`, {
+          params,
           headers: getSessionTokenHeaders(),
         });
       } catch (error) {
@@ -131,25 +128,27 @@ const createApiClient = () => {
       }
     },
 
-    async createProduct(
-      payload: CreateProductPayload,
-    ): Promise<AxiosResponse<ApiResponse>> {
+    async createProduct(payload: CreateProductPayload): Promise<
+      AxiosResponse<{
+        success: boolean;
+        code: string;
+        message: string;
+        data: { message: string; timestamp: string };
+      }>
+    > {
       try {
-        const response = await axios.post(
-          `${BASE_URL}/createProductV2`,
+        return await axios.post(
+          `${BASE_URL}/products`,
           {
             name: payload.name,
             price: payload.price,
             quantity: payload.quantity,
-            ...(payload.category && { category: payload.category }),
-            ...(payload.description && { description: payload.description }),
+            productCategory: 'ERASER',
           },
           {
             headers: getSessionTokenHeaders(),
           },
         );
-
-        return response;
       } catch (error) {
         handleApiError(error as AxiosError);
       }
@@ -169,24 +168,26 @@ const createApiClient = () => {
       }
     },
 
-    async updateProduct(
-      payload: UpdateProductPayload,
-    ): Promise<AxiosResponse<ApiResponse>> {
-      try {
-        const updateData: Record<string, string | number> = {
-          productId: payload.productId,
+    async updateProduct(payload: UpdateProductPayload): Promise<
+      AxiosResponse<{
+        success: boolean;
+        code: string;
+        message: string;
+        data: {
+          message: string;
+          timestamp: string;
         };
+      }>
+    > {
+      try {
+        const { productId, ...updateData } = payload;
 
-        if (payload.name !== undefined) updateData.name = payload.name;
-        if (payload.price !== undefined) updateData.price = payload.price;
-        if (payload.quantity !== undefined)
-          updateData.quantity = payload.quantity;
-        if (payload.category !== undefined)
-          updateData.category = payload.category;
-        if (payload.description !== undefined)
-          updateData.description = payload.description;
+        const data: Record<string, string | number> = {};
+        if (payload.name !== undefined) data.name = payload.name;
+        if (payload.price !== undefined) data.price = payload.price;
+        if (payload.quantity !== undefined) data.quantity = payload.quantity;
 
-        return await axios.post(`${BASE_URL}/updateProduct`, updateData, {
+        return await axios.patch(`${BASE_URL}/products/${productId}`, data, {
           headers: getSessionTokenHeaders(),
         });
       } catch (error) {
@@ -195,57 +196,32 @@ const createApiClient = () => {
       }
     },
 
-    async deleteProduct(
-      productId: string,
-    ): Promise<AxiosResponse<ApiResponse>> {
+    async deleteProduct(productId: string): Promise<
+      AxiosResponse<{
+        success: boolean;
+        code: string;
+        message: string;
+        data: {
+          message: string;
+          timestamp: string;
+        };
+      }>
+    > {
       try {
-        return await axios.post(
-          `${BASE_URL}/deleteProduct`,
-          { productId },
-          { headers: getSessionTokenHeaders() },
-        );
+        return await axios.delete(`${BASE_URL}/products/${productId}`, {
+          headers: getSessionTokenHeaders(),
+        });
       } catch (error) {
+        console.error('Delete product error:', error);
         handleApiError(error as AxiosError);
       }
     },
 
     async getAllProducts(): Promise<AxiosResponse<ProductsApiResponse>> {
       return this.getProducts({
-        search: '',
-        page: 1,
-        limit: 100,
-        dateRange: {
-          start: '2024-01-01T00:00:00.000Z',
-          end: new Date().toISOString(),
-        },
-      });
-    },
-
-    async getProductsByCategory(
-      category: string,
-    ): Promise<AxiosResponse<ProductsApiResponse>> {
-      try {
-        return await axios.post(
-          `${BASE_URL}/getProductsByCategory`,
-          { category },
-          { headers: getSessionTokenHeaders() },
-        );
-      } catch (error) {
-        handleApiError(error as AxiosError);
-      }
-    },
-
-    async searchProducts(
-      searchTerm: string,
-    ): Promise<AxiosResponse<ProductsApiResponse>> {
-      return this.getProducts({
-        search: searchTerm,
-        page: 1,
-        limit: 50,
-        dateRange: {
-          start: '2024-01-01T00:00:00.000Z',
-          end: new Date().toISOString(),
-        },
+        searchText: '',
+        pageNumber: 0,
+        pageSize: 100,
       });
     },
   };

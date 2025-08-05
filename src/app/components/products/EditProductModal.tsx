@@ -80,11 +80,11 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   useEffect(() => {
     if (productData && isOpen) {
       setFormData({
-        name: productData.productName || '',
-        price: productData.productPrice?.toString() || '',
-        quantity: productData.productQuantity?.toString() || '',
-        category: productData.productCategory || 'general',
-        description: productData.productDescription || '',
+        name: productData.name || '',
+        price: productData.price?.toString() || '',
+        quantity: productData.quantity?.toString() || '',
+        category: productData.category || '',
+        description: productData.description || '',
       });
     }
   }, [productData, isOpen]);
@@ -149,18 +149,15 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!validateForm() || !productId) return;
+    if (!validateForm()) return;
 
-    const submitData = {
-      productId: productId,
+    const updateData = {
       name: formData.name.trim(),
       price: parseFloat(formData.price),
       quantity: parseInt(formData.quantity),
-      category: formData.category || 'general',
-      description: formData.description.trim(),
     };
 
-    updateProduct(submitData);
+    updateProduct(updateData);
   };
 
   const handleClose = () => {
@@ -229,7 +226,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   </div>
                 )}
 
-                {/* Loading State */}
                 {isLoadingProductData && !authError && (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-[#17478B]" />
@@ -239,7 +235,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   </div>
                 )}
 
-                {/* Error State */}
                 {productError && !authError && (
                   <div className="mb-6 rounded-lg bg-red-50 p-4">
                     <div className="flex items-center">
@@ -420,7 +415,6 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                   </>
                 )}
 
-                {/* Close Button */}
                 <Dialog.Close asChild>
                   <motion.button
                     initial={{ opacity: 0 }}

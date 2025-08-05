@@ -1,8 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  X,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  ChevronDown,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   validateProductForm,
@@ -50,6 +56,22 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [submitStatus, setSubmitStatus] = useState<
     'idle' | 'success' | 'error'
   >('idle');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -118,6 +140,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
     formData.name.trim() &&
     formData.price.trim() &&
     formData.quantity.trim() &&
+    formData.category.trim() &&
     Object.keys(errors).length === 0;
 
   return (
@@ -138,7 +161,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 <Dialog.Title className="mb-6 text-xl font-bold text-gray-900">
                   Add Products
                 </Dialog.Title>
-
                 <motion.h2
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -150,7 +172,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 >
                   Enter Product Details
                 </motion.h2>
-
                 <motion.div
                   className="flex flex-col gap-6"
                   initial={{ opacity: 0, y: 10 }}
@@ -231,8 +252,69 @@ const ProductModal: React.FC<ProductModalProps> = ({
                       </p>
                     )}
                   </div>
-                </motion.div>
 
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Product Category *
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        disabled={loading || isSubmitting}
+                        className={`flex h-[46px] w-full items-center justify-between rounded-md border px-4 py-3 text-sm transition-colors ${
+                          errors.category ? 'border-red-500' : 'border-gray-300'
+                        } ${
+                          loading || isSubmitting
+                            ? 'cursor-not-allowed bg-gray-100'
+                            : 'bg-white hover:border-gray-400'
+                        }`}
+                      >
+                        <span
+                          className={
+                            formData.category
+                              ? 'text-gray-900'
+                              : 'text-gray-500'
+                          }
+                        >
+                          {formData.category || 'Select category'}
+                        </span>
+                        <ChevronDown
+                          size={20}
+                          className={`text-gray-500 transition-transform ${
+                            isDropdownOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+
+                      {isDropdownOpen && !loading && !isSubmitting && (
+                        <div
+                          ref={dropdownRef}
+                          className="absolute right-0 top-full z-10 mt-1 w-full rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+                        >
+                          {['ERASER'].map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => {
+                                handleInputChange('category', option);
+                                setIsDropdownOpen(false);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {errors.category && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.category}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>{' '}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -275,7 +357,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     )}
                   </button>
                 </motion.div>
-
                 {/* Status Messages */}
                 {submitStatus === 'error' && (
                   <motion.div
@@ -286,7 +367,6 @@ const ProductModal: React.FC<ProductModalProps> = ({
                     Failed to create product. Please try again.
                   </motion.div>
                 )}
-
                 <Dialog.Close asChild>
                   <motion.button
                     initial={{ opacity: 0 }}

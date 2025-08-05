@@ -7,6 +7,7 @@ import ProductModal from '@/app/components/products/ProductModal';
 import EditProductModal from '@/app/components/products/EditProductModal';
 import ProductDeleteModal from '@/app/components/products/ProductDeleteModal';
 import ProductCard from '@/app/components/products/ProductCard';
+import Pagination from '@/app/components/leaderboard/Pagination';
 
 import ProductsApi, {
   Product,
@@ -36,7 +37,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const PRODUCTS_PER_PAGE = 12;
+  const PRODUCTS_PER_PAGE = 9;
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -60,17 +61,13 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
         setAuthError(null);
 
         const payload: GetProductsPayload = {
-          search: debouncedSearchTerm,
-          page: currentPage,
-          limit: PRODUCTS_PER_PAGE,
-          dateRange: {
-            start: '2024-01-01T00:00:00.000Z',
-            end: new Date().toISOString(),
-          },
+          searchText: debouncedSearchTerm,
+          pageNumber: currentPage - 1,
+          pageSize: PRODUCTS_PER_PAGE,
         };
 
         const response = await ProductsApi.getProducts(payload);
-        return response.data.result;
+        return response.data;
       } catch (error) {
         if (error instanceof AuthenticationError) {
           setAuthError(error.message);
@@ -97,7 +94,14 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     }) => {
       try {
         setAuthError(null);
-        const response = await ProductsApi.createProduct(data);
+
+        const payload = {
+          name: data.name,
+          price: data.price,
+          quantity: data.quantity,
+          productCategory: 'ERASER',
+        };
+        const response = await ProductsApi.createProduct(payload);
         return response.data;
       } catch (error) {
         if (error instanceof AuthenticationError) {
@@ -121,6 +125,9 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
         setAuthError(null);
 
         const response = await ProductsApi.deleteProduct(productId);
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Failed to delete product');
+        }
         return response.data;
       } catch (error) {
         if (error instanceof AuthenticationError) {
@@ -129,11 +136,12 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-
-      setIsDeleteModalOpen(false);
-      setProductToDelete(null);
+    onSuccess: (data) => {
+      if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ['products'] });
+        setIsDeleteModalOpen(false);
+        setProductToDelete(null);
+      }
     },
     onError: (error) => {
       console.error('Failed to delete product:', error);
@@ -141,8 +149,8 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
   });
 
   const allProducts = useMemo(() => {
-    return productsResponse?.data || [];
-  }, [productsResponse?.data]);
+    return productsResponse?.data.content || [];
+  }, [productsResponse?.data.content]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -162,14 +170,14 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
   );
 
   const handleEditProduct = useCallback((product: Product) => {
-    setEditProductId(product.objectId);
+    setEditProductId(product.id);
     setEditProductData(product);
     setIsEditModalOpen(true);
   }, []);
 
   const handleOpenDeleteModal = useCallback(
     (productId: string) => {
-      const product = allProducts.find((p) => p.objectId === productId);
+      const product = allProducts.find((p) => p.id === productId);
       if (product) {
         setProductToDelete(product);
         setIsDeleteModalOpen(true);
@@ -181,7 +189,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
   const confirmDeleteProduct = useCallback(async () => {
     if (!productToDelete) return;
 
-    deleteProductMutation.mutate(productToDelete.objectId);
+    deleteProductMutation.mutate(productToDelete.id);
   }, [productToDelete, deleteProductMutation.mutate]);
 
   const handlePageChange = useCallback((page: number) => {
@@ -248,15 +256,14 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     </div>
   );
 
-  // Pagination component
-  const Pagination = () => {
-    const pagination = productsResponse?.pagination;
-    if (!pagination || pagination.totalPages <= 1) return null;
+  const renderPaginationSection = () => {
+    if (!productsResponse?.data) return null;
 
-    const { currentPage: _apiCurrentPage, totalPages, totalItems } = pagination;
+    const { totalPages, totalElements: totalItems } = productsResponse.data;
+    if (totalPages <= 1) return null;
 
     return (
-      <div className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row">
+      <div className="flex flex-col items-end gap-4 pt-6">
         <div className="text-sm text-gray-600">
           Showing {allProducts.length} of {totalItems} products
           {debouncedSearchTerm && (
@@ -266,53 +273,16 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Previous
-          </button>
-
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            let pageNumber;
-            if (totalPages <= 5) {
-              pageNumber = i + 1;
-            } else {
-              const startPage = Math.max(1, currentPage - 2);
-              const endPage = Math.min(totalPages, startPage + 4);
-              pageNumber = startPage + i;
-              if (pageNumber > endPage) return null;
-            }
-
-            return (
-              <button
-                key={pageNumber}
-                onClick={() => handlePageChange(pageNumber)}
-                className={`rounded-md border px-3 py-2 text-sm font-medium ${
-                  currentPage === pageNumber
-                    ? 'border-[#17478B] bg-[#17478B] text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {pageNumber}
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </div>
     );
   };
-
   return (
     <div className="min-h-screen bg-white px-4 py-6 md:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
@@ -348,10 +318,8 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           </div>
         </div>
 
-        {/* Authentication Error */}
         {authError && <AuthErrorComponent />}
 
-        {/* Loading State */}
         {isLoading && !authError && <LoadingSkeleton />}
 
         {/* Error State */}
@@ -385,12 +353,12 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
             >
               {allProducts.map((product) => (
                 <ProductCard
-                  key={product.objectId}
+                  key={product.id}
                   product={{
-                    id: product.objectId,
-                    name: product.productName,
-                    quantity: product.productQuantity,
-                    price: product.productPrice,
+                    id: product.id,
+                    name: product.name,
+                    quantity: product.quantity,
+                    price: product.price,
                     currency: '₦',
                     iconName: product.productImage?.name,
                   }}
@@ -399,26 +367,25 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
                 />
               ))}
             </div>
-
-            <Pagination />
+            {renderPaginationSection()}
           </>
         )}
 
         {!isLoading && !isError && !authError && allProducts.length === 0 && (
-          <div className="py-12 text-center">
-            <div className="mb-4 text-lg text-gray-500 md:text-xl">
+          <div className="col-span-full py-12 text-center">
+            <div className="mb-4 text-lg text-gray-500">
               {debouncedSearchTerm
                 ? `No products found for "${debouncedSearchTerm}"`
                 : 'No products available'}
             </div>
             {debouncedSearchTerm && (
-              <div className="mb-4 text-sm text-gray-400 md:text-base">
+              <div className="mt-2 text-sm text-gray-400">
                 Try adjusting your search terms
               </div>
             )}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center space-x-2 bg-[#17478B] px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-[#0f3a75]"
+              className="mt-4 inline-flex items-center space-x-2 bg-[#17478B] px-6 py-3 font-medium text-white transition-colors duration-200 hover:bg-[#0f3a75]"
             >
               <Plus size={16} />
               <span>Add Your First Product</span>
@@ -454,7 +421,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           }}
           onConfirm={confirmDeleteProduct}
           title={`Are you sure you want to delete ${
-            productToDelete?.productName || 'this Product'
+            productToDelete?.name || 'this Product'
           }?`}
           isLoading={deleteProductMutation.isPending}
         />
