@@ -340,10 +340,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
         {/* Products Grid */}
         {!isLoading && !isError && !authError && (
           <>
-            <div
-              className="flex flex-wrap justify-center"
-              style={{ gap: '25px' }}
-            >
+            <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
               {allProducts.map((product) => (
                 <ProductCard
                   key={product.id}
