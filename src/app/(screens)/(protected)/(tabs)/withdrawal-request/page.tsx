@@ -6,7 +6,6 @@ import WithdrawalCards, {
 import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal';
 import Pagination from '@/app/components/leaderboard/Pagination';
 import { Search, ListFilter, ChevronDown, UserCheck } from 'lucide-react';
-import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
@@ -25,6 +24,19 @@ import { calculateDateRange } from '@/app/utils/date-range';
 import { VerifiedIcon } from '@/app/icons/icons';
 import { useRouter } from 'next/navigation';
 
+interface WithdrawalRequest {
+  id: string;
+  purpose: string;
+  comment: string;
+  amount: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  processAt: string;
+  createdAt: string;
+  firstName: string;
+  availableBalance: number;
+  approvedBy?: string;
+}
+
 function Page() {
   const router = useRouter();
 
@@ -33,9 +45,8 @@ function Page() {
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
   const [selectedKycFilter, setSelectedKycFilter] = useState<string>('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedWithdrawal, setSelectedWithdrawal] = useState<
-    UnknownObject | WithdrawalRequest | null
-  >(null);
+  const [selectedWithdrawal, setSelectedWithdrawal] =
+    useState<WithdrawalRequest | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [sortBy, setSortBy] = useState<string>('');
@@ -47,7 +58,7 @@ function Page() {
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const kycFilterDropdownRef = useRef<HTMLDivElement>(null);
 
-  const filterOptions = ['All', 'Resolved', 'Pending', 'Rejected'];
+  const filterOptions = ['All', 'APPROVED', 'PENDING', 'REJECTED'];
   const kycFilterOptions = ['All', 'Verified', 'Unverified'];
 
   const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
@@ -76,36 +87,30 @@ function Page() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  const kycVerifiedParam = useMemo(() => {
-    if (selectedKycFilter === 'Verified') return true;
-    if (selectedKycFilter === 'Unverified') return false;
-    return undefined;
-  }, [selectedKycFilter]);
+  const apiPage = currentPage - 1;
 
   const { data, isPending: fetchingDashData } = useGetWithdrawalRequests(
-    currentPage,
+    apiPage,
     itemsPerPage,
-    selectedFilter?.toLowerCase(),
+    selectedFilter === 'All' ? undefined : selectedFilter,
     debouncedSearchTerm,
-    calculateDateRange(selected, customDateRange),
-    kycVerifiedParam,
   );
 
   const { data: statsData, isPending: fetchingStats } = useGetWithdrawalStats();
 
   const withdrawalData = useMemo(() => {
-    if (data) {
-      return data?.results ?? [];
+    if (data && data.content) {
+      return data.content;
     }
     return [];
   }, [data]);
 
   const paginationInfo = useMemo(() => {
-    if (data?.pagination) {
+    if (data?.pageable) {
       return {
-        currentPage: data.pagination.currentPage,
-        totalPages: data.pagination.totalPages,
-        totalCount: data.pagination.totalItems,
+        currentPage: data.pageable.pageNumber + 1,
+        totalPages: data.pageable.totalPages,
+        totalCount: data.pageable.totalElements,
       };
     }
 
@@ -118,7 +123,6 @@ function Page() {
 
   const shouldShowPagination = useMemo(() => {
     if (fetchingDashData) return false;
-
     return withdrawalData.length > 0 || currentPage > 1;
   }, [fetchingDashData, withdrawalData.length, currentPage]);
 
@@ -145,17 +149,10 @@ function Page() {
       };
     }
 
-    const approved = withdrawalData.filter((item) => {
-      const status = (item.status || 'pending').toLowerCase();
-      return (
-        status === 'resolved' || status === 'approved' || status === 'completed'
-      );
-    });
-
-    const pending = withdrawalData.filter((item) => {
-      const status = (item.status || 'pending').toLowerCase();
-      return status === 'pending' || status === 'processing';
-    });
+    const approved = withdrawalData.filter(
+      (item) => item.status === 'APPROVED',
+    );
+    const pending = withdrawalData.filter((item) => item.status === 'PENDING');
 
     return {
       totalRequests: withdrawalData.length,
@@ -189,7 +186,7 @@ function Page() {
     };
   }, []);
 
-  const handleViewDetails = (withdrawalRequest: UnknownObject) => {
+  const handleViewDetails = (withdrawalRequest: WithdrawalRequest) => {
     setSelectedWithdrawal(withdrawalRequest);
     setIsModalOpen(true);
   };
@@ -245,6 +242,18 @@ function Page() {
       </div>
     </Table.Cell>
   );
+
+  const getStatusStyling = (status: string) => {
+    switch (status) {
+      case 'APPROVED':
+        return 'bg-green-100 text-green-800';
+      case 'REJECTED':
+        return 'bg-red-100 text-red-800';
+      case 'PENDING':
+      default:
+        return 'bg-yellow-100 text-yellow-800';
+    }
+  };
 
   return (
     <div className="space-y-10">
@@ -364,48 +373,6 @@ function Page() {
               </div>
             )}
           </div>
-
-          <div className="relative" ref={kycFilterDropdownRef}>
-            <button
-              onClick={() => setIsKycFilterOpen(!isKycFilterOpen)}
-              className="flex items-center gap-1 whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none transition-colors hover:bg-gray-50"
-            >
-              <UserCheck className="size-5 text-[#1B212D]" />
-              <span className="hidden md:block">
-                {selectedKycFilter === 'All' ? 'KYC Status' : selectedKycFilter}
-              </span>
-              <ChevronDown
-                className={`size-4 text-[#1B212D] transition-transform ${
-                  isKycFilterOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {isKycFilterOpen && (
-              <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-[#D9D9D9] bg-white shadow-lg">
-                <div className="py-2">
-                  {kycFilterOptions.map((option, index) => (
-                    <React.Fragment key={option}>
-                      <button
-                        onClick={() => handleKycFilterSelect(option)}
-                        className={`w-full px-4 py-2 text-left transition-colors hover:bg-gray-50 ${
-                          selectedKycFilter === option
-                            ? 'bg-blue-50 font-medium text-blue-600'
-                            : 'text-gray-700'
-                        }`}
-                      >
-                        {option}
-                      </button>
-
-                      {index < kycFilterOptions.length - 1 && (
-                        <div className="mx-2 border-b border-gray-200"></div>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -419,7 +386,10 @@ function Page() {
               <Table.Row>
                 <TableHeader label="Request ID" sortKey="id" />
                 <TableHeader label="First Name" sortKey="firstName" />
-                <TableHeader label="Wallet Balance" sortKey="balance" />
+                <TableHeader
+                  label="Available Balance"
+                  sortKey="availableBalance"
+                />
                 <TableHeader label="Amount Requested" sortKey="amount" />
                 <TableHeader label="Withdrawal Status" sortKey="status" />
                 <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
@@ -433,16 +403,12 @@ function Page() {
                   </Table.Cell>
                 </Table.Row>
               ) : withdrawalData.length > 0 ? (
-                withdrawalData.map((item: UnknownObject, index: number) => {
-                  const { time, fullDate } = formatDateTime(
-                    item.createdAt?.iso || new Date().toISOString(),
-                  );
-
-                  const actualIndex =
-                    (currentPage - 1) * itemsPerPage + index + 1;
+                withdrawalData.map((item: WithdrawalRequest, index: number) => {
+                  const { time, fullDate } = formatDateTime(item.createdAt);
+                  const actualIndex = apiPage * itemsPerPage + index + 1;
 
                   return (
-                    <Table.Row key={item.id || index}>
+                    <Table.Row key={item.id}>
                       <Table.Cell className="whitespace-nowrap px-4 py-4">
                         <div className="flex items-center gap-2">
                           <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
@@ -450,7 +416,7 @@ function Page() {
                           </div>
                           <div>
                             <p className="font-heading font-bold uppercase text-neutral-800">
-                              {item.id || `REQ-${actualIndex}`}
+                              {item.id}
                             </p>
                             <p className="text-xs text-neutral-500">
                               {fullDate} • {time}
@@ -459,70 +425,36 @@ function Page() {
                         </div>
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
-                        <div
-                          className="flex cursor-pointer items-center gap-3"
-                          onClick={() => {
-                            router.push(
-                              `/players/player-profile/${item.userId}`,
-                            );
-                          }}
-                        >
+                        <div className="flex items-center gap-3">
                           <div className="bg-primary-50 relative flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
                             <Avatar
-                              src={item?.avatar || ''}
-                              fallback={
-                                item.firstName?.charAt(0).toUpperCase() || 'U'
-                              }
+                              src=""
+                              fallback={item.firstName.charAt(0).toUpperCase()}
                               radius="full"
                               className="bg-primary-50"
                             />
-                            {item?.kycVerified && (
-                              <div className="absolute -right-2 top-0 rounded-full">
-                                <VerifiedIcon className="size-5" />
-                              </div>
-                            )}
                           </div>
                           <div>
                             <p className="text-primary-800 capitalize">
-                              {item.firstName || 'Unknown'}
+                              {item.firstName}
                             </p>
-                            <span className="text-sm text-neutral-600">
-                              {item.email || 'Unknown'}
-                            </span>
                           </div>
                         </div>
                       </Table.Cell>
 
                       <Table.Cell className="px-4 py-4">
-                        {formatNaira(Number(item.balance || 0), true)}
+                        {formatNaira(item.availableBalance, true)}
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
-                        {formatNaira(Number(item.amount || 0), true)}
+                        {formatNaira(item.amount, true)}
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <p
-                          className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${(() => {
-                            const status = (item.status || 'pending') as string;
-                            const statusLower = status.toLowerCase();
-
-                            if (
-                              statusLower === 'resolved' ||
-                              statusLower === 'approved' ||
-                              statusLower === 'completed'
-                            ) {
-                              return 'bg-green-100 text-green-800';
-                            }
-                            if (
-                              statusLower === 'failed' ||
-                              statusLower === 'rejected' ||
-                              statusLower === 'declined'
-                            ) {
-                              return 'bg-red-100 text-red-800';
-                            }
-                            return 'bg-yellow-100 text-yellow-800';
-                          })()}`}
+                          className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusStyling(
+                            item.status,
+                          )}`}
                         >
-                          {item.status || 'pending'}
+                          {item.status.toLowerCase()}
                         </p>
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
@@ -544,15 +476,9 @@ function Page() {
                   >
                     <div className="space-y-2">
                       <p className="font-bold">
-                        {selectedFilter === 'All' && selectedKycFilter === 'All'
+                        {selectedFilter === 'All'
                           ? 'No Withdrawal Requests Found'
-                          : `No ${
-                              selectedFilter !== 'All' ? selectedFilter : ''
-                            } ${
-                              selectedKycFilter !== 'All'
-                                ? selectedKycFilter
-                                : ''
-                            } Withdrawal Requests Found`}
+                          : `No ${selectedFilter} Withdrawal Requests Found`}
                       </p>
                       {currentPage > 1 && (
                         <p className="text-sm text-gray-500">
@@ -591,7 +517,6 @@ function Page() {
                 `Page ${currentPage} of ${paginationInfo.totalPages}`
               )}
               {selectedFilter !== 'All' && ` (filtered by ${selectedFilter})`}
-              {selectedKycFilter !== 'All' && ` (KYC: ${selectedKycFilter})`}
               {debouncedSearchTerm && ` (search: "${debouncedSearchTerm}")`}
             </div>
             <Pagination
