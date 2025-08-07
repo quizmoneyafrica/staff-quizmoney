@@ -1,33 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Copy, Check } from 'lucide-react';
 import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import {
   useApproveWithdrawal,
   useRejectWithdrawal,
+  useGetWithdrawalRequest,
 } from '@/app/api/withdrawal';
-import { VerifiedIcon } from '@/app/icons/icons';
 import { toast } from 'sonner';
 import { toastPosition } from '@/app/utils/utils';
-import { Flag } from 'lucide-react';
 
-interface ExtendedWithdrawalRequest
-  extends Omit<WithdrawalRequest, 'bankAccount'> {
-  userId?: string;
-  bankAccount?: {
-    bankName?: string;
-    accountNumber?: string;
-    accountName?: string;
-  };
+interface WithdrawalRequest {
+  id: string;
+  purpose: string;
+  comment: string;
+  amount: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  processAt: string;
+  createdAt: string;
+  firstName: string;
+  availableBalance: number;
+  approvedBy?: string;
 }
 
 interface WithdrawalModalProps {
   isOpen: boolean;
   onClose: () => void;
-  withdrawalData: UnknownObject | null;
+  withdrawalData: WithdrawalRequest | null;
+}
+
+interface ApiError {
+  message?: string;
+  error?: string;
 }
 
 const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
@@ -38,9 +44,20 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [comment, setComment] = useState('');
 
+  const { data: detailedWithdrawalData, isLoading: loadingDetails } =
+    useGetWithdrawalRequest(withdrawalData?.id || '');
+
   const { mutateAsync: approveWithdrawal, isPending } = useApproveWithdrawal();
   const { mutateAsync: rejectWithdrawal, isPending: isRejecting } =
     useRejectWithdrawal();
+
+  const currentWithdrawalData = detailedWithdrawalData || withdrawalData;
+
+  useEffect(() => {
+    if (isOpen) {
+      setComment('');
+    }
+  }, [isOpen]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -93,34 +110,40 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
   );
 
   const getFormattedDateTime = () => {
-    if (!withdrawalData?.createdAt?.iso) return { time: '', fullDate: '' };
-    return formatDateTime(withdrawalData.createdAt.iso);
+    if (!currentWithdrawalData?.createdAt) return { time: '', fullDate: '' };
+    return formatDateTime(currentWithdrawalData.createdAt);
   };
 
   const { time, fullDate } = getFormattedDateTime();
 
   const handleApproveWithdrawal = async () => {
+    if (!currentWithdrawalData?.id) return;
+
     try {
       const response = await approveWithdrawal({
-        transactionId: withdrawalData?.transactionId,
-        fee: 0,
+        id: currentWithdrawalData.id,
+        comment: comment.trim() || 'Approved',
       });
+
       if (response) {
-        toast.success(response?.result?.message, {
+        toast.success(response.message || 'Withdrawal approved successfully', {
           position: toastPosition,
         });
         onClose();
       }
-    } catch (error: { error?: string } | unknown) {
-      if (error && typeof error === 'object' && 'error' in error) {
-        toast.error(error.error as string, {
-          position: toastPosition,
-        });
-      }
+    } catch (error) {
+      const apiError = error as ApiError;
+      const errorMessage =
+        apiError?.message || apiError?.error || 'Failed to approve withdrawal';
+      toast.error(errorMessage, {
+        position: toastPosition,
+      });
     }
   };
 
   const handleRejectWithdrawal = async () => {
+    if (!currentWithdrawalData?.id) return;
+
     if (comment.trim() === '') {
       toast.error('Please add a comment or reason for rejection.', {
         position: toastPosition,
@@ -130,23 +153,40 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
 
     try {
       const response = await rejectWithdrawal({
-        transactionId: withdrawalData?.transactionId,
-        reason: comment,
+        id: currentWithdrawalData.id,
+        comment: comment.trim(),
       });
+
       if (response) {
-        toast.success(response?.result?.message, {
+        toast.success(response.message || 'Withdrawal rejected successfully', {
           position: toastPosition,
         });
         onClose();
       }
-    } catch (error: { error?: string } | unknown) {
-      if (error && typeof error === 'object' && 'error' in error) {
-        toast.error(error.error as string, {
-          position: toastPosition,
-        });
-      }
+    } catch (error) {
+      const apiError = error as ApiError;
+      const errorMessage =
+        apiError?.message || apiError?.error || 'Failed to reject withdrawal';
+      toast.error(errorMessage, {
+        position: toastPosition,
+      });
     }
   };
+
+  if (loadingDetails && !currentWithdrawalData) {
+    return (
+      <Dialog.Root open={isOpen} onOpenChange={onClose}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform rounded-xl bg-white px-8 py-8 shadow-xl focus:outline-none">
+            <div className="flex items-center justify-center py-12">
+              <div className="text-gray-500">Loading withdrawal details...</div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    );
+  }
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onClose}>
@@ -172,7 +212,7 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                   </Dialog.Title>
                 </motion.div>
 
-                {withdrawalData && (
+                {currentWithdrawalData && (
                   <motion.div
                     className="flex flex-col gap-6"
                     variants={containerVariants}
@@ -186,41 +226,27 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                       <div className="relative h-12 w-12 flex-shrink-0">
                         <div className="bg-primary-50 flex h-12 w-12 items-center justify-center rounded-full">
                           <span className="text-primary-800 text-lg font-semibold">
-                            {withdrawalData.firstName
+                            {currentWithdrawalData.firstName
                               ?.charAt(0)
                               .toUpperCase() || 'U'}
                           </span>
                         </div>
-                        {withdrawalData?.kycVerified && (
-                          <div className="absolute -right-2 top-0 rounded-full">
-                            <VerifiedIcon className="size-5" />
-                          </div>
-                        )}
-
-                        {withdrawalData?.blacklisted && (
-                          <div className="absolute -right-2 bottom-0 rounded-full">
-                            <Flag
-                              className={`h-4 w-4 text-red-600`}
-                              fill="currentColor"
-                            />
-                          </div>
-                        )}
                       </div>
                       <div className="flex-1">
                         <div className="text-lg font-semibold capitalize text-gray-900">
-                          {withdrawalData.firstName || 'Unknown User'}
+                          {currentWithdrawalData.firstName || 'Unknown User'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          User ID: {withdrawalData.userId || 'N/A'}
+                          Request ID: {currentWithdrawalData.id}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="mb-1 text-sm text-gray-500">
-                          Wallet Balance
+                          Available Balance
                         </div>
                         <div className="text-lg font-semibold text-gray-900">
                           {formatNaira(
-                            Number(withdrawalData.balance || 0),
+                            currentWithdrawalData.availableBalance,
                             true,
                           )}
                         </div>
@@ -236,27 +262,12 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         className="flex items-center justify-between"
                       >
                         <div className="text-sm font-medium text-gray-600">
-                          Request ID
-                        </div>
-                        <div className="text-sm font-semibold text-gray-900">
-                          {withdrawalData.id || 'N/A'}
-                        </div>
-                      </motion.div>
-
-                      <motion.div
-                        variants={itemVariants}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="text-sm font-medium text-gray-600">
                           Request Amount
                         </div>
                         <div className="flex items-center text-sm font-semibold text-gray-900">
-                          {formatNaira(
-                            Number(withdrawalData.amount || 0),
-                            true,
-                          )}
+                          {formatNaira(currentWithdrawalData.amount, true)}
                           <CopyButton
-                            text={String(withdrawalData.amount || 0)}
+                            text={String(currentWithdrawalData.amount)}
                             fieldName="Request Amount"
                           />
                         </div>
@@ -267,54 +278,38 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         className="flex items-center justify-between"
                       >
                         <div className="text-sm font-medium text-gray-600">
-                          Bank Name
+                          Purpose
                         </div>
                         <div className="flex items-center text-sm font-semibold text-gray-900">
-                          {withdrawalData.bankAccount?.bankName || 'N/A'}
-                          {withdrawalData.bankAccount?.bankName && (
+                          {currentWithdrawalData.purpose || 'N/A'}
+                          {currentWithdrawalData.purpose && (
                             <CopyButton
-                              text={withdrawalData.bankAccount.bankName}
-                              fieldName="Bank Name"
+                              text={currentWithdrawalData.purpose}
+                              fieldName="Purpose"
                             />
                           )}
                         </div>
                       </motion.div>
 
-                      <motion.div
-                        variants={itemVariants}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="text-sm font-medium text-gray-600">
-                          Account No
-                        </div>
-                        <div className="flex items-center text-sm font-semibold text-gray-900">
-                          {withdrawalData.bankAccount?.accountNumber || 'N/A'}
-                          {withdrawalData.bankAccount?.accountNumber && (
+                      {currentWithdrawalData.comment && (
+                        <motion.div
+                          variants={itemVariants}
+                          className="flex items-start justify-between"
+                        >
+                          <div className="text-sm font-medium text-gray-600">
+                            User Comment
+                          </div>
+                          <div className="flex max-w-xs items-start text-right text-sm font-semibold text-gray-900">
+                            <span className="break-words">
+                              {currentWithdrawalData.comment}
+                            </span>
                             <CopyButton
-                              text={withdrawalData.bankAccount.accountNumber}
-                              fieldName="Account Number"
+                              text={currentWithdrawalData.comment}
+                              fieldName="User Comment"
                             />
-                          )}
-                        </div>
-                      </motion.div>
-
-                      <motion.div
-                        variants={itemVariants}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="text-sm font-medium text-gray-600">
-                          Account Holder
-                        </div>
-                        <div className="flex items-center text-sm font-semibold text-gray-900">
-                          {withdrawalData.bankAccount?.accountName || 'N/A'}
-                          {withdrawalData.bankAccount?.accountName && (
-                            <CopyButton
-                              text={withdrawalData.bankAccount.accountName}
-                              fieldName="Account Holder"
-                            />
-                          )}
-                        </div>
-                      </motion.div>
+                          </div>
+                        </motion.div>
+                      )}
 
                       <motion.div
                         variants={itemVariants}
@@ -340,6 +335,37 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         </div>
                       </motion.div>
 
+                      {currentWithdrawalData.processAt && (
+                        <motion.div
+                          variants={itemVariants}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="text-sm font-medium text-gray-600">
+                            Process Date
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {
+                              formatDateTime(currentWithdrawalData.processAt)
+                                .fullDate
+                            }
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {currentWithdrawalData.approvedBy && (
+                        <motion.div
+                          variants={itemVariants}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="text-sm font-medium text-gray-600">
+                            Approved By
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {currentWithdrawalData.approvedBy}
+                          </div>
+                        </motion.div>
+                      )}
+
                       <motion.div
                         variants={itemVariants}
                         className="flex items-center justify-between border-b border-dashed border-gray-300 pb-6"
@@ -350,17 +376,15 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         <span
                           className={classNames(
                             'rounded-full px-3 py-1 text-xs font-semibold capitalize',
-                            getStatusClass(withdrawalData.status || 'pending'),
+                            getStatusClass(currentWithdrawalData.status),
                           )}
                         >
-                          {withdrawalData.status || 'pending'}
+                          {currentWithdrawalData.status.toLowerCase()}
                         </span>
                       </motion.div>
                     </motion.div>
 
-                    {!['resolved', 'rejected'].includes(
-                      withdrawalData.status?.toLowerCase() || '',
-                    ) && (
+                    {currentWithdrawalData.status === 'PENDING' && (
                       <motion.div
                         className="flex flex-col gap-4"
                         variants={containerVariants}
@@ -384,21 +408,19 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                           <button
                             type="button"
                             onClick={handleRejectWithdrawal}
-                            disabled={isRejecting}
-                            className="rounded-md bg-red-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                            disabled={isRejecting || isPending}
+                            className="rounded-md bg-red-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
                           >
-                            Reject
+                            {isRejecting ? 'Rejecting...' : 'Reject'}
                           </button>
-                          {!withdrawalData?.blacklisted && (
-                            <button
-                              type="button"
-                              onClick={handleApproveWithdrawal}
-                              disabled={isPending}
-                              className="rounded-md bg-green-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                            >
-                              Accept
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={handleApproveWithdrawal}
+                            disabled={isPending || isRejecting}
+                            className="rounded-md bg-green-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+                          >
+                            {isPending ? 'Approving...' : 'Approve'}
+                          </button>
                         </motion.div>
                       </motion.div>
                     )}
@@ -425,15 +447,12 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
 };
 
 const getStatusClass = (status: string) => {
-  switch (status.toLowerCase()) {
-    case 'resolved':
-    case 'approved':
-    case 'successful':
+  switch (status.toUpperCase()) {
+    case 'APPROVED':
       return 'bg-green-100 text-green-700';
-    case 'failed':
-    case 'rejected':
+    case 'REJECTED':
       return 'bg-red-100 text-red-700';
-    case 'pending':
+    case 'PENDING':
     default:
       return 'bg-yellow-100 text-yellow-700';
   }

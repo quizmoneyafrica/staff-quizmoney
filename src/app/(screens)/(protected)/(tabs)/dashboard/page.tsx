@@ -1,13 +1,11 @@
 'use client';
 import DashboardApi from '@/app/api/dashboardApi';
-import { getAuthUser } from '@/app/api/userApi';
 import DashboardCards, {
   DashboardCardsLoading,
 } from '@/app/components/screens/dashboard/Cards';
 import LastGameWinners from '@/app/components/screens/dashboard/LastGameWinners';
 import NextLiveGame from '@/app/components/screens/dashboard/NextLiveGame';
 import RecentWithdraw from '@/app/components/screens/dashboard/RecentWithdraw';
-import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
 import {
   EyeIcon,
   EyeSlash,
@@ -18,47 +16,22 @@ import {
   WalletCardIcon,
   WalletIconBig,
 } from '@/app/icons/icons';
-import { setDashboardDetails } from '@/app/store/dashboardSlice';
 import { formatNaira } from '@/app/utils/utils';
-import React, { useCallback, useState } from 'react';
-import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 
 function Page() {
-  const user = getAuthUser();
-  const dispatch = useAppDispatch();
-  const [fetchingDashData, setFetchingDashData] = useState(false);
-  const { noOfUsers, lastGamePlayers, availableWalletBalance } = useAppSelector(
-    (state) => state.dashboard,
-  );
   const [showTotalAmount, setShowTotalAmount] = useState(false);
 
-  const fetchDashboardData = useCallback(async () => {
-    if (noOfUsers && lastGamePlayers && availableWalletBalance) return;
-    setFetchingDashData(true);
-    try {
-      const res = await DashboardApi.fetchDashboardDetails(user.objectId);
-      dispatch(setDashboardDetails(res.data.result));
-      setFetchingDashData(false);
-    } catch {
-      toast.error('Error loading Dashboard Details, please refresh');
-      setFetchingDashData(false);
-    }
-  }, [
-    availableWalletBalance,
-    dispatch,
-    lastGamePlayers,
-    noOfUsers,
-    user.objectId,
-  ]);
-
-  React.useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+  const { data: dashboardSummary, isLoading } = useQuery({
+    queryKey: ['dashboardSummary'],
+    queryFn: DashboardApi.fetchDashboardSummary,
+  });
 
   return (
     <div className="space-y-10">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {fetchingDashData ? (
+        {isLoading ? (
           <DashboardCardsLoading />
         ) : (
           <DashboardCards
@@ -67,10 +40,10 @@ function Page() {
             bgColor="blue"
             icon={<UsersIcon />}
           >
-            <p>{noOfUsers}</p>
+            <p>{dashboardSummary?.totalUsers || 0}</p>
           </DashboardCards>
         )}
-        {fetchingDashData ? (
+        {isLoading ? (
           <DashboardCardsLoading />
         ) : (
           <DashboardCards
@@ -79,10 +52,10 @@ function Page() {
             bgColor="green"
             icon={<GameIcon />}
           >
-            <p>{lastGamePlayers}</p>
+            <p>{dashboardSummary?.lastGamePlayers || 0}</p>
           </DashboardCards>
         )}
-        {fetchingDashData ? (
+        {isLoading ? (
           <DashboardCardsLoading />
         ) : (
           <DashboardCards
@@ -93,7 +66,12 @@ function Page() {
           >
             <p>
               {showTotalAmount ? (
-                <span>{formatNaira(Number(availableWalletBalance), true)}</span>
+                <span>
+                  {formatNaira(
+                    Number(dashboardSummary?.availableWalletBalance || 0),
+                    true,
+                  )}
+                </span>
               ) : (
                 <span>********</span>
               )}

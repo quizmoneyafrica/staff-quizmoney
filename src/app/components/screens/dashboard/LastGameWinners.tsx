@@ -2,56 +2,30 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
-import LeaderboardAPI from '@/app/api/leaderboardApi';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { setLastGameLeaderboard } from '@/app/store/leaderboardSlice';
 import { Avatar } from '@radix-ui/themes';
 import { formatNaira } from '@/app/utils/utils';
 
+import DashboardApi from '@/app/api/dashboardApi';
+
 const LastGameWinners: React.FunctionComponent = () => {
-  const dispatch = useAppDispatch();
-  const { lastGame } = useAppSelector((state) => state.leaderboard);
-  const [fetching, setFetching] = React.useState(false);
+  const {
+    data: winners,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['lastGameWinners'],
+    queryFn: () => DashboardApi.getLastGameWinners(0, 5),
+    select: (res) => res.data.content,
+  });
 
-  const fetchLastGameWinners = React.useCallback(async () => {
-    if (lastGame.length > 0) return;
-    setFetching(true);
-    try {
-      const res = await LeaderboardAPI.getLastGameLeaderboardAdmin(1, 5, '');
+  if (isError) {
+    toast.error('Error loading Last Game Winners, please refresh');
+  }
 
-      const transformedData = res.data.result.data.map((ranking) => ({
-        position: ranking.position,
-        prize: ranking.prize,
-        coins: ranking.coins,
-
-        totalTime: '0',
-        totalCorrect: 0,
-
-        user: {
-          ...ranking.user,
-          noOfGamesPlayed: ranking.noOfGamesPlayed,
-          facebook: '',
-          twitter: '',
-          instagram: '',
-        },
-      }));
-
-      dispatch(setLastGameLeaderboard(transformedData));
-    } catch (error) {
-      console.error('Failed to fetch last game winners:', error);
-      toast.error('Error loading Last Game Winners, please refresh');
-    } finally {
-      setFetching(false);
-    }
-  }, [dispatch, lastGame]);
-
-  React.useEffect(() => {
-    fetchLastGameWinners();
-  }, [fetchLastGameWinners]);
-
-  if (fetching) {
+  if (isLoading) {
     return (
       <motion.div
         layout
@@ -73,17 +47,21 @@ const LastGameWinners: React.FunctionComponent = () => {
       </div>
 
       <div className="mt-3 space-y-4">
-        {lastGame.slice(0, 5).map((item, index) => {
-          return (
+        {winners && winners.length > 0 ? (
+          winners.map((item, index) => (
             <UserTable
               key={index}
-              num={item.position}
-              image={item.user.avatar}
-              name={item.user.firstName}
-              amount={item.prize}
+              num={item.rank}
+              image={null}
+              name={item.playerName}
+              amount={item.prizeWon}
             />
-          );
-        })}
+          ))
+        ) : (
+          <div className="flex h-48 items-center justify-center text-sm text-gray-500">
+            No winners found for the last game.
+          </div>
+        )}
       </div>
     </motion.div>
   );

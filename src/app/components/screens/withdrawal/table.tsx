@@ -1,12 +1,5 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@radix-ui/react-dropdown-menu';
-import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
-import { formatDateTime, formatNaira } from '@/app/utils/utils';
-import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
+import { formatNaira } from '@/app/utils/utils';
+import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import { CreditCard } from 'lucide-react';
 import Pagination from '../../leaderboard/Pagination';
@@ -20,10 +13,22 @@ interface PaginationInfo {
   limit: number;
 }
 
+interface WithdrawalRequest {
+  id: string;
+  purpose: string;
+  comment: string;
+  amount: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  processAt: string;
+  createdAt: string;
+  firstName: string;
+  availableBalance: number;
+  approvedBy?: string;
+}
+
 interface IRecentWithdrawTableProps {
   data: WithdrawalRequest[];
   viewDetails?: (data: WithdrawalRequest) => void;
-  showDirectAction?: boolean;
   pagination?: PaginationInfo;
   onPageChange?: (page: number) => void;
   currentPage?: number;
@@ -32,16 +37,15 @@ interface IRecentWithdrawTableProps {
 const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
   data,
   viewDetails,
-  showDirectAction = false,
   pagination,
   onPageChange,
   currentPage = 1,
 }) => {
   type SortableWithdrawalKeys =
-    | 'transactionId'
+    | 'id'
     | 'firstName'
     | 'amount'
-    | 'balance'
+    | 'availableBalance'
     | 'status';
 
   const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | ''>('');
@@ -103,30 +107,30 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
         >
           <Table.Header className="bg-primary-50">
             <Table.Row>
+              <Th label="Request ID" onClick={() => handleSort('id')} />
               <Th
-                label="Transaction ID"
-                onClick={() => handleSort('transactionId')}
+                label="Name & Purpose"
+                onClick={() => handleSort('firstName')}
               />
-              <Th label="First Name" onClick={() => handleSort('firstName')} />
               <Th
-                label="Wallet Balance"
-                onClick={() => handleSort('balance')}
+                label="Available Balance"
+                onClick={() => handleSort('availableBalance')}
               />
               <Th
                 label="Amount Requested"
                 onClick={() => handleSort('amount')}
               />
-              <Th
-                label="Withdrawal Status"
-                onClick={() => handleSort('status')}
-              />
+              <Th label="Status" onClick={() => handleSort('status')} />
               <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
             {sortedData?.length > 0 ? (
-              sortedData.map((item, index) => {
-                const createdDate = new Date(item.createdAt.iso);
+              sortedData.map((item) => {
+                const createdDate = new Date(item.createdAt);
+                const processDate = item.processAt
+                  ? new Date(item.processAt)
+                  : null;
                 const formattedDateTime =
                   createdDate.toLocaleDateString('en-US', {
                     month: 'short',
@@ -137,12 +141,11 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                   createdDate.toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
-                    second: '2-digit',
                     hour12: true,
                   });
 
                 return (
-                  <Table.Row key={item.transactionId}>
+                  <Table.Row key={item.id}>
                     <Table.Cell className="whitespace-nowrap px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
@@ -150,7 +153,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                         </div>
                         <div>
                           <p className="font-heading font-bold uppercase text-neutral-800">
-                            {item.transactionId}
+                            {item.id}
                           </p>
                           <p className="text-xs text-neutral-500">
                             {formattedDateTime}
@@ -170,17 +173,17 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                         </div>
                         <div>
                           <p className="text-primary-800 font-medium capitalize">
-                            {item.firstName} {item.lastName}
+                            {item.firstName}
                           </p>
                           <p className="text-xs text-neutral-500">
-                            {item.email}
+                            {item.purpose}
                           </p>
                         </div>
                       </div>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
                       <span className="font-medium">
-                        {formatNaira(Number(item.balance), true)}
+                        {formatNaira(Number(item.availableBalance), true)}
                       </span>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
@@ -189,47 +192,32 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                       </span>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
-                      <p
-                        className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
-                          item.status === 'resolved'
-                            ? 'bg-green-100 text-green-800'
-                            : item.status === 'failed'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        {item.status}
-                      </p>
+                      <div>
+                        <p
+                          className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
+                            item.status === 'APPROVED'
+                              ? 'bg-green-100 text-green-800'
+                              : item.status === 'REJECTED'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {item.status.toLowerCase()}
+                        </p>
+                        {processDate && (
+                          <p className="mt-1 text-xs text-neutral-500">
+                            Processed: {processDate.toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
-                      {showDirectAction ? (
-                        <button
-                          onClick={() => handleViewDetails(item)}
-                          className="hover:bg-primary-50 text-primary-900 border-primary-200 cursor-pointer rounded border px-3 py-2 text-sm font-medium transition-colors"
-                        >
-                          View Details
-                        </button>
-                      ) : (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="rounded p-1 hover:bg-gray-100">
-                              <DotsVerticalIcon />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            side="bottom"
-                            align="start"
-                            className="z-50 w-40 rounded-md border bg-white p-1 shadow-md"
-                          >
-                            <DropdownMenuItem
-                              className="hover:bg-primary-50 text-primary-900 cursor-pointer rounded px-2 py-1 text-sm font-medium"
-                              onClick={() => handleViewDetails(item)}
-                            >
-                              View Details
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                      <button
+                        onClick={() => handleViewDetails(item)}
+                        className="hover:bg-primary-50 text-primary-900 border-primary-200 cursor-pointer rounded border px-3 py-2 text-sm font-medium transition-colors"
+                      >
+                        View Details
+                      </button>
                     </Table.Cell>
                   </Table.Row>
                 );

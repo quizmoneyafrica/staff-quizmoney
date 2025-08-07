@@ -1,39 +1,33 @@
+'use client';
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
-import GameApi, { decryptGameData } from '@/app/api/game';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { formatNaira, formatQuizDate, toastPosition } from '@/app/utils/utils';
 import { Flex, Heading, Link, Text } from '@radix-ui/themes';
-import { setCurrentGame } from '@/app/store/gameSlice';
+import DashboardApi from '@/app/api/dashboardApi';
 
 const NextLiveGame: React.FunctionComponent = () => {
-  const dispatch = useAppDispatch();
-  const { currentGame } = useAppSelector((state) => state.game);
-  const [fetching, setFetching] = React.useState(false);
+  const {
+    data: nextGame,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ['nextLiveGame'],
+    queryFn: () => DashboardApi.getNextLiveGame(),
 
-  const fetchNextLiveGame = React.useCallback(async () => {
-    if (currentGame !== null) return;
-    setFetching(true);
-    try {
-      const res = await GameApi.fetchNextGame();
-      const encryptedGame = res.data.result.errorData;
-      const game = decryptGameData(encryptedGame);
-      dispatch(setCurrentGame(game));
-      setFetching(false);
-    } catch {
-      toast.error('Error loading Next Game, please refresh', {
-        position: toastPosition,
-      });
-      setFetching(false);
-    }
-  }, [currentGame, dispatch]);
+    select: (res) => res.data.data,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
-  React.useEffect(() => {
-    fetchNextLiveGame();
-  }, [fetchNextLiveGame]);
+  if (isError) {
+    toast.error('Error loading Next Game, please refresh', {
+      position: toastPosition,
+    });
+  }
 
-  if (fetching) {
+  if (isLoading) {
     return (
       <motion.div
         layout
@@ -41,6 +35,7 @@ const NextLiveGame: React.FunctionComponent = () => {
       ></motion.div>
     );
   }
+
   return (
     <motion.div
       layout
@@ -59,12 +54,13 @@ const NextLiveGame: React.FunctionComponent = () => {
               Game Prize
             </Heading>
             <Heading as="h1" className="text-primary-900 !text-5xl !font-black">
-              {formatNaira(Number(currentGame?.gamePrize), true)}
+              {formatNaira(Number(nextGame?.prize || 0), true)}
             </Heading>
             <Flex direction="column" gap="2" align="center" justify="center">
-              {currentGame &&
-                !currentGame.completed &&
-                new Date(currentGame.startDate.iso) <= new Date() && (
+              {nextGame &&
+                (nextGame.status === 'ACTIVE' ||
+                  nextGame.status === 'INPROGRESS') &&
+                new Date(nextGame.startTime) <= new Date() && (
                   <div className="flex items-center gap-1">
                     <div className="bg-error-500 relative h-3 w-3 rounded-full">
                       <div className="bg-error-500 absolute left-0 top-0 h-3 w-3 animate-ping rounded-full" />
@@ -77,10 +73,12 @@ const NextLiveGame: React.FunctionComponent = () => {
 
               <Text className="text-neutral-800">
                 Next Game:{' '}
-                {currentGame && formatQuizDate(currentGame.startDate.iso)}
+                {nextGame?.startTime
+                  ? formatQuizDate(nextGame.startTime)
+                  : 'Not scheduled'}
               </Text>
               <Text className="font-medium text-neutral-800">
-                Entry Fee: {formatNaira(Number(currentGame?.entryFee), true)}
+                Entry Fee: {formatNaira(Number(nextGame?.fee || 0), true)}
               </Text>
             </Flex>
           </Flex>

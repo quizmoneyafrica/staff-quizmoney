@@ -1,31 +1,64 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { useGetWithdrawalRequests } from '@/app/api';
-import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
+import { useGetWithdrawalRequests } from '@/app/api/withdrawal';
 import RecentWithdrawTable from '../withdrawal/table';
 import QmDrawer from '../../drawer/drawer';
 import WithdrawDetailsModal from '../withdrawal/WithdrawDrawer';
 
+interface TableWithdrawalRequest {
+  id: string;
+  purpose: string;
+  comment: string;
+  amount: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  processAt: string;
+  createdAt: string;
+  firstName: string;
+  availableBalance: number;
+  approvedBy?: string;
+}
+
+interface StoreWithdrawalRequest {
+  id: string;
+  purpose: string;
+  comment: string;
+  amount: number;
+  status: 'pending' | 'resolved' | 'failed';
+  processAt: string;
+  createdAt: {
+    __type: 'Date';
+    iso: string;
+  };
+  firstName: string;
+  lastName: string;
+  email: string;
+  balance: number;
+  availableBalance: number;
+  approvedBy?: string;
+  bankAccount: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  };
+  transactionId: string;
+}
+
 const RecentWithdraw: React.FunctionComponent = () => {
-  const [openViewModal, setOpenViewModal] = React.useState(false);
-  const [selectedData, setSelectedData] = React.useState<WithdrawalRequest>();
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [itemsPerPage] = React.useState(10);
+  const [selectedData, setSelectedData] =
+    React.useState<StoreWithdrawalRequest>();
+  const [currentPage, setCurrentPage] = React.useState(0);
+  const [pageSize] = React.useState(10);
   const [isRefetching, setIsRefetching] = React.useState(false);
 
   const {
     data,
-    isPending: fetching,
+    isLoading: fetching,
     isError,
-    error,
-  } = useGetWithdrawalRequests(currentPage, itemsPerPage, 'pending', '', null);
+  } = useGetWithdrawalRequests(currentPage, pageSize, 'PENDING');
 
   const withdrawalRequests = React.useMemo(() => {
-    if (data?.results) {
-      return data.results;
-    }
-    return [];
+    return data?.content || [];
   }, [data]);
 
   React.useEffect(() => {
@@ -34,17 +67,42 @@ const RecentWithdraw: React.FunctionComponent = () => {
     }
   }, [isError]);
 
-  const handleOpenViewDetails = (data: WithdrawalRequest) => {
-    setOpenViewModal(true);
-    setSelectedData(data);
+  const transformForModal = (
+    apiData: TableWithdrawalRequest,
+  ): StoreWithdrawalRequest => ({
+    ...apiData,
+    status:
+      apiData.status === 'PENDING'
+        ? 'pending'
+        : apiData.status === 'APPROVED'
+        ? 'resolved'
+        : apiData.status === 'REJECTED'
+        ? 'failed'
+        : 'pending',
+    createdAt: { __type: 'Date' as const, iso: apiData.createdAt },
+
+    lastName: '',
+    email: '',
+    balance: apiData.availableBalance || 0,
+    bankAccount: {
+      bankName: '',
+      accountNumber: '',
+      accountName: '',
+    },
+    transactionId: apiData.id,
+  });
+
+  const handleOpenViewDetails = (data: TableWithdrawalRequest) => {
+    const transformedData = transformForModal(data);
+    setSelectedData(transformedData);
   };
 
   const closeViewDetails = () => {
-    setOpenViewModal(false);
+    setSelectedData(undefined);
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setCurrentPage(page - 1);
   };
 
   if (fetching || isRefetching) {
@@ -60,20 +118,29 @@ const RecentWithdraw: React.FunctionComponent = () => {
     <div>
       <div className="p-4">
         <p className="font-heading text-base text-neutral-800">
-          Pending Withdrawal Request ({data?.pagination?.totalItems || 0})
+          Pending Withdrawal Request ({data?.pageable?.totalElements || 0})
         </p>
       </div>
 
       <QmDrawer
-        onOpenChange={setOpenViewModal}
+        onOpenChange={(isOpen: boolean) => {
+          if (!isOpen) {
+            setSelectedData(undefined);
+          }
+        }}
         heightClass="h-auto lg:h-[80%]"
         trigger={
           <RecentWithdrawTable
             data={withdrawalRequests}
             viewDetails={handleOpenViewDetails}
-            pagination={data?.pagination}
+            pagination={{
+              currentPage: (data?.pageable?.pageNumber || 0) + 1,
+              totalPages: data?.pageable?.totalPages || 1,
+              totalItems: data?.pageable?.totalElements || 0,
+              limit: data?.pageable?.pageSize || pageSize,
+            }}
             onPageChange={handlePageChange}
-            currentPage={currentPage}
+            currentPage={currentPage + 1}
           />
         }
       >

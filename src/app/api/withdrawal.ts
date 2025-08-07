@@ -7,88 +7,98 @@ interface DateRange {
   end: string;
 }
 
-interface WithdrawalRequestPayload {
-  page: number;
-  limit: number;
-  status?: string;
-  search?: string;
-  dateRange?: DateRange;
-  kycVerified?: boolean;
+interface WithdrawalRequest {
+  id: string;
+  purpose: string;
+  comment: string;
+  amount: number;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  processAt: string;
+  createdAt: string;
+  firstName: string;
+  availableBalance: number;
+  approvedBy?: string;
 }
 
-interface WithdrawalResponse {
-  results: any[];
-  pagination: {
-    currentPage: number;
+interface WithdrawalData {
+  content: WithdrawalRequest[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
     totalPages: number;
-    totalCount: number;
-    hasNext: boolean;
-    hasPrevious: boolean;
+    totalElements: number;
   };
+}
+
+interface WithdrawalApiResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: WithdrawalData;
+}
+
+interface SingleWithdrawalApiResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: WithdrawalRequest;
+}
+
+interface DefaultResponse {
+  message: string;
+  timestamp: string;
+}
+
+interface ApproveWithdrawalRequest {
+  id: string;
+  comment: string;
+}
+
+interface RejectWithdrawalRequest {
+  id: string;
+  comment: string;
 }
 
 export const useGetWithdrawalRequests = (
   page: number,
-  limit: number,
-  filter: string,
-  search = '',
-  dateRange: DateRange | null = null,
-  kycVerified?: boolean,
+  pageSize: number,
+  status?: string,
+  search?: string,
 ) => {
   const request = useRequestInstance();
 
-  const buildPayload = (): WithdrawalRequestPayload => {
-    const payload: WithdrawalRequestPayload = {
-      page,
-      limit,
-      status:
-        filter === 'all'
-          ? undefined
-          : filter === 'approved'
-          ? 'resolved'
-          : filter,
-    };
+  return useQuery({
+    queryKey: ['withdrawal_requests', page, pageSize, status, search],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(pageSize),
+        search: search || '',
+        ...(status && { status }),
+      });
 
-    if (search && search.trim()) {
-      payload.search = search.trim();
-    }
+      const response = await request.get<WithdrawalApiResponse>(
+        `/withdrawal-requests?${params.toString()}`,
+      );
 
-    if (dateRange && dateRange.start && dateRange.end) {
-      payload.dateRange = {
-        start: dateRange.start,
-        end: dateRange.end,
-      };
-    }
+      return response.data.data;
+    },
+  });
+};
 
-    if (kycVerified !== undefined) {
-      payload.kycVerified = kycVerified;
-    }
-
-    return payload;
-  };
+export const useGetWithdrawalRequest = (id: string) => {
+  const request = useRequestInstance();
 
   return useQuery({
-    queryKey: [
-      'get_withdrawal_requests',
-      page,
-      limit,
-      filter,
-      search,
-      dateRange?.start,
-      dateRange?.end,
-      kycVerified,
-    ],
-    queryFn: () =>
-      request
-        .post(`/getWithdrawalRequestsV2`, buildPayload())
-        .then((res) => {
-          return res.data.result;
-        })
-        .catch((error) => {
-          console.error('API Error:', error);
-          throw error.response?.data || error;
-        }),
-    placeholderData: (previousData) => previousData,
+    queryKey: ['withdrawal_request', id],
+    queryFn: async () => {
+      const response = await request.get<SingleWithdrawalApiResponse>(
+        `/withdrawal-requests/${id}`,
+      );
+
+      return response.data.data;
+    },
+    enabled: !!id,
   });
 };
 
@@ -97,16 +107,20 @@ export const useApproveWithdrawal = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: unknown) =>
-      request
-        .post(`/approveWithdrawal`, values)
-        .then((res) => res.data)
-        .catch((error) => {
-          throw error.response?.data || error;
-        }),
+    mutationFn: async (values: ApproveWithdrawalRequest) => {
+      const response = await request.patch<DefaultResponse>(
+        `/withdrawal-requests/approve`,
+        values,
+      );
+      return response.data;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['get_withdrawal_requests'] });
+      queryClient.invalidateQueries({ queryKey: ['withdrawal_requests'] });
+      queryClient.invalidateQueries({ queryKey: ['withdrawal_request'] });
       queryClient.invalidateQueries({ queryKey: ['get_withdrawal_stats'] });
+    },
+    onError: (error: any) => {
+      throw error.response?.data || error;
     },
   });
 };
@@ -116,16 +130,20 @@ export const useRejectWithdrawal = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (values: unknown) =>
-      request
-        .post(`/rejectWithdrawal`, values)
-        .then((res) => res.data)
-        .catch((error) => {
-          throw error.response?.data || error;
-        }),
+    mutationFn: async (values: RejectWithdrawalRequest) => {
+      const response = await request.patch<DefaultResponse>(
+        `/withdrawal-requests/reject`,
+        values,
+      );
+      return response.data;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['get_withdrawal_requests'] });
+      queryClient.invalidateQueries({ queryKey: ['withdrawal_requests'] });
+      queryClient.invalidateQueries({ queryKey: ['withdrawal_request'] });
       queryClient.invalidateQueries({ queryKey: ['get_withdrawal_stats'] });
+    },
+    onError: (error: any) => {
+      throw error.response?.data || error;
     },
   });
 };
