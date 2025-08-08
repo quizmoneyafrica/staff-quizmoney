@@ -71,7 +71,7 @@ const UserAPI = {
   forgotPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/auth/password/forgot`,
-      { email },
+      { email, purpose: 'EMAIL_VERIFICATION' },
       {
         headers: appHeaders,
       },
@@ -89,14 +89,22 @@ const UserAPI = {
   verifyForgotPasswordOtp(
     form: VerifyForgotPasswordOtpForm,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/verifyForgotPasswordOtp`, form, {
-      headers: appHeaders,
-    });
+    return axios.post(
+      `${BASE_URL}/verifyForgotPasswordOtp`,
+      {
+        otp: form.otp,
+        purpose: 'EMAIL_VERIFICATION',
+        // form
+      },
+      {
+        headers: appHeaders,
+      },
+    );
   },
   resetPasswordAuth(
     form: ResetPasswordForm,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/changePassword`, form, {
+    return axios.post(`${BASE_URL}/auth/password/reset`, form, {
       headers: appHeaders,
     });
   },

@@ -35,7 +35,7 @@ export interface VerifyForgotPasswordOtpForm {
 }
 //verifyForgotPasswordOtp interface
 export interface ResetPasswordForm {
-  email: string;
+  email?: string;
   password: string;
 }
 

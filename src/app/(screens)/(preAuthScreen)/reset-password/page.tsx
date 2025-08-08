@@ -21,11 +21,13 @@ const initialForm = {
 function Page() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
+  const otp = searchParams.get('otp');
+
   const router = useRouter();
   if (!email) {
     router.replace('/forgot-password');
   }
-  //
+
   const [loading, setLoading] = useState(false);
   const [resetForm, setResetForm] = useState(initialForm);
 
@@ -58,17 +60,19 @@ function Page() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     const newValues = {
-      email: email?.toLowerCase().trim() || '',
+      code: otp || '',
+      // email: email?.toLowerCase().trim() || '',
       password: resetForm.password,
+      confirmPassword: resetForm.confirmPassword,
     };
 
     try {
       const response = await UserAPI.resetPasswordAuth(newValues);
-      if (response.status === 200) {
-        router.push(
-          `/password-changed?email=${encodeURIComponent(email || '')}`,
-        );
+
+      if (response.data.code === '200') {
+        router.push(`/password-changed`);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
@@ -105,7 +109,7 @@ function Page() {
 								</Flex>
 							</div> */}
               <Flex direction="column" gap="1">
-                <Heading as="h2">Create New Password </Heading>
+                <Heading as="h2">Create New Password</Heading>
                 <Text className="text-neutral-600 ">
                   Go ahead and change your password
                 </Text>
