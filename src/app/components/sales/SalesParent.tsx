@@ -17,7 +17,7 @@ import {
   WalletCardIconLightGreen,
   PurchasedIcon,
 } from '@/app/icons/icons';
-import { sub } from 'date-fns';
+import { startOfMonth, endOfMonth } from 'date-fns';
 import { formatNaira } from '@/app/utils/utils';
 
 type WalletStat = {
@@ -31,35 +31,16 @@ type WalletStat = {
   onEyeToggle?: () => void;
 };
 
-const chartTypeMap: { [key: string]: 'month' | 'year' } = {
-  Months: 'month',
-  Years: 'year',
-};
-
-const getDateRangeForApi = (period: string, monthRange?: DateRange) => {
-  const toApiStart = (date: Date) => {
-    const d = new Date(date);
-    d.setUTCHours(23, 0, 0, 0);
-    return d.toISOString();
-  };
-  const toApiEnd = (date: Date) => {
-    const d = new Date(date);
-    d.setDate(d.getDate() + 1);
-    d.setUTCHours(22, 59, 59, 999);
-    return d.toISOString();
+const getDateRange = (period: string, monthRange?: DateRange) => {
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split('T')[0];
   };
 
-  if (monthRange?.from && monthRange?.to) {
+  if (period === 'Years' && monthRange?.from && monthRange?.to) {
     return {
-      start: toApiStart(monthRange.from),
-      end: toApiEnd(monthRange.to),
+      start: formatDate(startOfMonth(monthRange.from)),
+      end: formatDate(endOfMonth(monthRange.to)),
     };
-  }
-
-  const now = new Date();
-  if (period === 'Months') {
-    const start = sub(now, { months: 1 });
-    return { start: toApiStart(start), end: toApiEnd(now) };
   }
 };
 
@@ -69,42 +50,59 @@ function SalesParent() {
   const [monthRange, setMonthRange] = useState<DateRange | undefined>();
 
   const {
-    data: salesData,
-    isLoading,
-    isError,
-    error,
+    data: summaryData,
+    isLoading: isSummaryLoading,
+    isError: isSummaryError,
+    error: summaryError,
   } = useQuery({
-    queryKey: ['salesStats', selectedPeriod, monthRange],
-    queryFn: () => {
-      const payload = {
-        chartType: chartTypeMap[selectedPeriod],
-        dateRange: getDateRangeForApi(selectedPeriod, monthRange),
-      };
-      return SalesApi.getSalesTransactionsChartStats(payload);
+    queryKey: ['salesSummary'],
+    queryFn: () => SalesApi.getSalesSummary().then((res) => res.data.data),
+  });
+
+  const {
+    data: chartResponse,
+    isLoading: isChartLoading,
+    isError: isChartError,
+    error: chartError,
+  } = useQuery({
+    queryKey: ['salesChart', selectedPeriod, monthRange],
+    queryFn: async () => {
+      const dateRange = getDateRange(selectedPeriod, monthRange);
+
+      try {
+        const response = await SalesApi.getSalesChart(
+          dateRange.start,
+          dateRange.end,
+        );
+        return response.data;
+      } catch (error) {
+        throw new Error('Failed to fetch sales chart data');
+      }
     },
-    select: (res) => res.data.result,
     enabled:
       selectedPeriod !== 'Years' ||
       (selectedPeriod === 'Years' && !!monthRange?.from && !!monthRange?.to),
   });
 
+  const chartData = chartResponse?.data?.salesChartResponses || [];
+
+  const isLoading = isSummaryLoading || isChartLoading;
+
   const toggleWithdrawalVisibility = () => setIsWithdrawalVisible((p) => !p);
 
   const walletStats: WalletStat[] = useMemo(() => {
-    if (!salesData) return [];
-    const { statistics } = salesData;
     return [
       {
         title: 'Users Purchased',
-        value: statistics.totalDistinctUsers.toString(),
+        value: (summaryData?.totalPurchases ?? 0).toString(),
         bgColor: 'blue',
         icon: <Shop />,
         bgImage: <BigShop />,
         showEye: false,
       },
       {
-        title: 'Total Withdrawal',
-        value: formatNaira(statistics.totalAmount),
+        title: 'Net Sales',
+        value: formatNaira(summaryData?.netSales ?? 0),
         bgColor: 'lightGreen',
         icon: <WalletCardIconLightGreen />,
         bgImage: <WalletIconBigGreen />,
@@ -114,23 +112,41 @@ function SalesParent() {
       },
       {
         title: 'Most Purchased',
-        value: statistics.mostPurchasedProduct?.name || 'N/A',
+        value: summaryData?.mostPurchased || 'N/A',
         bgColor: 'cyan',
         icon: <PurchasedIcon />,
         bgImage: <BigPurchasedIcon />,
         showEye: false,
       },
     ];
-  }, [salesData, isWithdrawalVisible]);
+  }, [summaryData, isWithdrawalVisible]);
 
-  if (isError) {
-    return <div>Error fetching data: {error?.message}</div>;
+  if (isSummaryError) {
+    return (
+      <div className="flex w-full max-w-full flex-col items-center justify-center py-12">
+        <div className="text-center">
+          <h2 className="mb-2 text-lg font-semibold text-gray-900">
+            Error Loading Sales Data
+          </h2>
+          <p className="mb-4 text-sm text-gray-600">
+            {summaryError?.message ||
+              'Unable to fetch sales summary. Please try again.'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-        {isLoading ? (
+        {isSummaryLoading ? (
           <>
             <WalletStatCardsLoading />
             <WalletStatCardsLoading />
@@ -144,11 +160,12 @@ function SalesParent() {
       </div>
 
       <SalesChart
-        chartData={salesData?.chartData || []}
+        chartData={chartData}
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={setSelectedPeriod}
         monthRange={monthRange}
         onMonthRangeChange={setMonthRange}
+        isLoading={isChartLoading}
       />
 
       <TotalTransactionsTable />

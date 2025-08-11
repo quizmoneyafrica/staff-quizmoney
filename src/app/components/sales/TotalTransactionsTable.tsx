@@ -1,18 +1,23 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { Search, ListFilter, ChevronDown, AlertCircle } from 'lucide-react';
 import classNames from 'classnames';
 import { Avatar, Table } from '@radix-ui/themes';
 import { subDays } from 'date-fns';
+import { useDebounce } from '@/app/hooks/useDebounce';
 
 import CustomImage from '@/app/components/CustomImage';
 import Pagination from '../leaderboard/Pagination';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
-import SalesApi from '@/app/api/salesApi';
+import SalesApi, {
+  CustomerOrderResponse,
+  PageResponse,
+  SalesOrdersApiResponse,
+} from '@/app/api/salesApi';
 import { VerifiedIcon } from '@/app/icons/icons';
 
 type CustomDateRange = { startDate: Date; endDate: Date } | null;
@@ -21,29 +26,25 @@ const getDateRangeForFilter = (
   selectedOption: string,
   customRange: CustomDateRange,
 ) => {
-  const toApiStart = (date: Date) => {
-    const d = new Date(date);
-    d.setUTCHours(23, 0, 0, 0);
-    return d.toISOString();
-  };
-  const toApiEnd = (date: Date) => {
-    const d = new Date(date);
-    d.setDate(d.getDate() + 1);
-    d.setUTCHours(22, 59, 59, 999);
-    return d.toISOString();
-  };
+  const formatDateForApi = (date: Date) => date.toISOString().split('T')[0];
 
   const now = new Date();
   switch (selectedOption) {
     case 'This week':
-      return { start: toApiStart(subDays(now, 7)), end: toApiEnd(now) };
+      return {
+        start: formatDateForApi(subDays(now, 7)),
+        end: formatDateForApi(now),
+      };
     case 'Last 30 days':
-      return { start: toApiStart(subDays(now, 30)), end: toApiEnd(now) };
+      return {
+        start: formatDateForApi(subDays(now, 30)),
+        end: formatDateForApi(now),
+      };
     case 'Custom':
       if (customRange?.startDate && customRange?.endDate) {
         return {
-          start: toApiStart(customRange.startDate),
-          end: toApiEnd(customRange.endDate),
+          start: formatDateForApi(customRange.startDate),
+          end: formatDateForApi(customRange.endDate),
         };
       }
       return undefined;
@@ -59,30 +60,26 @@ const TotalTransactionsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
   const [selectedFilter, setSelectedFilter] = useState<
-    'All' | 'Completed' | 'Pending' | 'Failed'
+    'All' | 'COMPLETED' | 'PENDING' | 'FAILED'
   >('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Use the debounce hook
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
-  const filterOptions = ['All', 'Completed', 'Pending', 'Failed'];
+  const filterOptions = ['All', 'COMPLETED', 'PENDING', 'FAILED'];
 
   const [selectedTimeRange, setSelectedTimeRange] = useState('All Time');
-
   const [customDateRange, setCustomDateRange] = useState<CustomDateRange>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      setCurrentPage(1);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery<
+    PageResponse<CustomerOrderResponse>,
+    Error
+  >({
     queryKey: [
-      'salesTransactions',
+      'salesOrders',
       currentPage,
       itemsPerPage,
       debouncedSearchTerm,
@@ -90,21 +87,35 @@ const TotalTransactionsTable = () => {
       selectedTimeRange,
       customDateRange,
     ],
-    queryFn: () => {
+    queryFn: async () => {
+      const dateRange = getDateRangeForFilter(
+        selectedTimeRange,
+        customDateRange,
+      );
       const statusForApi =
-        selectedFilter === 'All' ? '' : selectedFilter.toLowerCase();
-      const payload = {
+        selectedFilter === 'All' ? undefined : selectedFilter;
+
+      const params = {
         page: currentPage,
         limit: itemsPerPage,
-        search: debouncedSearchTerm,
-        status: statusForApi as 'completed' | 'pending' | 'failed' | '',
-        dateRange: getDateRangeForFilter(selectedTimeRange, customDateRange),
+        ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
+        ...(statusForApi && { status: statusForApi }),
+        ...(dateRange && {
+          startDate: dateRange.start,
+          endDate: dateRange.end,
+        }),
       };
-      return SalesApi.getSalesTransactionsList(payload);
+
+      const response = await SalesApi.getSalesOrders(params);
+
+      return response.data.data;
     },
-    select: (res) => res.data.result,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData) => previousData,
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, selectedFilter, selectedTimeRange, customDateRange]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -120,10 +131,9 @@ const TotalTransactionsTable = () => {
   }, []);
 
   const handleFilterSelect = (
-    filter: 'All' | 'Completed' | 'Pending' | 'Failed',
+    filter: 'All' | 'COMPLETED' | 'PENDING' | 'FAILED',
   ) => {
     setSelectedFilter(filter);
-    setCurrentPage(1);
     setIsFilterOpen(false);
   };
 
@@ -135,9 +145,9 @@ const TotalTransactionsTable = () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleViewProfile = (userId: string) => {
-    if (userId) {
-      router.push(`/players/player-profile/${userId}`);
+  const handleViewProfile = (customerId: string) => {
+    if (customerId) {
+      router.push(`/players/player-profile/${customerId}`);
     }
   };
 
@@ -149,7 +159,7 @@ const TotalTransactionsTable = () => {
     return 'bg-gray-100 text-gray-800';
   };
 
-  const transactions = data?.results || [];
+  const transactions = data?.data || [];
   const pagination = data?.pagination;
 
   const EmptyState = () => (
@@ -162,6 +172,40 @@ const TotalTransactionsTable = () => {
             </div>
           </div>
           <p className="font-bold">No Transactions Found</p>
+          {debouncedSearchTerm && (
+            <p className="text-sm text-gray-500">
+              No results for {debouncedSearchTerm}
+            </p>
+          )}
+        </div>
+      </Table.Cell>
+    </Table.Row>
+  );
+
+  const LoadingState = () => (
+    <Table.Row>
+      <Table.Cell colSpan={6} className="py-12 text-center">
+        <div className="flex items-center justify-center space-x-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+          <span>Loading transactions...</span>
+        </div>
+      </Table.Cell>
+    </Table.Row>
+  );
+
+  const ErrorState = () => (
+    <Table.Row>
+      <Table.Cell colSpan={6} className="py-12 text-center text-red-500">
+        <div className="space-y-2">
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-red-50 p-4">
+              <AlertCircle className="h-8 w-8 text-red-400" />
+            </div>
+          </div>
+          <p className="font-bold">Error Loading Transactions</p>
+          <p className="text-sm">
+            {error?.message || 'An unexpected error occurred'}
+          </p>
         </div>
       </Table.Cell>
     </Table.Row>
@@ -190,15 +234,14 @@ const TotalTransactionsTable = () => {
             selected={selectedTimeRange}
             onSelect={(option) => {
               setSelectedTimeRange(option);
-              setCurrentPage(1);
             }}
             customDateRange={customDateRange}
             onCustomDateChange={(range) => {
               setCustomDateRange(range);
               setSelectedTimeRange('Custom');
-              setCurrentPage(1);
             }}
           />
+
           <div className="relative" ref={filterDropdownRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -220,7 +263,7 @@ const TotalTransactionsTable = () => {
                       key={option}
                       onClick={() =>
                         handleFilterSelect(
-                          option as 'All' | 'Completed' | 'Pending' | 'Failed',
+                          option as 'All' | 'COMPLETED' | 'PENDING' | 'FAILED',
                         )
                       }
                       className={`w-full px-4 py-2 text-left transition-colors hover:bg-gray-50 ${
@@ -248,112 +291,83 @@ const TotalTransactionsTable = () => {
             <Table.Header className="bg-primary-50">
               <Table.Row>
                 <Table.Cell className="px-4 py-2 text-left">
-                  Transaction ID
+                  Order ID
                 </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">
-                  Username
+                  Customer Name
                 </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">
-                  Transaction Type
+                  Description
                 </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">Amount</Table.Cell>
-                <Table.Cell className="px-4 py-2 text-left">
-                  Transaction Status
-                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">Status</Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
               {isLoading ? (
-                <Table.Row>
-                  <Table.Cell colSpan={6} className="py-12 text-center">
-                    Loading transactions...
-                  </Table.Cell>
-                </Table.Row>
+                <LoadingState />
               ) : isError ? (
-                <Table.Row>
-                  <Table.Cell
-                    colSpan={6}
-                    className="py-12 text-center text-red-500"
-                  >
-                    Error: {error.message}
-                  </Table.Cell>
-                </Table.Row>
+                <ErrorState />
               ) : transactions.length > 0 ? (
-                transactions.map((transaction) => {
-                  const { time, fullDate } = formatDateTime(
-                    transaction.createdAt.iso,
-                  );
-                  return (
-                    <Table.Row key={transaction.id}>
-                      <Table.Cell className="whitespace-nowrap px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                            <CustomImage alt="" src={'/icons/down.svg'} />
-                          </div>
-                          <div>
-                            <p className="font-heading font-bold uppercase text-neutral-800">
-                              {transaction.id}
-                            </p>
-                            <p className="text-xs text-neutral-500">
-                              {fullDate} • {time}
-                            </p>
-                          </div>
+                transactions.map((transaction) => (
+                  <Table.Row key={transaction.orderId}>
+                    <Table.Cell className="whitespace-nowrap px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
+                          <CustomImage alt="" src={'/icons/down.svg'} />
                         </div>
-                      </Table.Cell>
-                      <Table.Cell className="px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="relative">
-                            <Avatar
-                              src={transaction.user.avatar}
-                              fallback={
-                                transaction.user.firstName
-                                  ?.charAt(0)
-                                  .toUpperCase() || 'U'
-                              }
-                              radius="full"
-                              size="3"
-                            />
-                            {transaction.user.kycVerified && (
-                              <div className="absolute -right-1 -top-1">
-                                <VerifiedIcon className="h-5 w-5" />
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-primary-800 capitalize">
-                            {transaction.user.firstName || 'Unknown'}
+                        <div>
+                          <p className="font-heading font-bold uppercase text-neutral-800">
+                            {transaction.orderId}
                           </p>
                         </div>
-                      </Table.Cell>
-                      <Table.Cell className="px-4 py-4 text-sm text-gray-900">
-                        {transaction.title}
-                      </Table.Cell>
-                      <Table.Cell className="px-4 py-4 text-sm text-gray-900">
-                        {formatNaira(transaction.amount)}
-                      </Table.Cell>
-                      <Table.Cell className="px-4 py-4">
-                        <p
-                          className={classNames(
-                            'font-heading w-fit rounded-full px-4 py-2 text-center capitalize',
-                            getStatusClass(transaction.status),
-                          )}
-                        >
-                          {transaction.status}
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <Avatar
+                            fallback={
+                              transaction.name?.charAt(0).toUpperCase() || 'U'
+                            }
+                            radius="full"
+                            size="3"
+                          />
+                        </div>
+                        <p className="text-primary-800 capitalize">
+                          {transaction.name || 'Unknown'}
                         </p>
-                      </Table.Cell>
-                      <Table.Cell className="px-4 py-4">
-                        <button
-                          onClick={() =>
-                            handleViewProfile(transaction.user.userId)
-                          }
-                          className="hover:bg-primary-800 bg-primary-900 cursor-pointer  rounded px-3 py-2 text-sm font-medium text-white transition-colors"
-                        >
-                          View Profile
-                        </button>
-                      </Table.Cell>
-                    </Table.Row>
-                  );
-                })
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4 text-sm text-gray-900">
+                      {transaction.description}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4 text-sm text-gray-900">
+                      {formatNaira(transaction.amount)}
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <p
+                        className={classNames(
+                          'font-heading w-fit rounded-full px-4 py-2 text-center capitalize',
+                          getStatusClass(transaction.status),
+                        )}
+                      >
+                        {transaction.status.toLowerCase()}
+                      </p>
+                    </Table.Cell>
+                    <Table.Cell className="px-4 py-4">
+                      <button
+                        onClick={() =>
+                          handleViewProfile(transaction.customerId)
+                        }
+                        className="hover:bg-primary-800 bg-primary-900 cursor-pointer rounded px-3 py-2 text-sm font-medium text-white transition-colors"
+                      >
+                        View Profile
+                      </button>
+                    </Table.Cell>
+                  </Table.Row>
+                ))
               ) : (
                 <EmptyState />
               )}
@@ -370,6 +384,11 @@ const TotalTransactionsTable = () => {
                 pagination.totalItems,
               )}{' '}
               of {pagination.totalItems} entries
+              {debouncedSearchTerm && (
+                <span className="ml-1 font-medium">
+                  for &quot;{debouncedSearchTerm}&quot;
+                </span>
+              )}
             </div>
             <Pagination
               currentPage={pagination.currentPage}

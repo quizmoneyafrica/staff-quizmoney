@@ -1,16 +1,19 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import GameApi from '@/app/api/game';
 import GameBoxTemplate from '@/app/components/screens/game-zone/GameBoxTemplate';
 import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
-import { setAdminGames } from '@/app/store/gameSlice';
+import { setAdminGames, Game } from '@/app/store/gameSlice';
 import CustomButton from '@/app/utils/CustomBtn';
 import CustomTextField from '@/app/utils/CustomTextField';
 import { useRouter } from 'next/navigation';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import Pagination from '@/app/components/leaderboard/Pagination';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebounce } from '@/app/hooks/useDebounce';
+import { AxiosResponse } from 'axios';
+import { ApiResponse } from '@/app/api/interface';
 
 interface PaginationInfo {
   currentPage: number;
@@ -20,99 +23,126 @@ interface PaginationInfo {
   hasPrevPage: boolean;
 }
 
+interface PageResponse<T> {
+  data: T[];
+  pagination: PaginationInfo;
+}
+
 function GameZone() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { adminGames } = useAppSelector((state) => state.game);
+
   const [searchQuery, setSearchQuery] = React.useState<string>('');
-  const [fetchingData, setFetchingData] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [paginationInfo, setPaginationInfo] = React.useState<PaginationInfo>({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    hasNextPage: false,
-    hasPrevPage: false,
-  });
 
   const GAMES_PER_PAGE = 9;
 
-  const fetchGames = useCallback(
-    async (page = 1, search = '') => {
-      try {
-        setFetchingData(true);
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-        const requestBody = {
-          page,
-          limit: GAMES_PER_PAGE,
-          search,
-          dateRange: {
-            start: '2024-01-01',
-            end: new Date().toISOString().split('T')[0],
-          },
-        };
+  const fetchGamesFromAPI = async (
+    page: number,
+    search: string,
+  ): Promise<PageResponse<Game>> => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', GAMES_PER_PAGE.toString());
+    if (search) {
+      params.append('search', search);
+    }
 
-        const res = await GameApi.getAllGames(requestBody);
+    const response = await GameApi.getGamesWithQuery(params.toString());
+    return response.data.result;
+  };
 
-        const games = Array.isArray(res.data.result?.data)
-          ? res.data.result.data
-          : [];
+  const gamesQueryKey = (page: number, search: string) => [
+    'games',
+    { page, search },
+  ];
 
-        const pagination = res.data.result?.pagination || {};
-        setPaginationInfo({
-          currentPage: pagination.currentPage || page,
-          totalPages: pagination.totalPages || 1,
-          totalItems: pagination.totalItems || games.length,
-          hasNextPage: pagination.hasNextPage || false,
-          hasPrevPage: pagination.hasPrevPage || false,
-        });
-
-        dispatch(setAdminGames(games));
-        setCurrentPage(page);
-      } catch (error) {
-        toast.error('An error occurred loading games, please refresh.');
-      } finally {
-        setFetchingData(false);
-      }
-    },
-    [dispatch],
-  );
+  const {
+    data: gamesData,
+    isLoading: fetchingData,
+    isError,
+    error,
+  } = useQuery<PageResponse<Game>, Error>({
+    queryKey: gamesQueryKey(currentPage, debouncedSearchQuery),
+    queryFn: () => fetchGamesFromAPI(currentPage, debouncedSearchQuery),
+    placeholderData: (previousData) => previousData,
+  });
 
   React.useEffect(() => {
-    fetchGames(1, '');
-  }, [fetchGames]);
+    if (gamesData?.data) {
+      dispatch(setAdminGames(gamesData.data));
+    }
+  }, [gamesData?.data, dispatch]);
 
-  const deleteGame = async (objectId: string) => {
-    try {
-      await GameApi.deleteGame(objectId);
+  React.useEffect(() => {
+    if (isError) {
+      console.error('Error fetching games:', error);
+      toast.error('An error occurred loading games, please refresh.');
+    }
+  }, [isError, error]);
+
+  const paginationInfo = useMemo(() => {
+    return (
+      gamesData?.pagination || {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      }
+    );
+  }, [gamesData?.pagination]);
+
+  const deleteGameMutation = useMutation<
+    AxiosResponse<ApiResponse>,
+    Error,
+    string
+  >({
+    mutationFn: (objectId: string) => GameApi.deleteGame(objectId),
+    onSuccess: (_, deletedGameId) => {
+      queryClient.setQueryData(
+        gamesQueryKey(currentPage, debouncedSearchQuery),
+        (oldData: PageResponse<Game> | undefined) => {
+          if (!oldData) return oldData;
+
+          return {
+            ...oldData,
+            data: oldData.data.filter(
+              (game) => game.objectId !== deletedGameId,
+            ),
+            pagination: {
+              ...oldData.pagination,
+              totalItems: oldData.pagination.totalItems - 1,
+            },
+          };
+        },
+      );
 
       const updatedGames = adminGames.filter(
-        (game) => game.objectId !== objectId,
+        (game) => game.objectId !== deletedGameId,
       );
       dispatch(setAdminGames(updatedGames));
 
-      setPaginationInfo((prev) => ({
-        ...prev,
-        totalItems: prev.totalItems - 1,
-      }));
-
       toast.success('Game deleted successfully');
-    } catch (error: any) {
+    },
+    onError: (error: Error) => {
       console.error('Error deleting game:', error);
       toast.error('Error deleting game. Please try again.');
+    },
+  });
 
-      fetchGames(currentPage, searchQuery);
-    }
+  const deleteGame = async (objectId: string) => {
+    deleteGameMutation.mutate(objectId);
   };
 
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
-      setCurrentPage(1);
-      fetchGames(1, query);
-    },
-    [fetchGames],
-  );
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  }, []);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -121,23 +151,34 @@ function GameZone() {
         page >= 1 &&
         page <= paginationInfo.totalPages
       ) {
-        fetchGames(page, searchQuery);
+        setCurrentPage(page);
       }
     },
-    [currentPage, paginationInfo.totalPages, searchQuery, fetchGames],
+    [currentPage, paginationInfo.totalPages],
   );
 
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (searchQuery !== '') {
-        handleSearch(searchQuery);
-      } else if (searchQuery === '') {
-        fetchGames(1, '');
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col items-center justify-center py-12">
+          <p className="text-lg text-red-600">Failed to load games</p>
+          <p className="mt-2 text-sm text-gray-500">
+            {error instanceof Error
+              ? error.message
+              : 'An unexpected error occurred'}
+          </p>
+          <button
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ['games'] })
+            }
+            className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -149,14 +190,14 @@ function GameZone() {
               type="text"
               placeholder="Search games by name, description..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="w-full"
             />
           </div>
 
           <div className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:gap-6">
             <div className="text-center lg:text-right">
-              <h2 className=" font-black text-gray-900">All Available Games</h2>
+              <h2 className="font-black text-gray-900">All Available Games</h2>
             </div>
             <CustomButton
               size="md"
@@ -175,27 +216,27 @@ function GameZone() {
               <div
                 key={index}
                 className="h-[299px] w-full animate-pulse rounded-lg bg-neutral-300 p-4"
-              ></div>
+              />
             ))}
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {adminGames.length === 0 ? (
+              {!gamesData?.data?.length ? (
                 <div className="col-span-full py-12 text-center">
                   <p className="text-lg text-gray-500">
-                    {searchQuery
-                      ? `No games found for &quot;${searchQuery}&quot;`
+                    {debouncedSearchQuery
+                      ? `No games found for &quot;${debouncedSearchQuery}&quot;`
                       : 'No games found.'}
                   </p>
-                  {searchQuery && (
+                  {debouncedSearchQuery && (
                     <p className="mt-2 text-sm text-gray-400">
                       Try adjusting your search terms
                     </p>
                   )}
                 </div>
               ) : (
-                adminGames.map((game, index) => (
+                gamesData.data.map((game, index) => (
                   <GameBoxTemplate
                     key={game.objectId || index}
                     game={game}
@@ -207,15 +248,15 @@ function GameZone() {
 
             <div className="flex flex-col items-start justify-between gap-4 pt-6 lg:flex-row lg:items-center">
               <div className="text-sm text-gray-600">
-                Showing {adminGames.length} of {paginationInfo.totalItems} games
-                {searchQuery && (
+                Showing {gamesData?.data?.length || 0} of{' '}
+                {paginationInfo.totalItems} games
+                {debouncedSearchQuery && (
                   <span className="ml-1 font-medium">
-                    for &quot;{searchQuery}&quot;
+                    for &quot;{debouncedSearchQuery}&quot;
                   </span>
                 )}
               </div>
 
-              {/* Pagination Component */}
               {paginationInfo.totalPages > 1 && (
                 <Pagination
                   currentPage={paginationInfo.currentPage}

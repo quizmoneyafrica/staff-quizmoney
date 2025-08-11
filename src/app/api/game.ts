@@ -8,7 +8,32 @@ import {
 import { ApiResponse } from './interface';
 import CryptoJS from 'crypto-js';
 
-import { CreateGamePayload, CreateGameResponse } from './typesGame';
+import { Game } from '@/app/store/gameSlice';
+
+export interface CreateGamePayload {
+  name: string;
+  prize: number;
+  fee: number;
+  startTime: string;
+  questionLimit: number;
+  description?: string;
+  duration?: number;
+}
+
+export interface CreateGameResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    id: string;
+    name: string;
+    prize: number;
+    fee: number;
+    startTime: string;
+    questionLimit: number;
+    description?: string;
+    duration?: number;
+  };
+}
 
 export interface UpdateGamePayload {
   objectId: string;
@@ -36,11 +61,22 @@ export interface GetAllGamesPayload {
   };
 }
 
+export interface PageResponse<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
 const GameApi = {
   createGame(
     payload: CreateGamePayload,
   ): Promise<AxiosResponse<CreateGameResponse>> {
-    return axios.post(`${BASE_URL}/createGame`, payload, {
+    return axios.post(`${BASE_URL}/games`, payload, {
       headers: getSessionTokenHeaders(),
     });
   },
@@ -55,10 +91,10 @@ const GameApi = {
     return axios.post(`${BASE_URL}/errorLoad`, {}, { headers: appHeaders });
   },
 
-  getAllGames(
-    payload: GetAllGamesPayload,
-  ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/getAllGames`, payload, {
+  getGamesWithQuery(
+    queryParams: string,
+  ): Promise<AxiosResponse<{ result: PageResponse<Game> }>> {
+    return axios.get(`${BASE_URL}/games?${queryParams}`, {
       headers: getSessionTokenHeaders(),
     });
   },
