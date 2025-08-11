@@ -25,6 +25,7 @@ function Page() {
   if (!email) {
     router.replace('/forgot-password');
   }
+
   useEffect(() => {
     if (countdown <= 0) {
       setCanResend(true);
@@ -48,8 +49,12 @@ function Page() {
     };
     try {
       const response = await UserAPI.verifyForgotPasswordOtp(newValues);
-      if (response.status === 200) {
-        router.push(`/reset-password?email=${encodeURIComponent(email || '')}`);
+      if (response.data.code === '200') {
+        router.push(
+          `/reset-password?email=${encodeURIComponent(
+            email || '',
+          )}&otp=${otpCode}`,
+        );
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {

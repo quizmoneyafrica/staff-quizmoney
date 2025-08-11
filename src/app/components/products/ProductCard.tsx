@@ -28,8 +28,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div
-      className="relative select-none rounded-[10px] bg-[#F9F9F9]"
-      style={{ width: 315, height: 269 }}
+      className="relative select-none rounded-[10px] bg-[#F9F9F9] md:max-w-[315px]"
+      style={{ height: 269 }}
     >
       <div className="absolute left-4 right-4 top-4 flex items-center justify-between">
         <div
