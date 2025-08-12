@@ -72,6 +72,26 @@ export interface PageResponse<T> {
   };
 }
 
+interface ApiGame {
+  gameId: string;
+  status: string;
+  fee: number;
+  duration: number;
+  startTime: string;
+  description: string;
+  prize: number;
+  name: string;
+}
+
+interface ApiGameResponse {
+  content: ApiGame[];
+  pageNo: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
 const GameApi = {
   createGame(
     payload: CreateGamePayload,
@@ -93,7 +113,7 @@ const GameApi = {
 
   getGamesWithQuery(
     queryParams: string,
-  ): Promise<AxiosResponse<{ result: PageResponse<Game> }>> {
+  ): Promise<AxiosResponse<{ success: boolean; data: ApiGameResponse }>> {
     return axios.get(`${BASE_URL}/games?${queryParams}`, {
       headers: getSessionTokenHeaders(),
     });

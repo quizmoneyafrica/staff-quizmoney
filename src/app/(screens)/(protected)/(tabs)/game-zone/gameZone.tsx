@@ -28,6 +28,17 @@ interface PageResponse<T> {
   pagination: PaginationInfo;
 }
 
+interface ApiGame {
+  gameId: string;
+  status: string;
+  fee: number;
+  duration: number;
+  startTime: string;
+  description: string;
+  prize: number;
+  name: string;
+}
+
 function GameZone() {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -41,19 +52,58 @@ function GameZone() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
+  const transformApiGameToGame = (apiGame: ApiGame): Game => {
+    return {
+      objectId: apiGame.gameId,
+      name: apiGame.name,
+      startDate: {
+        iso: apiGame.startTime,
+      },
+      completed: false,
+      entryFee: apiGame.fee.toString(),
+      gamePrize: apiGame.prize,
+      numOfShare: 0,
+      winners: [],
+      users: [],
+      userTimes: [],
+      videoAds: { name: '', url: '' },
+      music: { name: '', url: '' },
+      createdAt: '',
+      updatedAt: '',
+      questions: [],
+      gameDescription: apiGame.description || '',
+    };
+  };
+
   const fetchGamesFromAPI = async (
     page: number,
     search: string,
   ): Promise<PageResponse<Game>> => {
     const params = new URLSearchParams();
-    params.append('page', page.toString());
+    params.append('page', (page - 1).toString());
     params.append('limit', GAMES_PER_PAGE.toString());
     if (search) {
       params.append('search', search);
     }
 
     const response = await GameApi.getGamesWithQuery(params.toString());
-    return response.data.result;
+
+    const apiData = response.data.data;
+
+    const transformedGames = (apiData.content || []).map(
+      transformApiGameToGame,
+    );
+
+    return {
+      data: transformedGames,
+      pagination: {
+        currentPage: (apiData.pageNo || 0) + 1,
+        totalPages: apiData.totalPages || 1,
+        totalItems: apiData.totalElements || 0,
+        hasNextPage: !apiData.last,
+        hasPrevPage: (apiData.pageNo || 0) > 0,
+      },
+    };
   };
 
   const gamesQueryKey = (page: number, search: string) => [

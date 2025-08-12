@@ -5,7 +5,7 @@ import WithdrawalCards, {
 } from '@/app/components/screens/withdrawal/Cards';
 import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal';
 import Pagination from '@/app/components/leaderboard/Pagination';
-import { Search, ListFilter, ChevronDown, UserCheck } from 'lucide-react';
+import { Search, ListFilter, ChevronDown } from 'lucide-react';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
@@ -21,8 +21,6 @@ import {
 } from '@/app/icons/icons';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
-import { VerifiedIcon } from '@/app/icons/icons';
-import { useRouter } from 'next/navigation';
 
 interface WithdrawalRequest {
   id: string;
@@ -37,9 +35,17 @@ interface WithdrawalRequest {
   approvedBy?: string;
 }
 
-function Page() {
-  const router = useRouter();
+interface DateRange {
+  start: string;
+  end: string;
+}
 
+interface TimeRangeDropdownDateRange {
+  startDate: Date;
+  endDate: Date;
+}
+
+function Page() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isKycFilterOpen, setIsKycFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
@@ -64,19 +70,71 @@ function Page() {
   const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
   const [selected, setSelected] = useState('All Time');
-  const [customDateRange, setCustomDateRange] = useState(null);
+  const [customDateRange, setCustomDateRange] = useState<{
+    startDate: Date;
+    endDate: Date;
+  } | null>(null);
 
-  const handleSelect = (option) => {
+  const handleSelect = (option: string) => {
     setSelected(option);
-
-    if (option !== 'Custom') {
-      setCustomDateRange(null);
-    }
+    if (option !== 'Custom') setCustomDateRange(null);
   };
 
-  const handleCustomDateChange = (dateRange) => {
+  const handleCustomDateChange = (
+    dateRange: { startDate: Date; endDate: Date } | null,
+  ) => {
     setCustomDateRange(dateRange);
   };
+
+  const [selectedStats, setSelectedStats] = useState('All Time');
+  const [customStatsDateRange, setCustomStatsDateRange] = useState<{
+    startDate: Date;
+    endDate: Date;
+  } | null>(null);
+
+  const handleStatsSelect = (option: string) => {
+    setSelectedStats(option);
+    if (option !== 'Custom') setCustomStatsDateRange(null);
+  };
+
+  const handleStatsCustomDateChange = (
+    dateRange: { startDate: Date; endDate: Date } | null,
+  ) => {
+    setCustomStatsDateRange(dateRange);
+  };
+
+  const statsDateRange: DateRange | undefined = useMemo(() => {
+    const endDate = new Date();
+    const startDate = new Date();
+
+    if (selectedStats === 'Custom' && customStatsDateRange) {
+      return {
+        start: customStatsDateRange.startDate.toISOString().split('T')[0],
+        end: customStatsDateRange.endDate.toISOString().split('T')[0],
+      };
+    }
+
+    switch (selectedStats) {
+      case 'This week': {
+        const day = endDate.getDay();
+        const diff = endDate.getDate() - day + (day === 0 ? -6 : 1);
+        startDate.setDate(diff);
+        break;
+      }
+      case 'Last 30 days':
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+      case 'All Time':
+      default:
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+    }
+
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0],
+    };
+  }, [selectedStats, customStatsDateRange]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -96,7 +154,8 @@ function Page() {
     debouncedSearchTerm,
   );
 
-  const { data: statsData, isPending: fetchingStats } = useGetWithdrawalStats();
+  const { data: statsData, isPending: fetchingStats } =
+    useGetWithdrawalStats(statsDateRange);
 
   const withdrawalData = useMemo(() => {
     if (data && data.content) {
@@ -127,14 +186,14 @@ function Page() {
   }, [fetchingDashData, withdrawalData.length, currentPage]);
 
   const withdrawalStats = React.useMemo(() => {
-    if (statsData?.result) {
+    if (statsData) {
       return {
-        totalRequests: statsData.result.totalThisWeek,
-        totalChangePercent: statsData.result.totalChangePercent,
-        approvedRequests: statsData.result.approvedThisWeek,
-        approvedChangePercent: statsData.result.approvedChangePercent,
-        pendingRequests: statsData.result.pendingThisWeek,
-        pendingChangePercent: statsData.result.pendingChangePercent,
+        totalRequests: statsData.totalWithdrawalRequest,
+        totalChangePercent: statsData.totalWithdrawalPerChange,
+        approvedRequests: statsData.totalApprovedRequest,
+        approvedChangePercent: statsData.totalApprovedPerChange,
+        pendingRequests: statsData.totalPendingRequest,
+        pendingChangePercent: statsData.totalPendingPerChange,
       };
     }
 
@@ -255,8 +314,27 @@ function Page() {
     }
   };
 
+  const getPeriodText = () => {
+    if (selectedStats === 'All Time') return 'all time';
+    if (selectedStats === 'This week') return 'this week';
+    if (selectedStats === 'Last 30 days') return 'last 30 days';
+    if (selectedStats === 'Custom' && customStatsDateRange) {
+      return `${customStatsDateRange.startDate.toLocaleDateString()} to ${customStatsDateRange.endDate.toLocaleDateString()}`;
+    }
+    return 'selected period';
+  };
+
   return (
     <div className="space-y-10">
+      <div className="md:hidden">
+        <TimeRangeDropdown
+          options={options}
+          selected={selectedStats}
+          onSelect={handleStatsSelect}
+          customDateRange={customStatsDateRange}
+          onCustomDateChange={handleStatsCustomDateChange}
+        />
+      </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {fetchingStats || fetchingDashData ? (
           <WithdrawalCardsLoading />
@@ -269,7 +347,7 @@ function Page() {
             bgImage={<WalletIconBig />}
             analytics={{
               percentage: withdrawalStats.totalChangePercent,
-              period: 'this week',
+              period: getPeriodText(),
             }}
           />
         )}
@@ -285,7 +363,7 @@ function Page() {
             bgImage={<WalletIconBigGreen />}
             analytics={{
               percentage: withdrawalStats.approvedChangePercent,
-              period: 'this week',
+              period: getPeriodText(),
             }}
           />
         )}
@@ -303,14 +381,26 @@ function Page() {
             bgImage={<WalletIconBigLightestYellow />}
             analytics={{
               percentage: withdrawalStats.pendingChangePercent,
-              period: 'this week',
+              period: getPeriodText(),
             }}
           />
         )}
       </div>
 
       <div className="mb-4 flex w-full flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
-        <p>Recent Withdrawal Request</p>
+        <div className="flex w-full flex-col">
+          <p>Recent Withdrawal Request</p>
+
+          <div className="mt-2 hidden md:block">
+            <TimeRangeDropdown
+              options={options}
+              selected={selectedStats}
+              onSelect={handleStatsSelect}
+              customDateRange={customStatsDateRange}
+              onCustomDateChange={handleStatsCustomDateChange}
+            />
+          </div>
+        </div>
 
         <div className="flex items-center gap-4">
           <div className="relative w-full max-w-md">
