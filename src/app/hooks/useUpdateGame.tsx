@@ -1,20 +1,24 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import GameApi, { UpdateGamePayload } from '@/app/api/game';
+import { useQueryClient } from '@tanstack/react-query';
+import GameApi, { UpdateGamePayloadV2 } from '@/app/api/game';
 import { toast } from 'sonner';
 import { AxiosError } from 'axios';
 
 export const useUpdateGame = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: (payload: UpdateGamePayload) => GameApi.updateGame(payload),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['game', variables.objectId] });
-      queryClient.invalidateQueries({ queryKey: ['games'] });
+  const updateGame = async (gameId: string, payload: UpdateGamePayloadV2) => {
+    try {
+      const response = await GameApi.updateGameV2(gameId, payload);
 
-      toast.success('Game updated successfully!');
-    },
-    onError: (error: unknown) => {
+      if (response.data.success) {
+        queryClient.invalidateQueries({ queryKey: ['game', gameId] });
+        queryClient.invalidateQueries({ queryKey: ['games'] });
+        toast.success('Game updated successfully!');
+        return response.data;
+      } else {
+        throw new Error(response.data.message || 'Failed to update game');
+      }
+    } catch (error) {
       console.error('Update game error:', error);
 
       if (error instanceof AxiosError) {
@@ -22,9 +26,14 @@ export const useUpdateGame = () => {
           error.response?.data?.message ||
           'Failed to update game. Please try again.';
         toast.error(message);
+      } else if (error instanceof Error) {
+        toast.error(error.message);
       } else {
         toast.error('Failed to update game. Please try again.');
       }
-    },
-  });
+      throw error;
+    }
+  };
+
+  return { updateGame };
 };

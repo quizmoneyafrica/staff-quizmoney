@@ -152,7 +152,7 @@ function GameZone() {
     Error,
     string
   >({
-    mutationFn: (objectId: string) => GameApi.deleteGame(objectId),
+    mutationFn: (objectId: string) => GameApi.deleteGameV2(objectId),
     onSuccess: (_, deletedGameId) => {
       queryClient.setQueryData(
         gamesQueryKey(currentPage, debouncedSearchQuery),
@@ -307,7 +307,7 @@ function GameZone() {
                 )}
               </div>
 
-              {paginationInfo.totalPages > 1 && (
+              {paginationInfo && (
                 <Pagination
                   currentPage={paginationInfo.currentPage}
                   totalPages={paginationInfo.totalPages}

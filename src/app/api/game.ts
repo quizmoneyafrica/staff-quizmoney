@@ -35,6 +35,33 @@ export interface CreateGameResponse {
   };
 }
 
+export interface GameQuestionOption {
+  optionId: string;
+  option: string;
+  answer: boolean;
+}
+
+export interface GameQuestion {
+  questionId: string;
+  order: number;
+  question: string;
+  options: GameQuestionOption[];
+}
+
+export interface GameQuestionResponse {
+  gameId: string;
+  status: string;
+  fee: number;
+  duration: number;
+  startTime: string;
+  endTime: string;
+  description: string;
+  prize: number;
+  name: string;
+  questionCount: number;
+  questions: GameQuestion[];
+}
+
 export interface UpdateGamePayload {
   objectId: string;
   name?: string;
@@ -49,6 +76,17 @@ export interface UpdateGamePayload {
   numOfShare?: number;
   entryFee?: string | number;
   startDate?: string;
+}
+
+export interface UpdateGamePayloadV2 {
+  fee: number;
+  duration: number;
+  startTime: string;
+  description: string;
+  prize: number;
+  name: string;
+  questionLimit: number;
+  questions: GameQuestion[];
 }
 
 export interface GetAllGamesPayload {
@@ -107,6 +145,15 @@ const GameApi = {
     });
   },
 
+  updateGameV2(
+    gameId: string,
+    payload: UpdateGamePayloadV2,
+  ): Promise<AxiosResponse<ApiResponse>> {
+    return axios.patch(`${BASE_URL}/games/${gameId}`, payload, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
   fetchNextGame(): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(`${BASE_URL}/errorLoad`, {}, { headers: appHeaders });
   },
@@ -135,12 +182,24 @@ const GameApi = {
     );
   },
 
+  deleteGameV2(gameId: string): Promise<AxiosResponse<ApiResponse>> {
+    return axios.delete(`${BASE_URL}/games/${gameId}`, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
   getGameById(objectId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/getGameById`,
       { objectId },
       { headers: getSessionTokenHeaders() },
     );
+  },
+
+  getGameByIdV2(gameId: string): Promise<AxiosResponse<GameQuestionResponse>> {
+    return axios.get(`${BASE_URL}/games/${gameId}`, {
+      headers: getSessionTokenHeaders(),
+    });
   },
 
   registerForGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {

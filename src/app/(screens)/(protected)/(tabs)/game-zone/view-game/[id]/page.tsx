@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import GameApi from '@/app/api/game';
+import GameApi, { GameQuestionResponse } from '@/app/api/game';
 import AppLoader from '@/app/components/loader/loader';
 import {
   Game,
@@ -28,12 +28,38 @@ function Page() {
 
       try {
         setFetchingData(true);
-        const res = await GameApi.getGameById(`${params.id}`);
-        const gameData = res.data.result;
+        const res = await GameApi.getGameByIdV2(`${params.id}`);
+        const result: GameQuestionResponse = res.data;
 
-        setFetchedData(gameData);
+        const transformedGame: Game = {
+          objectId: result.gameId,
+          name: result.name,
+          startDate: {
+            iso: result.startTime,
+          },
+          completed: false,
+          entryFee: result.fee.toString(),
+          gamePrize: result.prize,
+          numOfShare: 0, //
+          winners: [],
+          users: [],
+          userTimes: [],
+          videoAds: { name: '', url: '' },
+          music: { name: '', url: '' },
+          createdAt: '',
+          updatedAt: '',
+          questions: result.questions.map((apiQuestion, index) => ({
+            number: apiQuestion.order.toString(),
+            question: apiQuestion.question,
+            options: apiQuestion.options.map((option) => option.option),
+            correctAnswer:
+              apiQuestion.options.find((opt) => opt.answer)?.option || '',
+          })),
+          gameDescription: result.description || '',
+        };
 
-        dispatch(setCurrentGame(gameData));
+        setFetchedData(transformedGame);
+        dispatch(setCurrentGame(transformedGame));
 
         setFetchingData(false);
       } catch (error: any) {
