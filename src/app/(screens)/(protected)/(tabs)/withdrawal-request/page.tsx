@@ -20,7 +20,6 @@ import {
   WalletIconBigLightestYellow,
 } from '@/app/icons/icons';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
-import { calculateDateRange } from '@/app/utils/date-range';
 
 interface WithdrawalRequest {
   id: string;
@@ -326,7 +325,18 @@ function Page() {
 
   return (
     <div className="space-y-10">
-      <div className="md:hidden">
+      <div className="flex flex-col gap-2 md:hidden">
+        <p>Recent Withdrawal Request</p>
+        <TimeRangeDropdown
+          options={options}
+          selected={selectedStats}
+          onSelect={handleStatsSelect}
+          customDateRange={customStatsDateRange}
+          onCustomDateChange={handleStatsCustomDateChange}
+        />
+      </div>
+
+      <div className="hidden justify-end md:flex">
         <TimeRangeDropdown
           options={options}
           selected={selectedStats}
@@ -389,17 +399,7 @@ function Page() {
 
       <div className="mb-4 flex w-full flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
         <div className="flex w-full flex-col">
-          <p>Recent Withdrawal Request</p>
-
-          <div className="mt-2 hidden md:block">
-            <TimeRangeDropdown
-              options={options}
-              selected={selectedStats}
-              onSelect={handleStatsSelect}
-              customDateRange={customStatsDateRange}
-              onCustomDateChange={handleStatsCustomDateChange}
-            />
-          </div>
+          <p className="hidden md:block">Recent Withdrawal Request</p>
         </div>
 
         <div className="flex items-center gap-4">
