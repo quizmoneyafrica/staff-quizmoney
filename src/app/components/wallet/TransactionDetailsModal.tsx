@@ -3,17 +3,17 @@
 import React from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import CustomImage from '@/app/components/CustomImage';
+import { Avatar } from '@radix-ui/themes';
 import classNames from 'classnames';
 import { motion, AnimatePresence } from 'framer-motion';
-import { WalletTransaction } from '@/app/api/wallet';
+import { WalletTransactionResponse } from '@/app/api/wallet';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
-import { VerifiedIcon } from '@/app/icons/icons';
+// import { VerifiedIcon } from '@/app/icons/icons';
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  transactionData: WalletTransaction | null;
+  transactionData: WalletTransactionResponse | null;
 }
 
 const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
@@ -40,11 +40,12 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
 
   if (!transactionData) return null;
 
-  const { time, fullDate } = formatDateTime(transactionData.createdAt.iso);
+  const { time, fullDate } = formatDateTime(transactionData.transactionDate);
+  const fullName = `${transactionData.firstName} ${transactionData.lastName}`;
 
   const getStatusClass = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'completed':
+      case 'successful':
         return 'bg-green-100 text-green-700';
       case 'failed':
         return 'bg-red-100 text-red-700';
@@ -86,29 +87,37 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                   animate="visible"
                 >
                   <motion.div
-                    className="flex items-center gap-4 border-b border-gray-200 pb-6"
+                    className="flex items-center justify-between border-b border-gray-200 pb-6"
                     variants={itemVariants}
                   >
-                    <div className="relative h-12 w-12 flex-shrink-0">
-                      <CustomImage
-                        className="h-12 w-12 rounded-full"
-                        src={transactionData.user.avatar}
-                        alt={`${transactionData.user.name}'s avatar`}
-                        width={48}
-                        height={48}
-                      />
-                      {transactionData.user.kycVerified && (
-                        <div className="absolute -right-1 -top-0.5">
-                          <VerifiedIcon className="h-5 w-5" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-lg font-semibold capitalize text-gray-900">
-                        {transactionData.user.name}
+                    <div className="flex items-center gap-4">
+                      <div className="bg-primary-100 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full">
+                        <Avatar
+                          fallback={fullName.charAt(0).toUpperCase()}
+                          radius="full"
+                          size="3"
+                        />
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {transactionData.user.email}
+                      <div>
+                        <div className="text-lg font-semibold capitalize text-gray-900">
+                          {fullName}
+                        </div>
+                        <div>
+                          <button
+                            type="button"
+                            className="bg-primary-800 hover:bg-primary-900 mt-3 rounded-full px-4 py-2 text-sm font-medium text-white"
+                          >
+                            View user Profile
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-gray-700">
+                        Wallet Balance
+                      </div>
+                      <div className="text-base font-bold text-gray-900">
+                        {formatNaira(transactionData.walletBalance ?? 0)}
                       </div>
                     </div>
                   </motion.div>
@@ -137,7 +146,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                         Transaction Type
                       </div>
                       <div className="text-sm font-semibold capitalize text-gray-900">
-                        {transactionData.title}
+                        {transactionData.transactionType}
                       </div>
                     </motion.div>
 
@@ -175,11 +184,35 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                       <span
                         className={classNames(
                           'rounded-full px-3 py-1 text-xs font-semibold capitalize',
-                          getStatusClass(transactionData.status),
+                          getStatusClass(transactionData.transactionStatus),
                         )}
                       >
-                        {transactionData.status}
+                        {transactionData.transactionStatus}
                       </span>
+                    </motion.div>
+
+                    <motion.div
+                      variants={itemVariants}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="text-sm font-medium text-gray-600">
+                        Narration
+                      </div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {transactionData.narration}
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      variants={itemVariants}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="text-sm font-medium text-gray-600">
+                        Direction
+                      </div>
+                      <div className="text-sm font-semibold capitalize text-gray-900">
+                        {transactionData.direction}
+                      </div>
                     </motion.div>
                   </motion.div>
                 </motion.div>
@@ -190,6 +223,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                     className="absolute right-4 top-4 rounded-full p-2 transition-colors hover:bg-gray-100 focus:outline-none"
+                    onClick={onClose}
                   >
                     <X className="h-5 w-5 text-gray-400" />
                   </motion.button>

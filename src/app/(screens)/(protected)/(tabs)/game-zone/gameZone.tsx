@@ -307,13 +307,11 @@ function GameZone() {
                 )}
               </div>
 
-              {paginationInfo && (
-                <Pagination
-                  currentPage={paginationInfo.currentPage}
-                  totalPages={paginationInfo.totalPages}
-                  onPageChange={handlePageChange}
-                />
-              )}
+              <Pagination
+                currentPage={paginationInfo.currentPage}
+                totalPages={paginationInfo.totalPages}
+                onPageChange={handlePageChange}
+              />
             </div>
           </>
         )}

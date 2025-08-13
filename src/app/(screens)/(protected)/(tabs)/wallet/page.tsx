@@ -15,7 +15,7 @@ import {
   WalletIconBigRedError,
 } from '@/app/icons/icons';
 
-import WalletApi from '@/app/api/wallet';
+import WalletApi, { WalletSummaryResponse } from '@/app/api/wallet';
 import { formatNaira } from '@/app/utils/utils';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
@@ -37,31 +37,23 @@ function Page() {
   const handleCustomDateChange = (dateRange) => setCustomDateRange(dateRange);
 
   const {
-    data: statsData,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useQuery({
-    queryKey: ['walletStats', selected, customDateRange],
-    queryFn: () => {
-      const dateRange = calculateDateRange(selected, customDateRange);
-
-      if (selected === 'Custom' && dateRange && dateRange.end) {
-        const endDate = new Date(dateRange.end);
-        endDate.setHours(23, 59, 59, 999);
-        dateRange.end = endDate.toISOString();
-      }
-
-      const apiParams = dateRange && dateRange.start ? { dateRange } : {};
-
-      return WalletApi.getWalletTransactionStats(apiParams);
-    },
-    select: (res) => res.data.result.statistics,
+    data: summaryData,
+    isLoading: summaryLoading,
+    error: summaryError,
+  } = useQuery<{
+    success: boolean;
+    code: string;
+    message: string;
+    data: WalletSummaryResponse;
+  }>({
+    queryKey: ['walletSummary'],
+    queryFn: () => WalletApi.getWalletSummary().then((res) => res.data),
   });
 
   const walletStats = [
     {
       title: 'Total Wallet Balance',
-      value: formatNaira(statsData?.totalWalletBalance || 0),
+      value: formatNaira(summaryData?.data?.totalBalance || 0),
       bgColor: 'lightBlue',
       icon: <WalletCardIconLightBlue />,
       bgImage: <WalletIconBig />,
@@ -71,7 +63,7 @@ function Page() {
     },
     {
       title: 'Total Deposit',
-      value: formatNaira(statsData?.totalDeposits || 0),
+      value: formatNaira(summaryData?.data?.totalDeposit || 0),
       bgColor: 'lightCyan',
       icon: <WalletCardIconLightCyan />,
       bgImage: <WalletIconBigLightCyan />,
@@ -81,7 +73,7 @@ function Page() {
     },
     {
       title: 'Total Withdrawal',
-      value: formatNaira(statsData?.totalWithdrawals || 0),
+      value: formatNaira(summaryData?.data?.totalWithdrawal || 0),
       bgColor: 'lightGreen',
       icon: <WalletCardIconLightGreen />,
       bgImage: <WalletIconBigGreen />,
@@ -91,7 +83,7 @@ function Page() {
     },
     {
       title: 'Total Expenses',
-      value: formatNaira(statsData?.totalExpenses || 0),
+      value: formatNaira(summaryData?.data?.totalExpenses || 0),
       bgColor: 'redError',
       icon: <SmallRedWallet />,
       bgImage: <WalletIconBigRedError />,
@@ -115,14 +107,14 @@ function Page() {
       </div>
 
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">
-        {statsLoading ? (
+        {summaryLoading ? (
           Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
               className="h-[169px] animate-pulse rounded-lg bg-gray-200"
             ></div>
           ))
-        ) : statsError ? (
+        ) : summaryError ? (
           <div className="col-span-full py-8 text-center text-red-600">
             Failed to load wallet stats.
           </div>

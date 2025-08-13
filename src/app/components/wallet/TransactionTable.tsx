@@ -11,8 +11,8 @@ import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
 
 import WalletApi, {
-  WalletTransaction,
-  WalletTransactionsListResponse,
+  WalletTransactionResponse,
+  PageResponse,
 } from '@/app/api/wallet';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
@@ -22,11 +22,14 @@ import { VerifiedIcon } from '@/app/icons/icons';
 const TransactionTable: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
-    useState<WalletTransaction | null>(null);
+    useState<WalletTransactionResponse | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
-    'All' | 'Completed' | 'Pending' | 'Failed'
+    'All' | 'SUCCESSFUL' | 'PENDING' | 'FAILED'
+  >('All');
+  const [typeFilter, setTypeFilter] = useState<
+    'All' | 'WITHDRAWAL' | 'FUNDING'
   >('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -37,7 +40,19 @@ const TransactionTable: React.FC = () => {
   const itemsPerPage = 10;
 
   const { data, isLoading, error, refetch } = useQuery<
-    WalletTransactionsListResponse,
+    {
+      success: boolean;
+      code: string;
+      message: string;
+      data: {
+        content: WalletTransactionResponse[];
+        pageNo: number;
+        pageSize: number;
+        totalElements: number;
+        totalPages: number;
+        last: boolean;
+      };
+    },
     Error
   >({
     queryKey: [
@@ -45,47 +60,49 @@ const TransactionTable: React.FC = () => {
       currentPage,
       debouncedSearchTerm,
       statusFilter,
+      typeFilter,
       selected,
       customDateRange,
       itemsPerPage,
     ],
     queryFn: () => {
-      const apiStatus =
-        statusFilter === 'All' ? '' : statusFilter.toLowerCase();
-      const payload = {
+      const apiStatus = statusFilter === 'All' ? undefined : statusFilter;
+      const apiType = typeFilter === 'All' ? undefined : typeFilter;
+
+      const params = {
         page: currentPage,
         limit: itemsPerPage,
-        search: debouncedSearchTerm,
-        status: apiStatus as 'completed' | 'pending' | 'failed' | '',
-        dateRange: calculateDateRange(selected, customDateRange),
+        search: debouncedSearchTerm || undefined,
+        status: apiStatus,
+        type: apiType,
       };
 
-      return WalletApi.getWalletTransactionsList(payload).then(
-        (res) => res.data.result,
-      );
+      return WalletApi.getWalletTransactions(params).then((res) => res.data);
     },
 
     placeholderData: keepPreviousData,
   });
 
-  const transactions = data?.transactions || [];
-  const pagination = data?.pagination;
-  const totalCount = pagination?.totalItems || 0;
+  const transactions = data?.data?.content || [];
+  const pagination = data?.data;
+  const totalCount = pagination?.totalElements || 0;
 
-  const totalPages =
-    pagination && pagination.totalItems
-      ? Math.ceil(pagination.totalItems / itemsPerPage)
-      : 1;
+  const totalPages = pagination?.totalPages || 1;
 
   const handleFilterSelect = (
-    status: 'All' | 'Completed' | 'Pending' | 'Failed',
+    status: 'All' | 'SUCCESSFUL' | 'PENDING' | 'FAILED',
   ) => {
     setStatusFilter(status);
     setIsFilterOpen(false);
     setCurrentPage(1);
   };
 
-  const handleViewDetailsClick = (transaction: WalletTransaction) => {
+  const handleTypeFilterSelect = (type: 'All' | 'WITHDRAWAL' | 'FUNDING') => {
+    setTypeFilter(type);
+    setCurrentPage(1);
+  };
+
+  const handleViewDetailsClick = (transaction: WalletTransactionResponse) => {
     setSelectedTransaction(transaction);
     setIsModalOpen(true);
   };
@@ -106,7 +123,7 @@ const TransactionTable: React.FC = () => {
 
   const getStatusClass = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'completed':
+      case 'successful':
         return 'bg-[#D4F9E4] text-[#006E2D]';
       case 'failed':
         return 'bg-[#FFEDED] text-[#E11C25]';
@@ -157,23 +174,47 @@ const TransactionTable: React.FC = () => {
               {isFilterOpen && (
                 <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border bg-white shadow-lg">
                   <div className="py-1">
-                    {['All', 'Completed', 'Pending', 'Failed'].map((status) => (
+                    <div className="px-4 py-2 text-xs font-semibold uppercase text-gray-500">
+                      Status
+                    </div>
+                    {['All', 'SUCCESSFUL', 'PENDING', 'FAILED'].map(
+                      (status) => (
+                        <button
+                          key={status}
+                          onClick={() =>
+                            handleFilterSelect(
+                              status as
+                                | 'All'
+                                | 'SUCCESSFUL'
+                                | 'PENDING'
+                                | 'FAILED',
+                            )
+                          }
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                            statusFilter === status ? 'bg-gray-50' : ''
+                          }`}
+                        >
+                          {status}
+                        </button>
+                      ),
+                    )}
+                    <div className="my-2 border-t border-gray-200"></div>
+                    <div className="px-4 py-2 text-xs font-semibold uppercase text-gray-500">
+                      Type
+                    </div>
+                    {['All', 'WITHDRAWAL', 'FUNDING'].map((type) => (
                       <button
-                        key={status}
+                        key={type}
                         onClick={() =>
-                          handleFilterSelect(
-                            status as
-                              | 'All'
-                              | 'Completed'
-                              | 'Pending'
-                              | 'Failed',
+                          handleTypeFilterSelect(
+                            type as 'All' | 'WITHDRAWAL' | 'FUNDING',
                           )
                         }
                         className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 ${
-                          statusFilter === status ? 'bg-gray-50' : ''
+                          typeFilter === type ? 'bg-gray-50' : ''
                         }`}
                       >
-                        {status}
+                        {type}
                       </button>
                     ))}
                   </div>
@@ -204,7 +245,7 @@ const TransactionTable: React.FC = () => {
                 <Table.Cell className="px-4 py-2 text-left">
                   Transaction ID
                 </Table.Cell>
-                <Table.Cell className="px-4 py-2 text-left">Users</Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">User</Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">
                   Transaction Type
                 </Table.Cell>
@@ -220,7 +261,8 @@ const TransactionTable: React.FC = () => {
             <Table.Body>
               {transactions.length > 0 ? (
                 transactions.map((tx) => {
-                  const { time, fullDate } = formatDateTime(tx.createdAt.iso);
+                  const { time, fullDate } = formatDateTime(tx.transactionDate);
+                  const fullName = `${tx.firstName} ${tx.lastName}`;
                   return (
                     <Table.Row
                       key={tx.id}
@@ -246,22 +288,16 @@ const TransactionTable: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <div className="relative">
                             <Avatar
-                              src={tx.user.avatar || undefined}
-                              fallback={tx.user.name?.charAt(0).toUpperCase()}
+                              fallback={fullName.charAt(0).toUpperCase()}
                               radius="full"
                               size="3"
                             />
-                            {tx.user.kycVerified && (
-                              <div className="absolute -right-1 -top-1">
-                                <VerifiedIcon className="h-5 w-5" />
-                              </div>
-                            )}
                           </div>
-                          <p className="capitalize">{tx.user.name}</p>
+                          <p className="capitalize">{fullName}</p>
                         </div>
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4 capitalize">
-                        {tx.title}
+                        {tx.transactionType}
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4 font-semibold">
                         {formatNaira(tx.amount)}
@@ -269,10 +305,10 @@ const TransactionTable: React.FC = () => {
                       <Table.Cell className="px-4 py-4">
                         <p
                           className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getStatusClass(
-                            tx.status,
+                            tx.transactionStatus,
                           )}`}
                         >
-                          {tx.status}
+                          {tx.transactionStatus}
                         </p>
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
@@ -309,7 +345,7 @@ const TransactionTable: React.FC = () => {
             entries
           </div>
           <Pagination
-            currentPage={currentPage}
+            currentPage={pagination.pageNo || currentPage}
             totalPages={totalPages}
             onPageChange={handlePageChange}
           />

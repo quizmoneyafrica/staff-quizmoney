@@ -28,6 +28,13 @@ export interface WalletStatistics {
   totalTransactions: number;
 }
 
+export interface WalletSummaryResponse {
+  totalBalance: number;
+  totalDeposit: number;
+  totalWithdrawal: number;
+  totalExpenses: number;
+}
+
 export interface WalletTransaction {
   id: string;
   createdAt: { __type: 'Date'; iso: string };
@@ -47,6 +54,20 @@ export interface WalletTransaction {
   description: string;
 }
 
+export interface WalletTransactionResponse {
+  id: string;
+  transactionDate: string;
+  transactionStatus: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
+  transactionType: 'WITHDRAWAL' | 'FUNDING';
+  narration: string;
+  firstName: string;
+  lastName: string;
+  amount: number;
+  direction: 'CREDIT' | 'DEBIT';
+
+  walletBalance?: number;
+}
+
 export interface WalletTransactionsListResponse {
   transactions: WalletTransaction[];
   pagination: {
@@ -54,6 +75,17 @@ export interface WalletTransactionsListResponse {
     limit: number;
     totalPages: number;
     totalItems: number;
+  };
+}
+
+export interface PageResponse<T> {
+  data: T[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
   };
 }
 
@@ -201,6 +233,56 @@ const WalletApi = {
       `${BASE_URL}/getWalletTransactionsList`,
       { ...data },
       { headers: getSessionTokenHeaders() },
+    );
+  },
+
+  getWalletSummary(): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: WalletSummaryResponse;
+    }>
+  > {
+    return axios.get(`${BASE_URL}/wallets/summary`, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  getWalletTransactions(params: {
+    type?: 'WITHDRAWAL' | 'FUNDING';
+    status?: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: {
+        content: WalletTransactionResponse[];
+        pageNo: number;
+        pageSize: number;
+        totalElements: number;
+        totalPages: number;
+        last: boolean;
+      };
+    }>
+  > {
+    const queryParams = new URLSearchParams();
+
+    if (params.type) queryParams.append('type', params.type);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.page) queryParams.append('pageNo', params.page.toString());
+    if (params.limit) queryParams.append('pageSize', params.limit.toString());
+
+    return axios.get(
+      `${BASE_URL}/wallet-transactions?${queryParams.toString()}`,
+      {
+        headers: getSessionTokenHeaders(),
+      },
     );
   },
 };
