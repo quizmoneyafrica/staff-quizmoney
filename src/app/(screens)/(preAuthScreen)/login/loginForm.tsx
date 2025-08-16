@@ -61,10 +61,10 @@ const LoginForm = ({ loading, setLoading }: Props) => {
       const userData = response.data.data;
 
       // Encrypt the user data
-      const encryptedUser = encryptData(userData);
+      // const encryptedUser = encryptData(userData);
 
       // Dispatch to Redux
-      loginUser(encryptedUser);
+      loginUser(userData);
 
       router.replace('/dashboard');
 

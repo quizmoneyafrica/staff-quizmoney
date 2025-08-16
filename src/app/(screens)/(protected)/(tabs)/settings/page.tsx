@@ -31,7 +31,8 @@ const initialForm = {
 
 const Page = () => {
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
-  const user = encrypted ? decryptData(encrypted) : null;
+  const user = encrypted;
+  // ? decryptData(encrypted) : null;
   const formattedDOB = new Date(user?.dob?.iso ?? '')
     .toISOString()
     .split('T')[0];
@@ -83,10 +84,10 @@ const Page = () => {
           });
 
           const userData = res.data.result.updatedUser;
-          const encryptedUser = encryptData(userData);
+          // const encryptedUser = encryptData(userData);
 
           // ✅ Dispatch to Redux
-          loginUser(encryptedUser);
+          loginUser(userData);
         }
       })
       .catch((err: AxiosError) => {

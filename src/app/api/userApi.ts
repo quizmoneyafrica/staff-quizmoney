@@ -26,7 +26,8 @@ const appHeaders = {
 
 const getSessionTokenHeaders = () => {
   const encrypted = store.getState().auth.userEncryptedData;
-  const user = encrypted ? decryptData(encrypted) : null;
+  const user = encrypted;
+  // ? decryptData(encrypted) : null;
   const sessionToken = user?.accessToken;
 
   return {
