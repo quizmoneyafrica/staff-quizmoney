@@ -17,8 +17,6 @@ const NextLiveGame: React.FunctionComponent = () => {
     queryFn: () => DashboardApi.getNextLiveGame(),
 
     select: (res) => res.data.data,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
   });
 
   if (isError) {

@@ -1,14 +1,20 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/app/hooks/useAuth';
-import { Game, setCreateGameField } from '@/app/store/gameSlice';
-import CustomButton from '@/app/utils/CustomBtn';
+import {
+  Game,
+  setCreateGameField,
+  clearCreateGame,
+} from '@/app/store/gameSlice';
 import CustomTextField from '@/app/utils/CustomTextField';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import QuestionsSection from './questionsection';
 import { useCreateGame } from '@/app/hooks/useGameCreate';
-import { transformGameDataForAPI } from '@/app/utils/gameTransformers';
+import {
+  transformGameDataForAPI,
+  validateGamePayload,
+} from '@/app/utils/gameTransformers';
 
 interface Option {
   id: string;
@@ -39,27 +45,31 @@ function Page() {
   const game = useAppSelector((state) => state.game.createGame);
   const [datetimeInput, setDatetimeInput] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [questionsLimit] = useState(10); // Made it configurable
+  const [questionsLimit] = useState(10);
 
   const createGameMutation = useCreateGame({
     onSuccess: () => {
       toast.success('Game created successfully!');
+
+      dispatch(clearCreateGame());
+      setDatetimeInput('');
+      setQuestions([]);
     },
     onError: (error) => {
       console.error('Failed to create game:', error);
-      toast.error('Failed to create game. Please try again.');
     },
+    redirectOnSuccess: true,
+    redirectPath: '/game-zone',
   });
 
   React.useEffect(() => {
     if (datetimeInput) {
       const localDate = new Date(datetimeInput);
-      const utcDate = new Date(localDate.getTime() - 60 * 60 * 1000);
 
       dispatch(
         setCreateGameField({
           field: 'startDate',
-          value: { iso: utcDate.toISOString() },
+          value: { iso: localDate.toISOString() },
         }),
       );
     }
@@ -130,7 +140,6 @@ function Page() {
   const validateGameDetailsStepByStep = () => {
     if (!game.name?.trim()) {
       toast.error('Please enter a game name');
-
       const nameField = document.querySelector(
         'input[name="name"]',
       ) as HTMLInputElement;
@@ -263,19 +272,17 @@ function Page() {
         return;
       }
 
-      const mappedQuestions = questionsToValidate.map((q, index) => ({
-        number: (index + 1).toString(),
-        question: q.question,
-        options: q.options.map((o) => o.text),
-        correctAnswer: q.options[q.correctOptionIndex]?.text || '',
-      }));
+      const apiPayload = transformGameDataForAPI(game, questionsToValidate);
 
-      const apiPayload = transformGameDataForAPI(game, mappedQuestions);
+      const validationErrors = validateGamePayload(apiPayload);
+      if (validationErrors.length > 0) {
+        toast.error(validationErrors[0]);
+        return;
+      }
 
       await createGameMutation.mutateAsync(apiPayload);
     } catch (error) {
       console.error('Error creating game:', error);
-      toast.error('Failed to create game. Please try again.');
     }
   };
 
@@ -294,7 +301,7 @@ function Page() {
           <div className="font-heading grid grid-cols-1 gap-5 lg:grid-cols-2">
             <CustomTextField
               label="Game Name"
-              placeholder="Trivia"
+              placeholder="Trivia Showdown"
               type="text"
               name="name"
               value={game.name}
@@ -305,7 +312,7 @@ function Page() {
 
             <CustomTextField
               label="Entry Fee (₦)"
-              placeholder="1000"
+              placeholder="100"
               type="number"
               name="entryFee"
               value={toString(game.entryFee)}
@@ -317,8 +324,9 @@ function Page() {
 
             <CustomTextField
               label="Game Prize (₦)"
+              placeholder="5000"
               name="gamePrize"
-              type="text"
+              type="number"
               value={toString(game.gamePrize)}
               onChange={handleGameDetailsChange}
               inputMode="numeric"
@@ -336,9 +344,9 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Prize Between"
+              label="Share Prize Between (Winners)"
               name="numOfShare"
-              type="text"
+              type="number"
               value={toString(game.numOfShare)}
               onChange={handleGameDetailsChange}
               inputMode="numeric"
@@ -347,7 +355,7 @@ function Page() {
             />
 
             <CustomTextField
-              label="Set Questions Limit"
+              label="Questions Limit"
               name="questionsLimit"
               type="number"
               value={toString(questionsLimit)}
@@ -357,8 +365,8 @@ function Page() {
             />
 
             <CustomTextField
-              label="Game Description"
-              placeholder="Type something here"
+              label="Game Description (Optional)"
+              placeholder="A fast-paced trivia game with cash rewards"
               type="text"
               name="gameDescription"
               value={game.gameDescription || ''}
@@ -366,17 +374,17 @@ function Page() {
             />
 
             <CustomTextField
-              label="Game Background music (Ad)"
+              label="Game Background Music (Optional)"
               type="file"
-              accept="audio/mpeg"
+              accept="audio/mpeg,audio/mp3,audio/wav"
               name="music"
               onChange={(e) => handleFileChange(e, 'music')}
             />
 
             <CustomTextField
-              label="Game Video Ad"
+              label="Game Video Ad (Optional)"
               type="file"
-              accept="video/mp4"
+              accept="video/mp4,video/webm,video/ogg"
               name="videoAds"
               onChange={(e) => handleFileChange(e, 'videoAds')}
             />

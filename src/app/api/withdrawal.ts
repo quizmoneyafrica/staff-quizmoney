@@ -59,6 +59,22 @@ interface RejectWithdrawalRequest {
   comment: string;
 }
 
+interface WithdrawalStatsData {
+  totalWithdrawalRequest: number;
+  totalWithdrawalPerChange: number;
+  totalApprovedRequest: number;
+  totalApprovedPerChange: number;
+  totalPendingRequest: number;
+  totalPendingPerChange: number;
+}
+
+interface WithdrawalStatsApiResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: WithdrawalStatsData;
+}
+
 export const useGetWithdrawalRequests = (
   page: number,
   pageSize: number,
@@ -148,17 +164,31 @@ export const useRejectWithdrawal = () => {
   });
 };
 
-export const useGetWithdrawalStats = () => {
+export const useGetWithdrawalStats = (dateRange?: DateRange) => {
   const request = useRequestInstance();
 
   return useQuery({
-    queryKey: ['get_withdrawal_stats'],
-    queryFn: () =>
-      request
-        .post(`/withdrawalRequestStatsV2`)
-        .then((res) => res.data)
-        .catch((error) => {
-          throw error.response?.data || error;
-        }),
+    queryKey: ['get_withdrawal_stats', dateRange],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+
+      if (dateRange) {
+        params.append('start-date', dateRange.start);
+        params.append('end-date', dateRange.end);
+      } else {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 30);
+
+        params.append('start-date', startDate.toISOString().split('T')[0]);
+        params.append('end-date', endDate.toISOString().split('T')[0]);
+      }
+
+      const response = await request.get<WithdrawalStatsApiResponse>(
+        `/withdrawal-requests/summary?${params.toString()}`,
+      );
+
+      return response.data.data;
+    },
   });
 };

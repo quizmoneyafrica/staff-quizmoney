@@ -1,31 +1,99 @@
-// utils/gameTransformers.ts
 import { Game, QuestionState } from '../store/gameSlice';
-import { CreateGamePayload, CreateGameQuestion } from '../api/typesGame';
+import { CreateGamePayload } from '../api/game';
+
+interface Option {
+  id: string;
+  text: string;
+}
+
+interface Question {
+  id: string;
+  question: string;
+  options: Option[];
+  correctOptionIndex: number;
+  isExpanded: boolean;
+}
+
+interface TransformedQuestion {
+  number: number;
+  question: string;
+  options: string[];
+  correctAnswer: string;
+}
 
 export const transformGameDataForAPI = (
   gameDetails: Game,
-  questions: QuestionState[],
+  questions: Question[],
 ): CreateGamePayload => {
-  // Transform questions to match API format
-  const transformedQuestions: CreateGameQuestion[] = questions.map(
+  const startTime = gameDetails.startDate?.iso
+    ? gameDetails.startDate.iso
+    : new Date().toISOString();
+
+  const duration = 30;
+
+  return {
+    name: gameDetails.name || '',
+    prize: Number(gameDetails.gamePrize) || 0,
+    fee: Number(gameDetails.entryFee) || 0,
+    startTime: startTime,
+    questionLimit: questions.length,
+    description: gameDetails.gameDescription || '',
+    duration: duration,
+  };
+};
+
+export const transformGameDataWithQuestions = (
+  gameDetails: Game,
+  questions: Question[],
+): CreateGamePayload & { questions?: TransformedQuestion[] } => {
+  const basePayload = transformGameDataForAPI(gameDetails, questions);
+
+  const transformedQuestions: TransformedQuestion[] = questions.map(
     (question, index) => ({
       number: index + 1,
       question: question.question,
-      options: question.options,
-      correctAnswer: question.correctAnswer || '',
+      options: question.options.map((option) => option.text),
+      correctAnswer: question.options[question.correctOptionIndex]?.text || '',
     }),
   );
 
-  // Transform game details to match API format
   return {
-    name: gameDetails.name || '',
-    description: gameDetails.gameDescription || '',
+    ...basePayload,
     questions: transformedQuestions,
-    gamePrize: gameDetails.gamePrize || 0,
-    numOfShare: gameDetails.numOfShare || 0,
-    entryFee: String(gameDetails.entryFee || 0),
-    startDate: gameDetails.startDate?.iso
-      ? gameDetails.startDate.iso.split('T')[0]
-      : new Date().toISOString().split('T')[0],
   };
+};
+
+export const validateGamePayload = (payload: CreateGamePayload): string[] => {
+  const errors: string[] = [];
+
+  if (!payload.name?.trim()) {
+    errors.push('Game name is required');
+  }
+
+  if (payload.fee < 100) {
+    errors.push('Entry fee must be at least ₦100');
+  }
+
+  if (payload.prize < 500) {
+    errors.push('Game prize must be at least ₦500');
+  }
+
+  if (!payload.startTime) {
+    errors.push('Start time is required');
+  } else {
+    const startDate = new Date(payload.startTime);
+    if (startDate <= new Date()) {
+      errors.push('Start time must be in the future');
+    }
+  }
+
+  if (payload.questionLimit < 1) {
+    errors.push('Question limit must be at least 1');
+  }
+
+  if (payload.duration && payload.duration < 1) {
+    errors.push('Duration must be at least 1 minute');
+  }
+
+  return errors;
 };

@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import GameApi from '@/app/api/game';
+import GameApi, {
+  GameQuestionResponse,
+  GameQuestion,
+  GameQuestionOption,
+} from '@/app/api/game';
 import AppLoader from '@/app/components/loader/loader';
 import {
   Game,
@@ -37,11 +41,39 @@ function Page() {
   const [datetimeInput, setDatetimeInput] = useState('');
   const [fetchingData, setFetchingData] = useState(true);
 
-  const updateGameMutation = useUpdateGame();
+  const { updateGame } = useUpdateGame();
 
   const toStringValue = (value: string | number | undefined): string => {
     if (value === undefined || value === null) return '';
     return String(value);
+  };
+
+  const transformApiQuestionToQuestionState = (
+    apiQuestion: GameQuestion,
+  ): QuestionState => {
+    const correctOption = apiQuestion.options.find((option) => option.answer);
+    return {
+      number: apiQuestion.order.toString(),
+      question: apiQuestion.question,
+      options: apiQuestion.options.map((option) => option.option),
+      correctAnswer: correctOption?.option || '',
+    };
+  };
+
+  const transformQuestionStateToApiQuestion = (
+    question: QuestionState,
+    order: number,
+  ): GameQuestion => {
+    return {
+      questionId: `Q${order}`,
+      order: order,
+      question: question.question,
+      options: question.options.map((option, index) => ({
+        optionId: `O${order}${index + 1}`,
+        option: option,
+        answer: option === question.correctAnswer,
+      })),
+    };
   };
 
   React.useEffect(() => {
@@ -49,23 +81,40 @@ function Page() {
       if (!params.id) return;
       try {
         setFetchingData(true);
-        const res = await GameApi.getGameById(`${params.id}`);
-        const result = res.data.result;
+        const res = await GameApi.getGameByIdV2(`${params.id}`);
+        const result: GameQuestionResponse = res.data;
 
         const questionsWithIds: QuestionWithId[] =
-          result.questions?.map((question: QuestionState, index: number) => ({
-            ...question,
+          result.questions?.map((question: GameQuestion, index: number) => ({
+            ...transformApiQuestionToQuestionState(question),
             id: `question-${index}-${Date.now()}`,
           })) || [];
 
-        setFetchedData({
-          ...result,
+        const transformedGame: GameWithIds = {
+          objectId: result.gameId,
+          name: result.name,
+          startDate: {
+            iso: result.startTime,
+          },
+          completed: false,
+          entryFee: result.fee.toString(),
+          gamePrize: result.prize,
+          numOfShare: 0, //
+          winners: [],
+          users: [],
+          userTimes: [],
+          videoAds: { name: '', url: '' },
+          music: { name: '', url: '' },
+          createdAt: '',
+          updatedAt: '',
           questions: questionsWithIds,
-        });
+          gameDescription: result.description || '',
+        };
 
-        dispatch(setCurrentGame(result));
+        setFetchedData(transformedGame);
+        dispatch(setCurrentGame(transformedGame));
 
-        const isoString = result?.startDate?.iso;
+        const isoString = result.startTime;
         if (isoString) {
           const dateObj = new Date(isoString);
 
@@ -202,26 +251,22 @@ function Page() {
       }
 
       const transformedQuestions = fetchedData.questions.map(
-        (question, index) => ({
-          number: index + 1,
-          question: question.question,
-          options: question.options,
-          correctAnswer: question.correctAnswer,
-        }),
+        (question, index) =>
+          transformQuestionStateToApiQuestion(question, index + 1),
       );
 
       const payload = {
-        objectId: String(params.id),
+        fee: Number(fetchedData.entryFee),
+        duration: 30, //
+        startTime: datetimeInput,
+        description: fetchedData.gameDescription || '',
+        prize: fetchedData.gamePrize,
         name: fetchedData.name,
-        description: '',
+        questionLimit: fetchedData.questions.length,
         questions: transformedQuestions,
-        gamePrize: fetchedData.gamePrize,
-        numOfShare: fetchedData.numOfShare,
-        entryFee: String(fetchedData.entryFee),
-        startDate: datetimeInput,
       };
 
-      updateGameMutation.mutate(payload);
+      await updateGame(params.id as string, payload);
     } catch (error: any) {
       console.error('Save error:', error);
       toast.error('Failed to save game. Please try again.');
@@ -240,10 +285,9 @@ function Page() {
             <h3 className="font-heading text-xl font-medium">Game Details</h3>
             <button
               onClick={handleSave}
-              disabled={updateGameMutation.isPending}
               className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
             >
-              {updateGameMutation.isPending ? 'Saving...' : 'Save Changes'}
+              Save Changes
             </button>
           </div>
 
