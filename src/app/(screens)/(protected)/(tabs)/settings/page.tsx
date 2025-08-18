@@ -1,5 +1,5 @@
 'use client';
-import { User, UpdateUserForm } from '@/app/api/interface';
+import { UpdateUserForm, User } from '@/app/api/interface';
 import userApi, {
   getAuthUser,
   AdminResponse,
@@ -36,9 +36,11 @@ const initialForm = {
 
 const Page = () => {
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
-  const user = encrypted ? decryptData(encrypted) : null;
-  const queryClient = useQueryClient();
-
+  const user = encrypted;
+  // ? decryptData(encrypted) : null;
+  const formattedDOB = new Date(user?.dob?.iso ?? '')
+    .toISOString()
+    .split('T')[0];
   const [formData, setFormData] = useState({
     ...initialForm,
     ...user?.user,
@@ -56,6 +58,7 @@ const Page = () => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { loginUser } = useAuth();
+  const queryClient = useQueryClient();
 
   // Get admin profile data
   const {
@@ -130,56 +133,47 @@ const Page = () => {
   const updateUser = async () => {
     setIsUpdating(true);
 
-    const updateData = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      dob: formData.dob,
-      gender: formData.gender,
-      country: formData.country,
-      facebook: formData.facebook ?? '',
-      instagram: formData.instagram ?? '',
-      twitter: formData.twitter ?? '',
-      whatsapp: formData.whatsapp ?? '',
-      avatar: user?.avatar ?? '',
-      promotionalMails: user?.promotionalMails ?? false,
-    };
+    await userApi
+      .updateUser({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dob: formData.dob,
+        gender: formData.gender,
+        country: formData.country,
+        facebook: formData.facebook ?? '',
+        instagram: formData.instagram ?? '',
+        twitter: formData.twitter ?? '',
+        whatsapp: formData.whatsapp ?? '',
+        avatar: user?.avatar ?? '',
+        promotionalMails: user?.promotionalMails ?? false,
+      })
+      .then((res) => {
+        if (res.status === 200) {
+          setIsEditing(false);
+          toast.success('Profile updated successfully', {
+            position: 'top-center',
+          });
 
-    updateProfileMutation.mutate(updateData);
-    setIsUpdating(false);
+          const userData = res.data.result.updatedUser;
+          // const encryptedUser = encryptData(userData);
+
+          // ✅ Dispatch to Redux
+          loginUser(userData);
+        }
+      })
+      .catch((err: AxiosError) => {
+        toast.error(
+          (err.response?.data as unknown as { error: string }).error ||
+            'Failed to update profile. Please try again later.',
+          {
+            position: 'top-center',
+          },
+        );
+      })
+      .finally(() => {
+        setIsUpdating(false);
+      });
   };
-
-  // Use admin data if available, otherwise fall back to user data
-  const profileData = adminData?.data || user;
-  const avatarUrl =
-    profileData?.avatarUrl ||
-    profileData?.avatar ||
-    '/assets/images/profile.png';
-
-  if (adminLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="border-primary-900 h-32 w-32 animate-spin rounded-full border-b-2"></div>
-      </div>
-    );
-  }
-
-  if (adminError) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="mb-4 text-red-600">Failed to load profile data</p>
-          <button
-            onClick={() =>
-              queryClient.invalidateQueries({ queryKey: ['adminProfile'] })
-            }
-            className="bg-primary-900 rounded px-4 py-2 text-white"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <motion.div
@@ -208,7 +202,11 @@ const Page = () => {
               >
                 <div className="relative flex h-full w-full items-center justify-center">
                   <Image
-                    src={avatarUrl}
+                    src={
+                      adminData?.data?.avatarUrl ||
+                      user?.avatar ||
+                      '/icons/user-cirlce-add.svg'
+                    }
                     alt="profile"
                     width={100}
                     height={100}
@@ -233,16 +231,17 @@ const Page = () => {
                     Change Image
                   </p>
                   <p className=" font-semibold capitalize">
-                    {profileData?.firstName} {profileData?.lastName}
+                    {adminData?.data?.firstName || user?.firstName}{' '}
+                    {adminData?.data?.lastName || user?.lastName}
                   </p>
                   <p className=" font-light">
-                    {profileData?.emailAddress || profileData?.email}
+                    {adminData?.data?.emailAddress || user?.email}
                   </p>
                   <p className=" block text-xs font-light sm:hidden">
                     Joined{' '}
-                    {profileData?.dateJoined || profileData?.createdAt
+                    {adminData?.data?.dateJoined || user?.createdAt
                       ? formatDateTime(
-                          profileData.dateJoined || profileData.createdAt,
+                          adminData?.data?.dateJoined || user?.createdAt,
                         ).fullDate
                       : 'N/A'}
                   </p>

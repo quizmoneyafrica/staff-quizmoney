@@ -69,7 +69,7 @@ function AppHeader() {
   const dispatch = useDispatch();
   const pathname = usePathname();
   const excludedPaths = ['/practice-game'];
-  const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
+  const userPayload = useAppSelector((s) => s.auth.userEncryptedData);
   const currentGame = useAppSelector((s) => s.game.currentGame);
   const router = useRouter();
   const [openLogout, setOpenLogout] = useState(false);
@@ -79,7 +79,8 @@ function AppHeader() {
     return Array.isArray(list) ? list.filter((n) => !n.read).length : 0;
   });
 
-  const { user } = encrypted ? decryptData(encrypted) : null;
+  // const { user } = encrypted;
+  // ? decryptData(encrypted) : null;
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -94,41 +95,41 @@ function AppHeader() {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  useEffect(() => {
-    let subscription: ParseSubscription | null = null;
-
-    const NotificationLiveQuery = async () => {
-      const userPointer = {
-        __type: 'Pointer',
-        className: '_User',
-        objectId: user?.objectId,
-      };
-
-      const query = new Parse.Query('Notification');
-      query.equalTo('user', userPointer);
-      subscription = (await liveQueryClient.subscribe(
-        query,
-      )) as ParseSubscription;
-
-      subscription?.on('create', () => {
-        fetchNotifications();
-      });
-      subscription?.on('update', () => {
-        fetchNotifications();
-      });
-      subscription?.on('delete', () => {
-        fetchNotifications();
-      });
-    };
-
-    if (user?.objectId) {
-      NotificationLiveQuery();
-    }
-
-    return () => {
-      if (subscription) subscription.unsubscribe();
-    };
-  }, [fetchNotifications, user?.objectId]);
+  //   useEffect(() => {
+  //     let subscription: ParseSubscription | null = null;
+  //
+  //     const NotificationLiveQuery = async () => {
+  //       const userPointer = {
+  //         __type: 'Pointer',
+  //         className: '_User',
+  //         objectId: userPayload?.user?.objectId,
+  //       };
+  //
+  //       const query = new Parse.Query('Notification');
+  //       query.equalTo('user', userPointer);
+  //       subscription = (await liveQueryClient.subscribe(
+  //         query,
+  //       )) as ParseSubscription;
+  //
+  //       subscription?.on('create', () => {
+  //         fetchNotifications();
+  //       });
+  //       subscription?.on('update', () => {
+  //         fetchNotifications();
+  //       });
+  //       subscription?.on('delete', () => {
+  //         fetchNotifications();
+  //       });
+  //     };
+  //
+  //     if (userPayload?.user?.objectId) {
+  //       NotificationLiveQuery();
+  //     }
+  //
+  //     return () => {
+  //       if (subscription) subscription.unsubscribe();
+  //     };
+  //   }, [fetchNotifications, userPayload?.user?.objectId]);
 
   const handleTabRoute = (path: string) => {
     if (pathname !== path) {
@@ -264,13 +265,13 @@ function AppHeader() {
           <div className="border-primary-50 flex-none cursor-pointer rounded-full border bg-white p-1 lg:border-none lg:px-2 lg:py-1">
             <Flex align="center" gap="2">
               <Avatar
-                src={user?.avatar}
-                fallback={user?.firstName?.charAt(0).toUpperCase()}
+                src={userPayload?.user?.avatar}
+                fallback={userPayload?.user?.firstName?.charAt(0).toUpperCase()}
                 radius="full"
                 className="bg-primary-50"
               />
               <p className="hidden font-medium capitalize text-[#1B212D] lg:flex">
-                {user?.firstName} {user?.lastName}
+                {userPayload?.user?.firstName} {userPayload?.user?.lastName}
               </p>
               <ArrowDownFillIcon className="hidden text-neutral-500 lg:flex" />
             </Flex>
@@ -405,13 +406,15 @@ function AppHeader() {
                     className="w-full"
                   >
                     <Avatar
-                      src={user?.avatar}
-                      fallback={user?.firstName?.charAt(0).toUpperCase()}
+                      src={userPayload?.user?.avatar}
+                      fallback={userPayload?.user?.firstName
+                        ?.charAt(0)
+                        .toUpperCase()}
                       radius="full"
                       className="bg-primary-50 h-8 w-8"
                     />
                     <p className="flex-1 text-center text-sm font-medium capitalize text-[#1B212D]">
-                      {user?.firstName}
+                      {userPayload?.user?.firstName}
                     </p>
                     <ArrowDownFillIcon className="h-4 w-4 text-neutral-500" />
                   </Flex>
@@ -505,7 +508,7 @@ function AppHeader() {
                   {!pathname.includes('player-profile') && (
                     <span className="lg:flex">
                       {pageTitle === 'Home'
-                        ? `Welcome, ${user?.firstName} 👋`
+                        ? `Welcome, ${userPayload?.user?.firstName} 👋`
                         : pageTitle}
                     </span>
                   )}

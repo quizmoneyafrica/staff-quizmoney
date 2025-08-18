@@ -28,10 +28,12 @@ const authSlice = createSlice({
     setRehydrated(state, action: PayloadAction<boolean>) {
       state.rehydrated = action.payload;
     },
-    updateUser(state, action: PayloadAction<object>) {
-      const currentDecrypted = decryptData(state.userEncryptedData || '') ?? {};
-      const updated = { ...currentDecrypted, ...action.payload };
-      state.userEncryptedData = encryptData(updated);
+    updateUser(state, action: PayloadAction<string>) {
+      // const currentDecrypted = decryptData(state.userEncryptedData || '') ?? {};
+      // const currentDecrypted = state.userEncryptedData
+      // const updated = { ...currentDecrypted, ...action.payload };
+      // state.userEncryptedData = encryptData(updated);
+      state.userEncryptedData = action.payload;
     },
   },
 });
