@@ -1,6 +1,10 @@
 'use client';
-import { User } from '@/app/api/interface';
-import userApi, { getAuthUser } from '@/app/api/userApi';
+import { User, UpdateUserForm } from '@/app/api/interface';
+import userApi, {
+  getAuthUser,
+  AdminResponse,
+  AvatarProjection,
+} from '@/app/api/userApi';
 import { useAppSelector, useAuth } from '@/app/hooks/useAuth';
 import { ArrowDownIcon, MailIcon, PersonIcon } from '@/app/icons/icons';
 import { decryptData, encryptData } from '@/app/utils/crypto';
@@ -15,6 +19,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const initialForm = {
   firstName: '',
@@ -32,14 +37,16 @@ const initialForm = {
 const Page = () => {
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
   const user = encrypted ? decryptData(encrypted) : null;
-  const formattedDOB = new Date(user?.dob?.iso ?? '')
-    .toISOString()
-    .split('T')[0];
+  const queryClient = useQueryClient();
+
   const [formData, setFormData] = useState({
     ...initialForm,
     ...user?.user,
-    dob: formattedDOB,
+    dob: user?.dob?.iso
+      ? new Date(user.dob.iso).toISOString().split('T')[0]
+      : '',
   });
+
   const authUser = getAuthUser();
   const { fullDate } = formatDateTime(
     authUser.createdAt ?? new Date().toISOString(),
@@ -49,6 +56,68 @@ const Page = () => {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { loginUser } = useAuth();
+
+  // Get admin profile data
+  const {
+    data: adminData,
+    isLoading: adminLoading,
+    error: adminError,
+  } = useQuery<{
+    success: boolean;
+    code: string;
+    message: string;
+    data: AdminResponse;
+  }>({
+    queryKey: ['adminProfile', user?.objectId],
+    queryFn: async () => {
+      const response = await userApi.getAdminProfile(user?.objectId || '');
+      return response.data;
+    },
+    enabled: !!user?.objectId,
+  });
+
+  // Get avatars list
+  const { data: avatarsData, isLoading: avatarsLoading } = useQuery<{
+    success: boolean;
+    code: string;
+    message: string;
+    data: AvatarProjection[];
+  }>({
+    queryKey: ['avatars'],
+    queryFn: async () => {
+      const response = await userApi.getAvatarsList();
+      return response.data;
+    },
+  });
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (formData: UpdateUserForm) => userApi.updateUser(formData),
+    onSuccess: (res) => {
+      if (res.status === 200) {
+        setIsEditing(false);
+        toast.success('Profile updated successfully', {
+          position: 'top-center',
+        });
+
+        const userData = res.data.result.updatedUser;
+        const encryptedUser = encryptData(userData);
+
+        loginUser(encryptedUser);
+
+        queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
+      }
+    },
+    onError: (err: AxiosError) => {
+      toast.error(
+        (err.response?.data as unknown as { error: string }).error ||
+          'Failed to update profile. Please try again later.',
+        {
+          position: 'top-center',
+        },
+      );
+    },
+  });
 
   const onChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -61,47 +130,56 @@ const Page = () => {
   const updateUser = async () => {
     setIsUpdating(true);
 
-    await userApi
-      .updateUser({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        dob: formData.dob,
-        gender: formData.gender,
-        country: formData.country,
-        facebook: formData.facebook ?? '',
-        instagram: formData.instagram ?? '',
-        twitter: formData.twitter ?? '',
-        whatsapp: formData.whatsapp ?? '',
-        avatar: user?.avatar ?? '',
-        promotionalMails: user?.promotionalMails ?? false,
-      })
-      .then((res) => {
-        if (res.status === 200) {
-          setIsEditing(false);
-          toast.success('Profile updated successfully', {
-            position: 'top-center',
-          });
+    const updateData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      dob: formData.dob,
+      gender: formData.gender,
+      country: formData.country,
+      facebook: formData.facebook ?? '',
+      instagram: formData.instagram ?? '',
+      twitter: formData.twitter ?? '',
+      whatsapp: formData.whatsapp ?? '',
+      avatar: user?.avatar ?? '',
+      promotionalMails: user?.promotionalMails ?? false,
+    };
 
-          const userData = res.data.result.updatedUser;
-          const encryptedUser = encryptData(userData);
-
-          // ✅ Dispatch to Redux
-          loginUser(encryptedUser);
-        }
-      })
-      .catch((err: AxiosError) => {
-        toast.error(
-          (err.response?.data as unknown as { error: string }).error ||
-            'Failed to update profile. Please try again later.',
-          {
-            position: 'top-center',
-          },
-        );
-      })
-      .finally(() => {
-        setIsUpdating(false);
-      });
+    updateProfileMutation.mutate(updateData);
+    setIsUpdating(false);
   };
+
+  // Use admin data if available, otherwise fall back to user data
+  const profileData = adminData?.data || user;
+  const avatarUrl =
+    profileData?.avatarUrl ||
+    profileData?.avatar ||
+    '/assets/images/profile.png';
+
+  if (adminLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="border-primary-900 h-32 w-32 animate-spin rounded-full border-b-2"></div>
+      </div>
+    );
+  }
+
+  if (adminError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="mb-4 text-red-600">Failed to load profile data</p>
+          <button
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ['adminProfile'] })
+            }
+            className="bg-primary-900 rounded px-4 py-2 text-white"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -130,7 +208,7 @@ const Page = () => {
               >
                 <div className="relative flex h-full w-full items-center justify-center">
                   <Image
-                    src={user?.avatar ?? '/assets/images/profile.png'}
+                    src={avatarUrl}
                     alt="profile"
                     width={100}
                     height={100}
@@ -155,11 +233,18 @@ const Page = () => {
                     Change Image
                   </p>
                   <p className=" font-semibold capitalize">
-                    {user?.firstName} {user?.lastName}
+                    {profileData?.firstName} {profileData?.lastName}
                   </p>
-                  <p className=" font-light">{user?.email}</p>
+                  <p className=" font-light">
+                    {profileData?.emailAddress || profileData?.email}
+                  </p>
                   <p className=" block text-xs font-light sm:hidden">
-                    Joined {user?.createdAt ? fullDate : 'N/A'}
+                    Joined{' '}
+                    {profileData?.dateJoined || profileData?.createdAt
+                      ? formatDateTime(
+                          profileData.dateJoined || profileData.createdAt,
+                        ).fullDate
+                      : 'N/A'}
                   </p>
                 </div>
 

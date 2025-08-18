@@ -18,6 +18,28 @@ const XParseApplicationId = process.env.NEXT_PUBLIC_XParseApplicationId;
 const XParseRESTAPIKey = process.env.NEXT_PUBLIC_XParseRESTAPIKey;
 const SECRET_KEY = process.env.NEXT_PUBLIC_SECRET_KEY!;
 
+export interface AdminResponse {
+  firstName: string;
+  lastName: string;
+  avatarUrl: string;
+  adminType: 'SUPER_ADMIN' | 'ADMIN' | 'MODERATOR';
+  emailAddress: string;
+  dateJoined: string;
+  gender: 'MALE' | 'FEMALE' | 'OTHER';
+  adminId: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface AvatarProjection {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
 const appHeaders = {
   // 'X-Parse-Application-Id': XParseApplicationId,
   // 'X-Parse-REST-API-Key': XParseRESTAPIKey,
@@ -148,6 +170,40 @@ const UserAPI = {
         headers: getSessionTokenHeaders(),
       },
     );
+  },
+
+  getAdminProfile(adminId: string): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: AdminResponse;
+    }>
+  > {
+    return axios.get(`${BASE_URL}/admins/${adminId}`, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  changePassword(
+    request: ChangePasswordRequest,
+  ): Promise<AxiosResponse<ApiResponse>> {
+    return axios.patch(`${BASE_URL}/admins/password`, request, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  getAvatarsList(): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: AvatarProjection[];
+    }>
+  > {
+    return axios.get(`${BASE_URL}/avatars`, {
+      headers: getSessionTokenHeaders(),
+    });
   },
 };
 

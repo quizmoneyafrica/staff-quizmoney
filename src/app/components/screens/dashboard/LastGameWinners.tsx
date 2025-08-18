@@ -8,17 +8,12 @@ import Link from 'next/link';
 import { Avatar } from '@radix-ui/themes';
 import { formatNaira } from '@/app/utils/utils';
 
-import DashboardApi from '@/app/api/dashboardApi';
+import DashboardApi, { LeaderboardResponse } from '@/app/api/dashboardApi';
 
 const LastGameWinners: React.FunctionComponent = () => {
-  const {
-    data: winners,
-    isLoading,
-    isError,
-  } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['lastGameWinners'],
-    queryFn: () => DashboardApi.getLastGameWinners(0, 5),
-    select: (res) => res.data.content,
+    queryFn: () => DashboardApi.getLeaderboard(0, 5),
   });
 
   if (isError) {
@@ -47,16 +42,18 @@ const LastGameWinners: React.FunctionComponent = () => {
       </div>
 
       <div className="mt-3 space-y-4">
-        {winners && winners.length > 0 ? (
-          winners.map((item, index) => (
-            <UserTable
-              key={index}
-              num={item.rank}
-              image={null}
-              name={item.playerName}
-              amount={item.prizeWon}
-            />
-          ))
+        {data?.data?.data?.content && data.data.data.content.length > 0 ? (
+          data.data.data.content.map(
+            (item: LeaderboardResponse, index: number) => (
+              <UserTable
+                key={index}
+                num={item.rank}
+                image={null}
+                name={item.playerName}
+                amount={item.prizeWon}
+              />
+            ),
+          )
         ) : (
           <div className="flex h-48 items-center justify-center text-sm text-gray-500">
             No winners found for the last game.
