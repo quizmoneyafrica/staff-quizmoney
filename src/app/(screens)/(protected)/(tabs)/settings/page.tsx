@@ -38,20 +38,43 @@ const Page = () => {
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
   const user = encrypted;
   // ? decryptData(encrypted) : null;
-  const formattedDOB = new Date(user?.dob?.iso ?? '')
-    .toISOString()
-    .split('T')[0];
+  const formattedDOB = user?.dob?.iso
+    ? (() => {
+        try {
+          return new Date(user.dob.iso).toISOString().split('T')[0];
+        } catch (error) {
+          console.error('Invalid date format for DOB:', error);
+          return '';
+        }
+      })()
+    : '';
   const [formData, setFormData] = useState({
     ...initialForm,
     ...user?.user,
     dob: user?.dob?.iso
-      ? new Date(user.dob.iso).toISOString().split('T')[0]
+      ? (() => {
+          try {
+            return new Date(user.dob.iso).toISOString().split('T')[0];
+          } catch (error) {
+            console.error('Invalid date format for DOB in formData:', error);
+            return '';
+          }
+        })()
       : '',
   });
 
   const authUser = getAuthUser();
   const { fullDate } = formatDateTime(
-    authUser.createdAt ?? new Date().toISOString(),
+    authUser?.createdAt
+      ? (() => {
+          try {
+            return new Date(authUser.createdAt).toISOString();
+          } catch (error) {
+            console.error('Invalid date format for createdAt:', error);
+            return new Date().toISOString();
+          }
+        })()
+      : new Date().toISOString(),
   );
 
   const [isEditing, setIsEditing] = useState(false);
@@ -240,9 +263,19 @@ const Page = () => {
                   <p className=" block text-xs font-light sm:hidden">
                     Joined{' '}
                     {adminData?.data?.dateJoined || user?.createdAt
-                      ? formatDateTime(
-                          adminData?.data?.dateJoined || user?.createdAt,
-                        ).fullDate
+                      ? (() => {
+                          try {
+                            return formatDateTime(
+                              adminData?.data?.dateJoined || user?.createdAt,
+                            ).fullDate;
+                          } catch (error) {
+                            console.error(
+                              'Invalid date format for join date:',
+                              error,
+                            );
+                            return 'N/A';
+                          }
+                        })()
                       : 'N/A'}
                   </p>
                 </div>
