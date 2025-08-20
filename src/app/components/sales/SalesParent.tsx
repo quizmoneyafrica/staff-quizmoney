@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DateRange } from 'react-day-picker';
 import WalletStatCard, {
@@ -17,8 +17,9 @@ import {
   WalletCardIconLightGreen,
   PurchasedIcon,
 } from '@/app/icons/icons';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { formatNaira } from '@/app/utils/utils';
+import { SalesChartResponse } from '@/app/api/salesApi';
 
 type WalletStat = {
   title: string;
@@ -47,7 +48,17 @@ const getDateRange = (period: string, monthRange?: DateRange) => {
 function SalesParent() {
   const [selectedPeriod, setSelectedPeriod] = useState('Months');
   const [isWithdrawalVisible, setIsWithdrawalVisible] = useState(false);
-  const [monthRange, setMonthRange] = useState<DateRange | undefined>();
+  const [monthRange, setMonthRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: new Date(),
+  });
+
+  const formattedStartDate = monthRange?.from
+    ? format(monthRange.from, 'yyyy-MM-dd')
+    : '';
+  const formattedEndDate = monthRange?.to
+    ? format(monthRange.to, 'yyyy-MM-dd')
+    : '';
 
   const {
     data: summaryData,
@@ -60,31 +71,29 @@ function SalesParent() {
   });
 
   const {
-    data: chartResponse,
+    data: salesChartData = [],
     isLoading: isChartLoading,
     isError: isChartError,
     error: chartError,
-  } = useQuery({
-    queryKey: ['salesChart', selectedPeriod, monthRange],
+  } = useQuery<SalesChartResponse[]>({
+    queryKey: [
+      'salesChart',
+      formattedStartDate,
+      formattedEndDate,
+      selectedPeriod,
+    ],
     queryFn: async () => {
-      const dateRange = getDateRange(selectedPeriod, monthRange);
-
-      try {
-        const response = await SalesApi.getSalesChart(
-          dateRange.start,
-          dateRange.end,
-        );
-        return response.data;
-      } catch (error) {
-        throw new Error('Failed to fetch sales chart data');
-      }
+      if (!formattedStartDate || !formattedEndDate) return [];
+      const response = await SalesApi.getSalesChart(
+        formattedStartDate,
+        formattedEndDate,
+      );
+      return response.data.data?.salesChartResponses || [];
     },
-    enabled:
-      selectedPeriod !== 'Years' ||
-      (selectedPeriod === 'Years' && !!monthRange?.from && !!monthRange?.to),
+    enabled: !!formattedStartDate && !!formattedEndDate,
   });
 
-  const chartData = chartResponse?.data?.salesChartResponses || [];
+  const chartData = salesChartData;
 
   const isLoading = isSummaryLoading || isChartLoading;
 
@@ -160,7 +169,7 @@ function SalesParent() {
       </div>
 
       <SalesChart
-        chartData={chartData}
+        chartData={salesChartData || []}
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={setSelectedPeriod}
         monthRange={monthRange}

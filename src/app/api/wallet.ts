@@ -1,6 +1,20 @@
 import axios, { AxiosResponse } from 'axios';
 import { BASE_URL, getSessionTokenHeaders } from './userApi';
 import { ApiResponse } from './interface';
+
+export interface CustomerWalletTransactionResponse {
+  id: string;
+  transactionDate: string;
+  transactionStatus: string;
+  transactionType: string;
+  narration: string;
+  firstName: string;
+  lastName: string;
+  amount: number;
+  direction: 'CREDIT' | 'DEBIT';
+  customerId: string;
+  walletBalance: number;
+}
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRequestInstance } from './config';
 
@@ -284,6 +298,16 @@ const WalletApi = {
         headers: getSessionTokenHeaders(),
       },
     );
+  },
+
+  getTransactionById(
+    transactionId: string,
+  ): Promise<
+    AxiosResponse<ApiResponse & { data: CustomerWalletTransactionResponse }>
+  > {
+    return axios.get(`${BASE_URL}/wallet-transactions/${transactionId}`, {
+      headers: getSessionTokenHeaders(),
+    });
   },
 };
 
