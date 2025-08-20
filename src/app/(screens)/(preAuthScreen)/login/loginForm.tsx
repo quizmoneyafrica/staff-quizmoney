@@ -53,7 +53,7 @@ const LoginForm = ({ loading, setLoading }: Props) => {
     const newValues = {
       username: email.toLowerCase().trim(),
       password: password,
-      deviceToken: token || '',
+      deviceToken: token || null,
       // deviceId: deviceId,
     };
     try {
