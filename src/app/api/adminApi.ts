@@ -60,7 +60,7 @@ const AdminApi = {
   ): Promise<
     AxiosResponse<{ success: boolean; data: PaginatedResponse<AdminResponse> }>
   > => {
-    return axios.get(`${BASE_URL}/admin`, {
+    return axios.get(`${BASE_URL}/admins`, {
       params,
       headers: await getSessionTokenHeaders(),
     });

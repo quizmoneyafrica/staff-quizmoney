@@ -1,9 +1,24 @@
 'use client';
-import React, { useState, useMemo, useCallback, memo, useEffect } from 'react';
-import { Search, Loader2, Eye, UserCheck, UserX } from 'lucide-react';
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  memo,
+  useEffect,
+  useRef,
+} from 'react';
+import {
+  Search,
+  Loader2,
+  Eye,
+  UserCheck,
+  UserX,
+  MoreVertical,
+} from 'lucide-react';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import { toast } from 'sonner';
+import classNames from 'classnames';
 import {
   useAdmins,
   useUpdateAdminStatus,
@@ -54,6 +69,118 @@ const mapApiToAdminData = (admin: AdminResponse): AdminData => {
     email: admin.emailAddress,
     id: admin.adminId,
   };
+};
+
+interface ActionDropdownProps {
+  options: Array<{
+    label: string;
+    onClick: () => void;
+    icon?: React.ReactNode;
+    className?: string;
+  }>;
+}
+
+const ActionDropdown: React.FC<ActionDropdownProps> = ({ options }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleOptionClick = (onClick: () => void) => {
+    onClick();
+    setIsOpen(false);
+  };
+
+  const calculatePosition = () => {
+    if (!dropdownRef.current) return { top: 0, left: 0 };
+
+    const rect = dropdownRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const dropdownHeight = options.length * 56 + 8;
+    const dropdownWidth = 155;
+
+    let top = rect.bottom + 4;
+    let left = rect.right - dropdownWidth;
+
+    if (top + dropdownHeight > viewportHeight) {
+      top = rect.top - dropdownHeight - 4;
+    }
+
+    if (left < 8) {
+      left = rect.left;
+    }
+
+    if (left + dropdownWidth > viewportWidth - 8) {
+      left = viewportWidth - dropdownWidth - 8;
+    }
+
+    if (top < 8) {
+      top = 8;
+    }
+
+    return { top, left };
+  };
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      const newPosition = calculatePosition();
+      setPosition(newPosition);
+    }
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={handleToggle}
+        className="p-1.5 text-gray-500 transition-colors hover:text-gray-700 focus:outline-none"
+        aria-label="More actions"
+      >
+        <MoreVertical className="h-4 w-4" />
+      </button>
+
+      {isOpen && (
+        <div
+          className="fixed z-[9999] w-[155px] rounded-lg border border-[#E9E9E9] bg-white shadow-[4px_16px_40px_-4px_rgba(0,0,0,0.15)]"
+          style={{
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+          }}
+        >
+          <div className="py-1">
+            {options.map((option, index) => (
+              <button
+                key={`${option.label}-${index}`}
+                onClick={() => handleOptionClick(option.onClick)}
+                className={classNames(
+                  'flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium transition-colors hover:bg-gray-50',
+                  option.className || 'text-gray-700',
+                )}
+              >
+                {option.icon && (
+                  <span className="flex-shrink-0">{option.icon}</span>
+                )}
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 interface AdminManagementTableProps {
@@ -293,6 +420,37 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
     });
   }, [filteredAdmins, sortField, sortDirection]);
 
+  const getActionOptions = useCallback(
+    (admin: AdminData) => {
+      return [
+        {
+          label: 'View Details',
+          onClick: () => {
+            setSelectedAdmin(admin);
+            setIsDetailsModalOpen(true);
+          },
+          icon: <Eye className="h-4 w-4" />,
+          className: 'text-gray-700 hover:text-blue-600',
+        },
+        {
+          label: admin.status === 'Active' ? 'Deactivate' : 'Activate',
+          onClick: () => handleStatusToggle(admin.id, admin.status),
+          icon:
+            admin.status === 'Active' ? (
+              <UserX className="h-4 w-4" />
+            ) : (
+              <UserCheck className="h-4 w-4" />
+            ),
+          className:
+            admin.status === 'Active'
+              ? 'text-red-600 hover:text-red-700'
+              : 'text-green-600 hover:text-green-700',
+        },
+      ];
+    },
+    [handleStatusToggle],
+  );
+
   if (isFetching && !data) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -407,37 +565,8 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
                     </span>
                   </Table.Cell>
                   <Table.Cell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedAdmin(admin);
-                          setIsDetailsModalOpen(true);
-                        }}
-                        className="p-1.5 text-gray-500 transition-colors hover:text-gray-700"
-                        title="View details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleStatusToggle(admin.id, admin.status)
-                        }
-                        className={`p-1.5 transition-colors ${
-                          admin.status === 'Active'
-                            ? 'text-red-500 hover:text-red-700'
-                            : 'text-green-500 hover:text-green-700'
-                        }`}
-                        title={
-                          admin.status === 'Active' ? 'Deactivate' : 'Activate'
-                        }
-                        disabled={updateStatusMutation.isPending}
-                      >
-                        {admin.status === 'Active' ? (
-                          <UserX className="h-4 w-4" />
-                        ) : (
-                          <UserCheck className="h-4 w-4" />
-                        )}
-                      </button>
+                    <div className="flex items-center justify-end">
+                      <ActionDropdown options={getActionOptions(admin)} />
                     </div>
                   </Table.Cell>
                 </Table.Row>
