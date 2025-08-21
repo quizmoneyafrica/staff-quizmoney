@@ -14,12 +14,14 @@ import CustomTextField from '@/app/utils/CustomTextField';
 import { formatDateTime } from '@/app/utils/utils';
 import { CalendarIcon, GlobeIcon, Pencil1Icon } from '@radix-ui/react-icons';
 import { Flex, Grid } from '@radix-ui/themes';
-import { AxiosError } from 'axios';
+
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { KeyRound, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const initialForm = {
   firstName: '',
@@ -34,7 +36,28 @@ const initialForm = {
   whatsapp: '',
 };
 
+const ChangePasswordButton = () => {
+  const router = useRouter();
+
+  const handleNavigateToChangePassword = () => {
+    router.push('/settings/change-password');
+  };
+
+  return (
+    <div className="flex justify-end">
+      <button
+        onClick={handleNavigateToChangePassword}
+        className="text-primary-500 hover:text-primary-600 flex cursor-pointer items-center text-xs underline transition-colors duration-200 sm:text-sm"
+      >
+        Change Password
+        <KeyRound className="ml-1 h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
 const Page = () => {
+  const router = useRouter();
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
   const user = encrypted;
   // ? decryptData(encrypted) : null;
@@ -134,14 +157,23 @@ const Page = () => {
         queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
       }
     },
-    onError: (err: AxiosError) => {
-      toast.error(
-        (err.response?.data as unknown as { error: string }).error ||
-          'Failed to update profile. Please try again later.',
-        {
-          position: 'top-center',
-        },
-      );
+    onError: (error: unknown) => {
+      const errorMessage =
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data &&
+        typeof error.response.data === 'object' &&
+        'error' in error.response.data
+          ? (error.response.data as { error: string }).error
+          : 'Failed to update profile. Please try again later.';
+
+      toast.error(errorMessage, {
+        position: 'top-center',
+      });
     },
   });
 
@@ -184,14 +216,23 @@ const Page = () => {
           loginUser(userData);
         }
       })
-      .catch((err: AxiosError) => {
-        toast.error(
-          (err.response?.data as unknown as { error: string }).error ||
-            'Failed to update profile. Please try again later.',
-          {
-            position: 'top-center',
-          },
-        );
+      .catch((error: unknown) => {
+        const errorMessage =
+          error &&
+          typeof error === 'object' &&
+          'response' in error &&
+          error.response &&
+          typeof error.response === 'object' &&
+          'data' in error.response &&
+          error.response.data &&
+          typeof error.response.data === 'object' &&
+          'error' in error.response.data
+            ? (error.response.data as { error: string }).error
+            : 'Failed to update profile. Please try again later.';
+
+        toast.error(errorMessage, {
+          position: 'top-center',
+        });
       })
       .finally(() => {
         setIsUpdating(false);
@@ -282,12 +323,21 @@ const Page = () => {
 
                 <div className="flex flex-col items-end justify-between">
                   {!isEditing && (
-                    <div
-                      onClick={() => setIsEditing(!isEditing)}
-                      className=" text-primary-500 flex cursor-pointer items-center text-xs underline sm:text-sm "
-                    >
-                      Edit Profile
-                      <Pencil1Icon className="h-4 w-4" />
+                    <div className="space-y-2">
+                      <div
+                        onClick={() => setIsEditing(!isEditing)}
+                        className=" text-primary-500 flex cursor-pointer items-center text-xs underline sm:text-sm "
+                      >
+                        Edit Profile
+                        <Pencil1Icon className="h-4 w-4" />
+                      </div>
+                      <div
+                        onClick={() => router.push('/settings/change-password')}
+                        className="text-primary-500 hover:text-primary-600 flex cursor-pointer items-center text-xs underline transition-colors duration-200 sm:text-sm"
+                      >
+                        Change Password
+                        <KeyRound className="ml-1 h-4 w-4" />
+                      </div>
                     </div>
                   )}
                   {/* <p className="font-light text-xs sm:block hidden">
@@ -365,8 +415,8 @@ const Page = () => {
 
                 <CustomSelect
                   label="Country"
-                  name="gender"
-                  value={formData.gender}
+                  name="country"
+                  value={formData.country}
                   options={[{ label: 'Nigeria', value: 'nigeria' }]}
                   onChange={onChange}
                   disabled={!isEditing}
