@@ -15,7 +15,6 @@ const NextLiveGame: React.FunctionComponent = () => {
   } = useQuery({
     queryKey: ['nextLiveGame'],
     queryFn: () => DashboardApi.getNextLiveGame(),
-
     select: (res) => res.data.data,
   });
 
