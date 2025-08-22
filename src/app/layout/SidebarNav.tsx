@@ -6,7 +6,8 @@ import { bottomNav, navs } from './nav';
 import { AnimatePresence, motion } from 'framer-motion';
 import LogoutDialog from '../components/logout/logout';
 import { useState } from 'react';
-import { X } from 'lucide-react'; // Add this import for the X icon
+import { X } from 'lucide-react';
+import { NavDropdown } from '../components/ui/NavDropdown';
 
 function SidebarNav({
   isOpen,
@@ -57,17 +58,29 @@ function SidebarNav({
         </div>
         <Flex direction="column" px="2" className="relative flex-1">
           {navs.map((nav, index) => {
+            if (nav.isDropdown && nav.items) {
+              return (
+                <NavDropdown
+                  key={index}
+                  icon={nav.icon}
+                  title={nav.name}
+                  items={nav.items}
+                />
+              );
+            }
+
             const isActive =
-              pathname === nav.path || pathname.startsWith(nav.path + '/');
+              nav.path &&
+              (pathname === nav.path || pathname.startsWith(nav.path + '/'));
             return (
               <motion.button
                 layout
                 key={index}
-                onClick={() => handleTabRoute(`${nav.path}`)}
-                className={`relative cursor-pointer py-4 text-sm transition ${
+                onClick={() => nav.path && handleTabRoute(nav.path)}
+                className={`relative w-full cursor-pointer py-4 text-sm transition ${
                   isActive
                     ? 'bg-primary-500 rounded-[8px] font-semibold text-white'
-                    : 'text-primary-300'
+                    : 'text-primary-300 hover:bg-primary-800 rounded-[8px]'
                 }`}
               >
                 {isActive && (

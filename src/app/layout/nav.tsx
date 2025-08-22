@@ -16,7 +16,15 @@ import {
 } from '../icons/icons';
 import { ROUTES } from '@/app/utils';
 
-export const navs = [
+export interface NavItem {
+  icon: React.ReactNode;
+  path?: string;
+  name: string;
+  isDropdown?: boolean;
+  items?: NavItem[];
+}
+
+export const navs: NavItem[] = [
   {
     icon: <HomeIcon />,
     path: ROUTES.DASHBOARD,
@@ -33,9 +41,36 @@ export const navs = [
     name: 'Products',
   },
   {
+    isDropdown: true,
     icon: <GameIconSP />,
-    path: ROUTES.GAME_ZONE,
     name: 'Game Zone',
+    items: [
+      {
+        name: 'Live Game Questions',
+        path: '/game-zone',
+        icon: <GameIconSP />,
+      },
+      {
+        name: 'Top Missed Questions',
+        path: ROUTES.TOP_MISSED_QUESTION,
+        icon: <MissedQuestionIcon />,
+      },
+      {
+        name: 'Memory Game',
+        path: '/memory-game',
+        icon: <GameIconSP />,
+      },
+      {
+        name: 'Perfect Score',
+        path: '/perfect-score',
+        icon: <GameIconSP />,
+      },
+      {
+        name: 'Number Guessing',
+        path: '/number-guessing',
+        icon: <GameIconSP />,
+      },
+    ],
   },
   {
     icon: <UsersIcon />,
@@ -56,11 +91,6 @@ export const navs = [
     icon: <CupIcon />,
     path: ROUTES.LEADERBOARD,
     name: 'Leaderboard',
-  },
-  {
-    icon: <MissedQuestionIcon />,
-    path: ROUTES.TOP_MISSED_QUESTION,
-    name: 'Top missed Question',
   },
   {
     icon: <QmCoinNavIcon />,
