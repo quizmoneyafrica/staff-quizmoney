@@ -109,20 +109,20 @@ function Page() {
     NormalizedPlayer[],
     Error
   >({
-    queryKey: ['leaderboardTopThree', activeTab],
+    queryKey: ['leaderboardTopThree'],
     queryFn: async () => {
-      const apiCall =
-        activeTab === 'Last Game leaderboard'
-          ? LeaderboardAPI.getLastGameLeaderboardAdmin(1, 3, '')
-          : LeaderboardAPI.getAllTimeLeaderboardAdmin(1, 3, '');
-
-      const res = await apiCall;
-      return res.data.result.data.map((p) =>
-        normalizeLeaderboardData(
-          p,
-          activeTab === 'Last Game leaderboard' ? 'lastGame' : 'allTime',
-        ),
-      );
+      const res = await LeaderboardAPI.getLeaderboard(1, 3, '');
+      return (res.data.data.content || []).map((p) => ({
+        id: p.playerName,
+        rank: p.rank,
+        username: p.playerName,
+        games: p.gamesPlayed,
+        price: p.prizeWon ? formatNaira(p.prizeWon) : undefined,
+        coins: undefined,
+        avatarUrl: '',
+        date: p.lastGameDate,
+        kycVerified: false,
+      }));
     },
     placeholderData: keepPreviousData,
   });
@@ -134,35 +134,36 @@ function Page() {
   } = useQuery<QueryResultData, Error>({
     queryKey: [
       'leaderboardTable',
-      activeTab,
       currentPage,
       debouncedSearchTerm,
       itemsPerPage,
     ],
     queryFn: async () => {
-      const apiCall =
-        activeTab === 'Last Game leaderboard'
-          ? LeaderboardAPI.getLastGameLeaderboardAdmin(
-              currentPage,
-              itemsPerPage,
-              debouncedSearchTerm,
-            )
-          : LeaderboardAPI.getAllTimeLeaderboardAdmin(
-              currentPage,
-              itemsPerPage,
-              debouncedSearchTerm,
-            );
-
-      const res = await apiCall;
-      const normalizedData = res.data.result.data.map((p) =>
-        normalizeLeaderboardData(
-          p,
-          activeTab === 'Last Game leaderboard' ? 'lastGame' : 'allTime',
-        ),
+      const res = await LeaderboardAPI.getLeaderboard(
+        currentPage,
+        itemsPerPage,
+        debouncedSearchTerm,
       );
+      const list = res.data.data;
+      const normalizedData = (list.content || []).map((p) => ({
+        id: p.playerName,
+        rank: p.rank,
+        username: p.playerName,
+        games: p.gamesPlayed,
+        price: p.prizeWon ? formatNaira(p.prizeWon) : undefined,
+        coins: undefined,
+        avatarUrl: null,
+        date: p.lastGameDate,
+        kycVerified: false,
+      }));
       return {
         data: normalizedData,
-        pagination: res.data.result.pagination,
+        pagination: {
+          currentPage: (list.pageNo || 0) + 1,
+          limit: list.pageSize || itemsPerPage,
+          totalPages: list.totalPages || 1,
+          totalItems: list.totalElements || 0,
+        },
       };
     },
     placeholderData: keepPreviousData,

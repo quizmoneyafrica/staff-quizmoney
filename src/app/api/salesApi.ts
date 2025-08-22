@@ -136,21 +136,12 @@ const SalesApi = {
     startDate: string,
     endDate: string,
   ): Promise<AxiosResponse<SalesChartApiResponse>> {
-    const params = new URLSearchParams();
-
-    const formattedStartDate = startDate.includes('T')
-      ? startDate.split('T')[0]
-      : startDate;
-    const formattedEndDate = endDate.includes('T')
-      ? endDate.split('T')[0]
-      : endDate;
-
-    params.append('start-date', formattedStartDate);
-    params.append('end-date', formattedEndDate);
-
-    return axios.get(`${BASE_URL}/sales/chart?${params.toString()}`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return axios.get(
+      `https://backoffice.quizmoney.ng/api/v1/sales/chart?start-date=${startDate}&end-date=${endDate}`,
+      {
+        headers: getSessionTokenHeaders(),
+      },
+    );
   },
 
   getSalesOrders(params: {

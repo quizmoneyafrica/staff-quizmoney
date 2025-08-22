@@ -2,7 +2,11 @@
 
 import React, { useState } from 'react';
 
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import {
+  useQuery,
+  keepPreviousData,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { Avatar, Table } from '@radix-ui/themes';
 import { Search, ListFilter, Loader2, ReceiptText } from 'lucide-react';
 
@@ -21,8 +25,9 @@ import { VerifiedIcon } from '@/app/icons/icons';
 
 const TransactionTable: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] =
-    useState<WalletTransactionResponse | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<
+    string | null
+  >(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
@@ -32,8 +37,25 @@ const TransactionTable: React.FC = () => {
     'All' | 'WITHDRAWAL' | 'FUNDING'
   >('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const [selected, setSelected] = useState('All Time');
+
+  // Query to fetch transaction details
+  const { data: transactionDetails } = useQuery({
+    queryKey: ['transactionDetails', selectedTransactionId],
+    queryFn: () => {
+      if (!selectedTransactionId) return null;
+      return WalletApi.getTransactionById(selectedTransactionId).then(
+        (res) => res.data.data,
+      );
+    },
+    enabled: !!selectedTransactionId,
+  });
+
+  const handleRowClick = (transactionId: string) => {
+    setSelectedTransactionId(transactionId);
+  };
   const [customDateRange, setCustomDateRange] = useState(null);
 
   const debouncedSearchTerm = useDebounce(searchTerm);
@@ -103,8 +125,7 @@ const TransactionTable: React.FC = () => {
   };
 
   const handleViewDetailsClick = (transaction: WalletTransactionResponse) => {
-    setSelectedTransaction(transaction);
-    setIsModalOpen(true);
+    setSelectedTransactionId(transaction.id);
   };
 
   const handlePageChange = (page: number) => {
@@ -266,7 +287,8 @@ const TransactionTable: React.FC = () => {
                   return (
                     <Table.Row
                       key={tx.id}
-                      className="border-b hover:bg-gray-50"
+                      className="cursor-pointer transition-colors hover:bg-gray-50"
+                      onClick={() => handleViewDetailsClick(tx)}
                     >
                       <Table.Cell className="whitespace-nowrap px-4 py-4">
                         <div className="flex items-center gap-2">
@@ -352,11 +374,22 @@ const TransactionTable: React.FC = () => {
         </div>
       )}
 
-      <TransactionDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        transactionData={selectedTransaction}
-      />
+      {transactionDetails && (
+        <TransactionDetailsModal
+          isOpen={!!selectedTransactionId}
+          onClose={() => setSelectedTransactionId(null)}
+          transactionData={{
+            ...transactionDetails,
+            transactionStatus: transactionDetails.transactionStatus as
+              | 'SUCCESSFUL'
+              | 'PENDING'
+              | 'FAILED',
+            transactionType: transactionDetails.transactionType as
+              | 'WITHDRAWAL'
+              | 'FUNDING',
+          }}
+        />
+      )}
     </>
   );
 };

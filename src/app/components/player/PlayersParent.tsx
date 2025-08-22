@@ -12,6 +12,7 @@ import { store } from '@/app/store/store';
 import PlayersApi from '@/app/api/playersApi';
 import { useSelector } from 'react-redux';
 import { useDebounce } from '@/app/hooks/useDebounce';
+import { useQuery } from '@tanstack/react-query';
 
 export default function PlayersParent() {
   const {
@@ -24,55 +25,56 @@ export default function PlayersParent() {
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  const fetchPlayersData = useCallback(async () => {
-    try {
-      store.dispatch(setLoadingPlayers(true));
-
-      const params: any = {
+  const { data, isLoading } = useQuery({
+    queryKey: [
+      'customers',
+      currentPage,
+      itemsPerPage,
+      debouncedSearchQuery,
+      selectedAccountType,
+    ],
+    queryFn: () =>
+      PlayersApi.getCustomers({
         page: currentPage,
-        limit: itemsPerPage,
-      };
-
-      if (selectedAccountType) {
-        params.accountType = selectedAccountType;
-      }
-
-      if (debouncedSearchQuery) {
-        params.search = debouncedSearchQuery;
-      }
-
-      if (dateRange) {
-        params.dateRange = dateRange;
-      }
-
-      const res = await PlayersApi.fetchPlayers(params);
-
-      if (res.data.result) {
-        store.dispatch(
-          setPlayersData({
-            ...res.data.result,
-            totalNoOfUsers: res.data.result.totalNoOfUsers,
-            totalActiveUsers: res.data.result.totalActiveUsers,
-            totalInactiveUsers: res.data.result.totalInactiveUsers,
-          }),
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching players:', error);
-    } finally {
-      store.dispatch(setLoadingPlayers(false));
-    }
-  }, [
-    currentPage,
-    itemsPerPage,
-    debouncedSearchQuery,
-    selectedAccountType,
-    dateRange,
-  ]);
+        size: itemsPerPage,
+        search: debouncedSearchQuery || undefined,
+      }).then((res) => res.data),
+  });
 
   useEffect(() => {
-    fetchPlayersData();
-  }, [fetchPlayersData]);
+    store.dispatch(setLoadingPlayers(isLoading));
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (data?.data) {
+      const { content, pageNo, pageSize, totalElements, totalPages } =
+        data.data;
+
+      store.dispatch(
+        setPlayersData({
+          totalNoOfUsers: 0,
+          totalActiveUsers: 0,
+          totalInactiveUsers: 0,
+          data: content.map((c) => ({
+            objectId: c.id,
+            firstName: c.firstName,
+            lastName: c.lastName,
+            email: c.email,
+            accountType: 'user',
+            createdAt: { __type: 'Date', iso: c.dateJoined },
+            avatar: '',
+            status: 'active',
+          })),
+          pagination: {
+            currentPage: (pageNo || 0) + 1,
+            limit: pageSize,
+            totalPages: totalPages,
+            totalItems: totalElements,
+          },
+        }),
+      );
+    }
+  }, [data]);
 
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">

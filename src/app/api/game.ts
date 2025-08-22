@@ -202,6 +202,14 @@ const GameApi = {
     });
   },
 
+  getGameDetailsV2(
+    gameId: string,
+  ): Promise<AxiosResponse<GameQuestionResponse>> {
+    return axios.get(`${BASE_URL}/games/${gameId}/details`, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
   registerForGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
     return axios.post(
       `${BASE_URL}/registerForGame`,

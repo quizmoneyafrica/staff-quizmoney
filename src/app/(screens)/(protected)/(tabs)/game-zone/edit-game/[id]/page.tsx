@@ -81,7 +81,7 @@ function Page() {
       if (!params.id) return;
       try {
         setFetchingData(true);
-        const res = await GameApi.getGameByIdV2(`${params.id}`);
+        const res = await GameApi.getGameDetailsV2(`${params.id}`);
         const result: GameQuestionResponse = res.data;
 
         const questionsWithIds: QuestionWithId[] =

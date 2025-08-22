@@ -65,6 +65,30 @@ const DashboardApi = {
     });
   },
 
+  getLeaderboard(
+    page: number,
+    size: number,
+  ): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: {
+        content: LeaderboardResponse[];
+        pageNo: number;
+        pageSize: number;
+        totalElements: number;
+        totalPages: number;
+        last: boolean;
+      };
+    }>
+  > {
+    return axios.get(`${BASE_URL}/games/leaderboard`, {
+      headers: getSessionTokenHeaders(),
+      params: { page, size },
+    });
+  },
+
   getNextLiveGame(): Promise<AxiosResponse<NextGameApiResponse>> {
     return axios.get(`${BASE_URL}/games/next`, {
       headers: getSessionTokenHeaders(),

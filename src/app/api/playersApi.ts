@@ -71,7 +71,63 @@ interface ExportPlayersResponse {
   };
 }
 
+export interface CustomerSummaryResponse {
+  totalCustomers: number;
+  activeCustomers: number;
+  inactiveCustomers: number;
+}
+
+export interface BOCustomerResponse {
+  id: string;
+  firstName: string;
+  lastName?: string;
+  email: string;
+  dateJoined: string;
+}
+
 const PlayersApi = {
+  getCustomerSummary(): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: CustomerSummaryResponse;
+    }>
+  > {
+    return axios.get(`${BASE_URL}/customers/summary`, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
+  getCustomers(params: {
+    page?: number;
+    size?: number;
+    search?: string;
+  }): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: {
+        content: BOCustomerResponse[];
+        pageNo: number;
+        pageSize: number;
+        totalElements: number;
+        totalPages: number;
+        last: boolean;
+      };
+    }>
+  > {
+    const query = new URLSearchParams();
+    query.append('page', String(Math.max(0, (params.page || 1) - 1)));
+    query.append('size', String(params.size || 10));
+    if (params.search) query.append('search', params.search);
+
+    return axios.get(`${BASE_URL}/customers?${query.toString()}`, {
+      headers: getSessionTokenHeaders(),
+    });
+  },
+
   fetchPlayers(
     params: FetchPlayersParams,
   ): Promise<AxiosResponse<FetchPlayersApiResponse>> {

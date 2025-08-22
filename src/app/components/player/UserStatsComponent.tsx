@@ -9,6 +9,7 @@ import {
   setStatsData,
 } from '@/app/store/playersSlice';
 import PlayersApi from '@/app/api/playersApi';
+import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@radix-ui/themes';
 
 interface Stat {
@@ -64,40 +65,22 @@ const UserStatsComponent: React.FC = () => {
   const dispatch = useDispatch();
   const { statsData, isStatsLoading } = useSelector(selectPlayers);
 
-  // Fetch stats data independently from table data
-  const fetchStatsData = useCallback(async () => {
-    try {
-      dispatch(setStatsLoading(true));
+  const { data, isLoading } = useQuery({
+    queryKey: ['customerSummary'],
+    queryFn: () => PlayersApi.getCustomerSummary().then((res) => res.data.data),
+  });
 
-      const params = {
-        page: 1,
-        limit: 1,
-      };
-
-      const res = await PlayersApi.fetchPlayers(params);
-
-      if (res.data.result) {
-        dispatch(
-          setStatsData({
-            totalNoOfUsers: res.data.result.totalNoOfUsers,
-            totalActiveUsers: res.data.result.totalActiveUsers,
-            totalInactiveUsers: res.data.result.totalInactiveUsers,
-          }),
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    } finally {
-      dispatch(setStatsLoading(false));
-    }
-  }, [dispatch]);
-
-  // Fetch stats on component mount only
   useEffect(() => {
-    if (!statsData) {
-      fetchStatsData();
+    if (data) {
+      dispatch(
+        setStatsData({
+          totalNoOfUsers: data.totalCustomers,
+          totalActiveUsers: data.activeCustomers,
+          totalInactiveUsers: data.inactiveCustomers,
+        }),
+      );
     }
-  }, [fetchStatsData, statsData]);
+  }, [data, dispatch]);
 
   const stats: Stat[] = [
     {
@@ -149,7 +132,7 @@ const UserStatsComponent: React.FC = () => {
     },
   };
 
-  if (isStatsLoading) {
+  if (isStatsLoading || isLoading) {
     return (
       <motion.div
         className="w-full"

@@ -1,6 +1,10 @@
 'use client';
-import { User } from '@/app/api/interface';
-import userApi, { getAuthUser } from '@/app/api/userApi';
+import { UpdateUserForm, User } from '@/app/api/interface';
+import userApi, {
+  getAuthUser,
+  AdminResponse,
+  AvatarProjection,
+} from '@/app/api/userApi';
 import { useAppSelector, useAuth } from '@/app/hooks/useAuth';
 import { ArrowDownIcon, MailIcon, PersonIcon } from '@/app/icons/icons';
 import { decryptData, encryptData } from '@/app/utils/crypto';
@@ -10,11 +14,14 @@ import CustomTextField from '@/app/utils/CustomTextField';
 import { formatDateTime } from '@/app/utils/utils';
 import { CalendarIcon, GlobeIcon, Pencil1Icon } from '@radix-ui/react-icons';
 import { Flex, Grid } from '@radix-ui/themes';
-import { AxiosError } from 'axios';
+
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { KeyRound, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const initialForm = {
   firstName: '',
@@ -29,27 +36,146 @@ const initialForm = {
   whatsapp: '',
 };
 
+const ChangePasswordButton = () => {
+  const router = useRouter();
+
+  const handleNavigateToChangePassword = () => {
+    router.push('/settings/change-password');
+  };
+
+  return (
+    <div className="flex justify-end">
+      <button
+        onClick={handleNavigateToChangePassword}
+        className="text-primary-500 hover:text-primary-600 flex cursor-pointer items-center text-xs underline transition-colors duration-200 sm:text-sm"
+      >
+        Change Password
+        <KeyRound className="ml-1 h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
 const Page = () => {
+  const router = useRouter();
   const encrypted = useAppSelector((s) => s.auth.userEncryptedData);
   const user = encrypted;
   // ? decryptData(encrypted) : null;
-  const formattedDOB = new Date(user?.dob?.iso ?? '')
-    .toISOString()
-    .split('T')[0];
+  const formattedDOB = user?.dob?.iso
+    ? (() => {
+        try {
+          return new Date(user.dob.iso).toISOString().split('T')[0];
+        } catch (error) {
+          console.error('Invalid date format for DOB:', error);
+          return '';
+        }
+      })()
+    : '';
   const [formData, setFormData] = useState({
     ...initialForm,
     ...user?.user,
-    dob: formattedDOB,
+    dob: user?.dob?.iso
+      ? (() => {
+          try {
+            return new Date(user.dob.iso).toISOString().split('T')[0];
+          } catch (error) {
+            console.error('Invalid date format for DOB in formData:', error);
+            return '';
+          }
+        })()
+      : '',
   });
+
   const authUser = getAuthUser();
   const { fullDate } = formatDateTime(
-    authUser.createdAt ?? new Date().toISOString(),
+    authUser?.createdAt
+      ? (() => {
+          try {
+            return new Date(authUser.createdAt).toISOString();
+          } catch (error) {
+            console.error('Invalid date format for createdAt:', error);
+            return new Date().toISOString();
+          }
+        })()
+      : new Date().toISOString(),
   );
 
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { loginUser } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Get admin profile data
+  const {
+    data: adminData,
+    isLoading: adminLoading,
+    error: adminError,
+  } = useQuery<{
+    success: boolean;
+    code: string;
+    message: string;
+    data: AdminResponse;
+  }>({
+    queryKey: ['adminProfile', user?.objectId],
+    queryFn: async () => {
+      const response = await userApi.getAdminProfile(user?.objectId || '');
+      return response.data;
+    },
+    enabled: !!user?.objectId,
+  });
+
+  // Get avatars list
+  const { data: avatarsData, isLoading: avatarsLoading } = useQuery<{
+    success: boolean;
+    code: string;
+    message: string;
+    data: AvatarProjection[];
+  }>({
+    queryKey: ['avatars'],
+    queryFn: async () => {
+      const response = await userApi.getAvatarsList();
+      return response.data;
+    },
+  });
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (formData: UpdateUserForm) => userApi.updateUser(formData),
+    onSuccess: (res) => {
+      if (res.status === 200) {
+        setIsEditing(false);
+        toast.success('Profile updated successfully', {
+          position: 'top-center',
+        });
+
+        const userData = res.data.result.updatedUser;
+        const encryptedUser = encryptData(userData);
+
+        loginUser(encryptedUser);
+
+        queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
+      }
+    },
+    onError: (error: unknown) => {
+      const errorMessage =
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data &&
+        typeof error.response.data === 'object' &&
+        'error' in error.response.data
+          ? (error.response.data as { error: string }).error
+          : 'Failed to update profile. Please try again later.';
+
+      toast.error(errorMessage, {
+        position: 'top-center',
+      });
+    },
+  });
 
   const onChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -90,14 +216,23 @@ const Page = () => {
           loginUser(userData);
         }
       })
-      .catch((err: AxiosError) => {
-        toast.error(
-          (err.response?.data as unknown as { error: string }).error ||
-            'Failed to update profile. Please try again later.',
-          {
-            position: 'top-center',
-          },
-        );
+      .catch((error: unknown) => {
+        const errorMessage =
+          error &&
+          typeof error === 'object' &&
+          'response' in error &&
+          error.response &&
+          typeof error.response === 'object' &&
+          'data' in error.response &&
+          error.response.data &&
+          typeof error.response.data === 'object' &&
+          'error' in error.response.data
+            ? (error.response.data as { error: string }).error
+            : 'Failed to update profile. Please try again later.';
+
+        toast.error(errorMessage, {
+          position: 'top-center',
+        });
       })
       .finally(() => {
         setIsUpdating(false);
@@ -131,7 +266,11 @@ const Page = () => {
               >
                 <div className="relative flex h-full w-full items-center justify-center">
                   <Image
-                    src={user?.avatar ?? '/assets/images/profile.png'}
+                    src={
+                      adminData?.data?.avatarUrl ||
+                      user?.avatar ||
+                      '/icons/user-cirlce-add.svg'
+                    }
                     alt="profile"
                     width={100}
                     height={100}
@@ -156,22 +295,49 @@ const Page = () => {
                     Change Image
                   </p>
                   <p className=" font-semibold capitalize">
-                    {user?.firstName} {user?.lastName}
+                    {adminData?.data?.firstName || user?.firstName}{' '}
+                    {adminData?.data?.lastName || user?.lastName}
                   </p>
-                  <p className=" font-light">{user?.email}</p>
+                  <p className=" font-light">
+                    {adminData?.data?.emailAddress || user?.email}
+                  </p>
                   <p className=" block text-xs font-light sm:hidden">
-                    Joined {user?.createdAt ? fullDate : 'N/A'}
+                    Joined{' '}
+                    {adminData?.data?.dateJoined || user?.createdAt
+                      ? (() => {
+                          try {
+                            return formatDateTime(
+                              adminData?.data?.dateJoined || user?.createdAt,
+                            ).fullDate;
+                          } catch (error) {
+                            console.error(
+                              'Invalid date format for join date:',
+                              error,
+                            );
+                            return 'N/A';
+                          }
+                        })()
+                      : 'N/A'}
                   </p>
                 </div>
 
                 <div className="flex flex-col items-end justify-between">
                   {!isEditing && (
-                    <div
-                      onClick={() => setIsEditing(!isEditing)}
-                      className=" text-primary-500 flex cursor-pointer items-center text-xs underline sm:text-sm "
-                    >
-                      Edit Profile
-                      <Pencil1Icon className="h-4 w-4" />
+                    <div className="space-y-2">
+                      <div
+                        onClick={() => setIsEditing(!isEditing)}
+                        className=" text-primary-500 flex cursor-pointer items-center text-xs underline sm:text-sm "
+                      >
+                        Edit Profile
+                        <Pencil1Icon className="h-4 w-4" />
+                      </div>
+                      <div
+                        onClick={() => router.push('/settings/change-password')}
+                        className="text-primary-500 hover:text-primary-600 flex cursor-pointer items-center text-xs underline transition-colors duration-200 sm:text-sm"
+                      >
+                        Change Password
+                        <KeyRound className="ml-1 h-4 w-4" />
+                      </div>
                     </div>
                   )}
                   {/* <p className="font-light text-xs sm:block hidden">
@@ -249,8 +415,8 @@ const Page = () => {
 
                 <CustomSelect
                   label="Country"
-                  name="gender"
-                  value={formData.gender}
+                  name="country"
+                  value={formData.country}
                   options={[{ label: 'Nigeria', value: 'nigeria' }]}
                   onChange={onChange}
                   disabled={!isEditing}
