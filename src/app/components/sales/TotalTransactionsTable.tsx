@@ -64,7 +64,6 @@ const TotalTransactionsTable = () => {
   >('All');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Use the debounce hook
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);

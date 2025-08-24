@@ -105,7 +105,7 @@ export default function SalesChart({
       let name: string;
 
       if (selectedPeriod === 'Years') {
-        name = format(date, 'MMM yyyy');
+        name = format(date, 'do MMM');
       } else {
         name = format(date, 'do MMM');
       }

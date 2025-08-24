@@ -1,5 +1,5 @@
-import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
+import { AxiosResponse } from 'axios';
+import { request } from '@/app/api/config';
 
 export interface QmCoinStats {
   totalEarned: number;
@@ -80,13 +80,7 @@ export interface QmCoinExportResponse {
 
 const QmCoinsApi = {
   getCoinStatsAdmin(): Promise<AxiosResponse<QmCoinStatsResponse>> {
-    return axios.post(
-      `${BASE_URL}/getCoinStatsAdmin`,
-      {},
-      {
-        headers: getSessionTokenHeaders(),
-      },
-    );
+    return request.post(`/getCoinStatsAdmin`);
   },
 
   getUsersWithCoinsAdmin(params: {
@@ -94,9 +88,7 @@ const QmCoinsApi = {
     limit: number;
     search?: string;
   }): Promise<AxiosResponse<QmCoinUsersResponse>> {
-    return axios.post(`${BASE_URL}/getUsersWithCoinsAdmin`, params, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/getUsersWithCoinsAdmin`, params);
   },
 
   getRedemptionHistoryAdmin(params: {
@@ -105,25 +97,19 @@ const QmCoinsApi = {
     search?: string;
     dateRange?: { start: string; end: string };
   }): Promise<AxiosResponse<QmCoinRedemptionResponse>> {
-    return axios.post(`${BASE_URL}/getRedemptionHistoryAdmin`, params, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/getRedemptionHistoryAdmin`, params);
   },
 
   exportUsersWithCoinsAdmin(params: {
     dateRange?: { start: string; end: string };
   }): Promise<AxiosResponse<QmCoinExportResponse>> {
-    return axios.post(`${BASE_URL}/exportUsersWithCoinsAdmin`, params, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/exportUsersWithCoinsAdmin`, params);
   },
 
   exportRedemptionHistoryAdmin(params: {
     dateRange: { start: string; end: string };
   }): Promise<AxiosResponse<QmCoinExportResponse>> {
-    return axios.post(`${BASE_URL}/exportRedemptionHistoryAdmin`, params, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/exportRedemptionHistoryAdmin`, params);
   },
 };
 

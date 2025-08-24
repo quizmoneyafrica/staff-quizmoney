@@ -22,12 +22,10 @@ interface WithdrawalRequest {
 
 interface WithdrawalData {
   content: WithdrawalRequest[];
-  pageable: {
-    pageNumber: number;
-    pageSize: number;
-    totalPages: number;
-    totalElements: number;
-  };
+  pageNo: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
 }
 
 interface WithdrawalApiResponse {

@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
+import { request } from '@/app/api/config';
 
 interface DashboardSummary {
   totalUsers: number;
@@ -49,9 +49,7 @@ export interface NextGameApiResponse {
 const DashboardApi = {
   fetchDashboardSummary(): Promise<DashboardSummary> {
     return axios
-      .get<DashboardSummaryApiResponse>(`${BASE_URL}/dashboard/summary`, {
-        headers: getSessionTokenHeaders(),
-      })
+      .get<DashboardSummaryApiResponse>(`/dashboard/summary`, {})
       .then((res) => res.data.data);
   },
 
@@ -59,8 +57,7 @@ const DashboardApi = {
     page: number,
     size: number,
   ): Promise<AxiosResponse<PageResponse<LeaderboardResponse>>> {
-    return axios.get(`${BASE_URL}/games/winners`, {
-      headers: getSessionTokenHeaders(),
+    return request.get(`/games/winners`, {
       params: { page, size },
     });
   },
@@ -83,16 +80,13 @@ const DashboardApi = {
       };
     }>
   > {
-    return axios.get(`${BASE_URL}/games/leaderboard`, {
-      headers: getSessionTokenHeaders(),
+    return request.get(`/games/leaderboard`, {
       params: { page, size },
     });
   },
 
   getNextLiveGame(): Promise<AxiosResponse<NextGameApiResponse>> {
-    return axios.get(`${BASE_URL}/games/next`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`/games/next`, {});
   },
 };
 

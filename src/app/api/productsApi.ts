@@ -1,6 +1,5 @@
-import axios, { AxiosResponse, AxiosError } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
-import { ApiResponse } from './interface';
+import { AxiosResponse } from 'axios';
+import { request } from '@/app/api/config';
 
 export interface ProductImage {
   __type: 'File';
@@ -90,42 +89,37 @@ export class ApiError extends Error {
 }
 
 const createApiClient = () => {
-  const handleApiError = (error: AxiosError): never => {
-    if (
-      error.response?.status === 401 ||
-      (error.response?.data as ErrorResponse)?.code === 142
-    ) {
-      throw new AuthenticationError('Authentication required. Please login.');
-    }
-
-    const status = error.response?.status || 500;
-    const code = (error.response?.data as ErrorResponse)?.code;
-    const message =
-      (error.response?.data as ErrorResponse)?.error ||
-      error.message ||
-      'An unknown error occurred';
-
-    throw new ApiError(message, status, code);
-  };
+  //   const handleApiError = (error: AxiosError): never => {
+  //     if (
+  //       error.response?.status === 401 ||
+  //       (error.response?.data as ErrorResponse)?.code === 142
+  //     ) {
+  //       throw new AuthenticationError('Authentication required. Please login.');
+  //     }
+  //
+  //     const status = error.response?.status || 500;
+  //     const code = (error.response?.data as ErrorResponse)?.code;
+  //     const message =
+  //       (error.response?.data as ErrorResponse)?.error ||
+  //       error.message ||
+  //       'An unknown error occurred';
+  //
+  //     throw new ApiError(message, status, code);
+  //   };
 
   return {
     async getProducts(
       payload: GetProductsPayload,
     ): Promise<AxiosResponse<ProductsApiResponse>> {
-      try {
-        const params = {
-          searchText: payload.searchText || '',
-          pageNumber: payload.pageNumber,
-          pageSize: payload.pageSize,
-        };
+      const params = {
+        searchText: payload.searchText || '',
+        pageNumber: payload.pageNumber,
+        pageSize: payload.pageSize,
+      };
 
-        return await axios.get(`${BASE_URL}/products/filter`, {
-          params,
-          headers: getSessionTokenHeaders(),
-        });
-      } catch (error) {
-        handleApiError(error as AxiosError);
-      }
+      return await request.get(`/products/filter`, {
+        params,
+      });
     },
 
     async createProduct(payload: CreateProductPayload): Promise<
@@ -136,36 +130,18 @@ const createApiClient = () => {
         data: { message: string; timestamp: string };
       }>
     > {
-      try {
-        return await axios.post(
-          `${BASE_URL}/products`,
-          {
-            name: payload.name,
-            price: payload.price,
-            quantity: payload.quantity,
-            productCategory: 'ERASER',
-          },
-          {
-            headers: getSessionTokenHeaders(),
-          },
-        );
-      } catch (error) {
-        handleApiError(error as AxiosError);
-      }
+      return await request.post(`/products`, {
+        name: payload.name,
+        price: payload.price,
+        quantity: payload.quantity,
+        productCategory: 'ERASER',
+      });
     },
 
     async getProductById(
       productId: string,
     ): Promise<AxiosResponse<SingleProductApiResponse>> {
-      try {
-        return await axios.post(
-          `${BASE_URL}/getProductById`,
-          { productId },
-          { headers: getSessionTokenHeaders() },
-        );
-      } catch (error) {
-        handleApiError(error as AxiosError);
-      }
+      return await request.post(`/getProductById`, { productId });
     },
 
     async updateProduct(payload: UpdateProductPayload): Promise<
@@ -179,21 +155,14 @@ const createApiClient = () => {
         };
       }>
     > {
-      try {
-        const { productId, ...updateData } = payload;
+      const { productId, ...updateData } = payload;
 
-        const data: Record<string, string | number> = {};
-        if (payload.name !== undefined) data.name = payload.name;
-        if (payload.price !== undefined) data.price = payload.price;
-        if (payload.quantity !== undefined) data.quantity = payload.quantity;
+      const data: Record<string, string | number> = {};
+      if (payload.name !== undefined) data.name = payload.name;
+      if (payload.price !== undefined) data.price = payload.price;
+      if (payload.quantity !== undefined) data.quantity = payload.quantity;
 
-        return await axios.patch(`${BASE_URL}/products/${productId}`, data, {
-          headers: getSessionTokenHeaders(),
-        });
-      } catch (error) {
-        console.error('Update product error:', error);
-        handleApiError(error as AxiosError);
-      }
+      return await request.patch(`/products/${productId}`, data, {});
     },
 
     async deleteProduct(productId: string): Promise<
@@ -207,14 +176,7 @@ const createApiClient = () => {
         };
       }>
     > {
-      try {
-        return await axios.delete(`${BASE_URL}/products/${productId}`, {
-          headers: getSessionTokenHeaders(),
-        });
-      } catch (error) {
-        console.error('Delete product error:', error);
-        handleApiError(error as AxiosError);
-      }
+      return await request.delete(`/products/${productId}`, {});
     },
 
     async getAllProducts(): Promise<AxiosResponse<ProductsApiResponse>> {
