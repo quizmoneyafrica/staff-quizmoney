@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import {
   ApiResponse,
   InAppChangePasswordForm,
@@ -11,6 +11,7 @@ import {
 } from './interface';
 import { store } from '@/app/store/store';
 import { decryptData } from '../utils/crypto';
+import { request } from '@/app/api/config';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -67,112 +68,62 @@ const getAuthUser = () => {
 };
 
 const UserAPI = {
+  refreshToken(token) {
+    return request.post(`/auth/refresh`, { token });
+  },
   login(form: LoginForm): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/auth/login`, form, {
-      headers: appHeaders,
-    });
+    return request.post(`/auth/login`, form);
   },
   signUp(form: SignUpForm): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/signup`, form, {
-      headers: appHeaders,
-    });
+    return request.post(`/signup`, form);
   },
   verifyEmail(form: VerifyEmailForm): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/verifyMail`, form, {
-      headers: appHeaders,
-    });
+    return request.post(`/verifyMail`, form);
   },
   resendSignupOtp(email: string): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/resendSignupOtp`,
-      { email },
-      {
-        headers: appHeaders,
-      },
-    );
+    return request.post(`/resendSignupOtp`, { email });
   },
   forgotPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/auth/password/forgot`,
-      { email, purpose: 'EMAIL_VERIFICATION' },
-      {
-        headers: appHeaders,
-      },
-    );
+    return request.post(`/auth/password/forgot`, {
+      email,
+      purpose: 'EMAIL_VERIFICATION',
+    });
   },
   resendPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/auth/resend`,
-      { email },
-      {
-        headers: appHeaders,
-      },
-    );
+    return request.post(`/auth/resend`, { email });
   },
   verifyForgotPasswordOtp(
     form: VerifyForgotPasswordOtpForm,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/verifyForgotPasswordOtp`,
-      {
-        otp: form.otp,
-        purpose: 'EMAIL_VERIFICATION',
-        // form
-      },
-      {
-        headers: appHeaders,
-      },
-    );
+    return request.post(`/verifyForgotPasswordOtp`, {
+      otp: form.otp,
+      purpose: 'EMAIL_VERIFICATION',
+    });
   },
   resetPasswordAuth(
     form: ResetPasswordForm,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/auth/password/reset`, form, {
-      headers: appHeaders,
-    });
+    return request.post(`/auth/password/reset`, form);
   },
   inAppChangePassword(
     form: InAppChangePasswordForm,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/inAppChangePassword`, form, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/inAppChangePassword`, form);
   },
-
   updateUser(form: UpdateUserForm): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/updateProfile?firstName=${form.firstName}&lastName=${form.lastName}&dob=${form.dob}&gender=${form.gender}&country=${form.country}&facebook=${form.facebook}&instagram=${form.instagram}&twitter=${form.twitter}&whatsapp=${form.whatsapp}&avatar=${form.avatar}`,
-      {},
-      {
-        headers: getSessionTokenHeaders(),
-      },
+    return request.post(
+      `/updateProfile?firstName=${form.firstName}&lastName=${form.lastName}&dob=${form.dob}&gender=${form.gender}&country=${form.country}&facebook=${form.facebook}&instagram=${form.instagram}&twitter=${form.twitter}&whatsapp=${form.whatsapp}&avatar=${form.avatar}`,
     );
   },
-
   getAvatars(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.get(`https://quizmoney.b4a.io/classes/Avatars`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`https://quizmoney.b4a.io/classes/Avatars`);
   },
-
   topGamersOfToday(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/topGamersOfThisMonth`,
-      {},
-      { headers: appHeaders },
-    );
+    return request.post(`/topGamersOfThisMonth`, { headers: appHeaders });
   },
-
   getReferralStats(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/referralData`,
-      {},
-      {
-        headers: getSessionTokenHeaders(),
-      },
-    );
+    return request.post(`/referralData`);
   },
-
   getAdminProfile(adminId: string): Promise<
     AxiosResponse<{
       success: boolean;
@@ -181,19 +132,13 @@ const UserAPI = {
       data: AdminResponse;
     }>
   > {
-    return axios.get(`${BASE_URL}/admins/${adminId}`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`/admins/${adminId}`);
   },
-
   changePassword(
-    request: ChangePasswordRequest,
+    payload: ChangePasswordRequest,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.patch(`${BASE_URL}/admins/password`, request, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.patch(`/admins/password`, payload);
   },
-
   getAvatarsList(): Promise<
     AxiosResponse<{
       success: boolean;
@@ -202,9 +147,7 @@ const UserAPI = {
       data: AvatarProjection[];
     }>
   > {
-    return axios.get(`${BASE_URL}/avatars`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`/avatars`);
   },
 };
 

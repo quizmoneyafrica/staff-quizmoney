@@ -1,3 +1,6 @@
+import { AxiosResponse } from 'axios';
+import { request } from '@/app/api/config';
+
 export interface PlayerGameQuestion {
   questionNumber: string;
   question: string;
@@ -28,8 +31,6 @@ export interface GetPlayerGameDetailsResult {
   incorrectQuestionNumbers?: (number | string)[];
   questions?: PlayerGameQuestion[];
 }
-import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
 
 interface ViewPlayerProfileRequest {
   userId: string;
@@ -240,50 +241,38 @@ const PlayerApi = {
   viewPlayerProfile(
     data: ViewPlayerProfileRequest,
   ): Promise<AxiosResponse<{ result: PlayerProfileData }>> {
-    return axios.post(`${BASE_URL}/getPlayerProfileDetails`, data, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/getPlayerProfileDetails`, data, {});
   },
 
   getPlayerGameDetails(data: {
     userId: string;
     gameId: string;
   }): Promise<AxiosResponse<{ result: GetPlayerGameDetailsResult }>> {
-    return axios.post(`${BASE_URL}/getPlayerGameDetails/`, data, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/getPlayerGameDetails/`, data, {});
   },
 
   getPlayerGameStats(
     data: GetPlayerGameStatsRequest,
   ): Promise<AxiosResponse<GameStatsResponse>> {
-    return axios.post(`${BASE_URL}/getPlayerGameStats`, data, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/getPlayerGameStats`, data, {});
   },
 
   getPlayerTransactions(
     data: GetPlayerTransactionsRequest,
   ): Promise<AxiosResponse<PlayerTransactionsResponse>> {
-    return axios.post(`${BASE_URL}/getPlayerTransactions`, data, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/getPlayerTransactions`, data, {});
   },
 
   updatePlayerVerification(
     data: UpdatePlayerVerificationRequest,
   ): Promise<AxiosResponse<UpdatePlayerVerificationResponse>> {
-    return axios.post(`${BASE_URL}/updatePlayer`, data, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/updatePlayer`, data, {});
   },
 
   flagPlayer(
     data: FlagPlayerRequest,
   ): Promise<AxiosResponse<FlagPlayerResponse>> {
-    return axios.post(`${BASE_URL}/flagPlayer`, data, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/flagPlayer`, data, {});
   },
 };
 

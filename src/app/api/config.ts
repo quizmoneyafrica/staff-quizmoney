@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
@@ -8,10 +9,56 @@ import { ROUTES } from '@/app/utils';
 import { getSessionTokenHeaders } from '@/app/api/userApi';
 import { useAppDispatch } from '@/app/hooks/useAuth';
 import { logout } from '@/app/store/authSlice';
+import { store } from '@/app/store/store';
+
+const session = store.getState().auth.userEncryptedData;
 
 export const request = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
 });
+
+const requestConfiguration = (config) => {
+  return {
+    ...config,
+    headers: getSessionTokenHeaders(),
+  };
+};
+
+const errorHandler = async (error) => {
+  console.log('error: ', error);
+  if (error?.response?.status === 401) {
+    if (
+      error?.response?.data?.message === 'Token expired, please login again'
+    ) {
+      if (session?.refreshToken) {
+        try {
+          const response = request.post('/auth/refresh', {
+            tokenValue: session?.refreshToken,
+          });
+          //TODO: handle refresh token
+          console.log('response: refresh token ', response);
+          return;
+        } catch (error) {
+          console.log('error: ', error);
+        }
+      }
+    }
+
+    // dispatch(logout());
+    window.location.href = ROUTES.LOG_IN;
+  }
+
+  if (error?.response?.data?.code === 209) {
+    // dispatch(logout());
+    // router.push(ROUTES.LOG_IN);
+  }
+
+  return Promise.reject(error);
+};
+
+request.interceptors.request.use(requestConfiguration, errorHandler);
+
+request.interceptors.response.use((response) => response, errorHandler);
 
 export const useRequestInstance = () => {
   const router = useRouter();
@@ -19,34 +66,13 @@ export const useRequestInstance = () => {
 
   useEffect(() => {
     const requestIntercept = request.interceptors.request.use(
-      (config: any) => {
-        return {
-          ...config,
-          headers: getSessionTokenHeaders(),
-        };
-      },
+      requestConfiguration,
       (error) => Promise.reject(error),
     );
 
     const responseIntercept = request.interceptors.response.use(
       (response) => response,
-      async (error) => {
-        if (error?.response?.status === 401) {
-          if (
-            error?.response?.data?.error === 'Unauthorized: No token provided'
-          ) {
-            dispatch(logout());
-            router.push(ROUTES.LOG_IN);
-          }
-        }
-
-        if (error?.response?.data?.code === 209) {
-          dispatch(logout());
-          router.push(ROUTES.LOG_IN);
-        }
-
-        return Promise.reject(error);
-      },
+      errorHandler,
     );
 
     return () => {

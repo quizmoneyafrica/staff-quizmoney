@@ -1,39 +1,23 @@
-import axios, { AxiosResponse } from 'axios';
-import { appHeaders, BASE_URL, getSessionTokenHeaders } from './userApi';
+import { AxiosResponse } from 'axios';
 import { ApiResponse } from './interface';
+import { request } from '@/app/api/config';
 
 const StoreAPI = {
   getProducts(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/getProductsAdmin`,
-      {},
-      { headers: appHeaders },
-    );
+    return request.post(`/getProductsAdmin`);
   },
 
   getProductById(productId: string): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/fetchSingleProduct`,
-      { productId },
-      { headers: appHeaders },
-    );
+    return request.post(`/fetchSingleProduct`, { productId });
   },
   purchaseItem(productId: string): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/purchaseItem`,
-      { productId },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/purchaseItem`, { productId });
   },
   fetchCustomerWallet(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/fetchCustomerWallet`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/fetchCustomerWallet`);
   },
   fetchTransactions(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(`${BASE_URL}/fetchTransactions`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/fetchTransactions`);
   },
 };
 

@@ -92,7 +92,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           name: data.name,
           price: data.price,
           quantity: data.quantity,
-          productCategory: 'ERASER',
+          productCategory: data.category,
         };
         const response = await ProductsApi.createProduct(payload);
         return response.data;
@@ -256,8 +256,10 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
 
   const renderPaginationSection = () => {
     if (!productsResponse?.data) return null;
+    console.log('productsResponse: ', productsResponse);
 
     const { totalPages, totalElements: totalItems } = productsResponse.data;
+    // if (totalPages <= 1) return null;
 
     return (
       <div className="flex flex-col items-end gap-4 pt-6">
@@ -284,7 +286,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     <div className="min-h-screen bg-white px-4 py-6 md:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
             All available Products
           </h1>
 

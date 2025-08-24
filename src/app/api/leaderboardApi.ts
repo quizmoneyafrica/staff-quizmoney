@@ -1,6 +1,6 @@
-import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
-import { PageResponse, LeaderboardResponse } from './dashboardApi';
+import { AxiosResponse } from 'axios';
+import { LeaderboardResponse } from './dashboardApi';
+import { request } from '@/app/api/config';
 
 interface LeaderboardUser {
   userId: string;
@@ -70,8 +70,7 @@ const LeaderboardAPI = {
       };
     }>
   > {
-    return axios.get(`${BASE_URL}/games/leaderboard`, {
-      headers: getSessionTokenHeaders(),
+    return request.get(`/games/leaderboard`, {
       params: {
         search: search || undefined,
         page: Math.max(0, page - 1),
@@ -85,11 +84,11 @@ const LeaderboardAPI = {
     limit: number,
     search: string,
   ): Promise<AxiosResponse<{ result: GetLastGameLeaderboardAdminResponse }>> {
-    return axios.post(
-      `${BASE_URL}/getLastGameLeaderboardAdmin`,
-      { page, limit, search },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/getLastGameLeaderboardAdmin`, {
+      page,
+      limit,
+      search,
+    });
   },
 
   getAllTimeLeaderboardAdmin(
@@ -97,11 +96,11 @@ const LeaderboardAPI = {
     limit: number,
     search: string,
   ): Promise<AxiosResponse<{ result: GetAllTimeLeaderboardAdminResponse }>> {
-    return axios.post(
-      `${BASE_URL}/getAllTimeLeaderboardAdmin`,
-      { page, limit, search },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/getAllTimeLeaderboardAdmin`, {
+      page,
+      limit,
+      search,
+    });
   },
 };
 

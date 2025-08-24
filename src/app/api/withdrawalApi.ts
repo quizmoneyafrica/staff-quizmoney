@@ -1,31 +1,22 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import { ApiResponse } from './interface';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
+import { request } from '@/app/api/config';
 
 const WithdrawalApi = {
   fetchWithdrawalRequest(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/getWithdrawalRequestsV2`,
-      {},
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/getWithdrawalRequestsV2`);
   },
   approveWithdrawal(
     transactionId: string,
     fee: number,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/approveWithdrawal`,
-      { transactionId: transactionId, fee: fee },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/approveWithdrawal`, {
+      transactionId: transactionId,
+      fee: fee,
+    });
   },
   rejectWithdrawal(): Promise<AxiosResponse<ApiResponse>> {
-    return axios.post(
-      `${BASE_URL}/rejectWithdrawal`,
-      {},
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/rejectWithdrawal`);
   },
 };
 

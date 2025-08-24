@@ -1,6 +1,5 @@
-import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
-import { ApiResponse } from './interface';
+import { AxiosResponse } from 'axios';
+import { request } from '@/app/api/config';
 
 export interface SalesSummaryData {
   totalPurchases: number;
@@ -35,7 +34,7 @@ export interface CustomerOrderResponse {
   orderId: string;
   description: string;
   amount: number;
-  status: 'COMPLETED' | 'PENDING' | 'FAILED';
+  status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
 }
 
 export interface SalesOrdersApiResponse {
@@ -127,27 +126,22 @@ export interface SalesTransactionsListResponse {
 
 const SalesApi = {
   getSalesSummary(): Promise<AxiosResponse<SalesSummaryResponse>> {
-    return axios.get(`${BASE_URL}/sales/summary`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`/sales/summary`);
   },
 
   getSalesChart(
     startDate: string,
     endDate: string,
   ): Promise<AxiosResponse<SalesChartApiResponse>> {
-    return axios.get(
-      `https://backoffice.quizmoney.ng/api/v1/sales/chart?start-date=${startDate}&end-date=${endDate}`,
-      {
-        headers: getSessionTokenHeaders(),
-      },
+    return request.get(
+      `/sales/chart?start-date=${startDate}&end-date=${endDate}`,
     );
   },
 
   getSalesOrders(params: {
     startDate?: string;
     endDate?: string;
-    status?: 'COMPLETED' | 'PENDING' | 'FAILED';
+    status?: 'COMPLETED' | 'PENDING' | 'CANCELLED';
     search?: string;
     page?: number;
     limit?: number;
@@ -171,19 +165,15 @@ const SalesApi = {
     if (params.status) urlParams.append('status', params.status);
     if (params.search) urlParams.append('search', params.search);
     if (params.page) urlParams.append('page', params.page.toString());
-    if (params.limit) urlParams.append('limit', params.limit.toString());
+    if (params.limit) urlParams.append('size', params.limit.toString());
 
-    return axios.get(`${BASE_URL}/sales/orders?${urlParams.toString()}`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`/sales/orders?${urlParams.toString()}`, {});
   },
 
   getSalesTransactionsList(
     payload: SalesTransactionsListPayload,
   ): Promise<AxiosResponse<{ result: SalesTransactionsListResponse }>> {
-    return axios.post(`${BASE_URL}/getSalesTransactionsList`, payload, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/getSalesTransactionsList`, payload);
   },
 };
 

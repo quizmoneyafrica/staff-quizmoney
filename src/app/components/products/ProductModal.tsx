@@ -117,10 +117,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
       await onSubmit(submitData);
 
       setSubmitStatus('success');
-
-      setTimeout(() => {
-        handleClose();
-      }, 1500);
+      handleClose();
     } catch (error) {
       console.error('Error creating product:', error);
       setSubmitStatus('error');
@@ -292,19 +289,21 @@ const ProductModal: React.FC<ProductModalProps> = ({
                           ref={dropdownRef}
                           className="absolute right-0 top-full z-10 mt-1 w-full rounded-md border border-gray-200 bg-white py-1 shadow-lg"
                         >
-                          {['ERASER'].map((option) => (
-                            <button
-                              key={option}
-                              type="button"
-                              onClick={() => {
-                                handleInputChange('category', option);
-                                setIsDropdownOpen(false);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                            >
-                              {option}
-                            </button>
-                          ))}
+                          {['ERASER', 'SPINS', 'MOVES', 'TRIALS'].map(
+                            (option) => (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() => {
+                                  handleInputChange('category', option);
+                                  setIsDropdownOpen(false);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                              >
+                                {option}
+                              </button>
+                            ),
+                          )}
                         </div>
                       )}
                     </div>

@@ -54,7 +54,7 @@ export function ChartPeriodPicker({
 }: ChartPeriodPickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [view, setView] = React.useState<'periods' | 'months' | 'days'>(
-    'periods',
+    'months',
   );
   const [displayYear, setDisplayYear] = React.useState(
     new Date().getFullYear(),
@@ -121,17 +121,18 @@ export function ChartPeriodPicker({
   };
 
   const handleOpenChange = (open: boolean) => {
-    if (open) {
-      setView('periods');
+    // if (open) {
+    setView('days');
 
-      setTempRange(range);
-    } else {
-      setTempRange(undefined);
-      setStartDate(null);
-      setEndDate(null);
-      setIsSelectingEnd(false);
-    }
-    setIsOpen(open);
+    setTempRange(range);
+    // }
+    // } else {
+    //   setTempRange(undefined);
+    //   setStartDate(null);
+    //   setEndDate(null);
+    //   setIsSelectingEnd(false);
+    // }
+    setIsOpen(true);
   };
 
   const handleApply = () => {
@@ -159,12 +160,13 @@ export function ChartPeriodPicker({
     setStartDate(null);
     setEndDate(null);
     setIsSelectingEnd(false);
-    setView('periods');
+    // setView('periods');
+    setIsOpen(false);
   };
 
   const formatDateRange = (start: Date, end: Date) => {
     if (view === 'months') {
-      return `${format(start, 'MMM yyyy')} - ${format(end, 'MMM yyyy')}`;
+      return `${format(start, 'do MMM yyyy')} - ${format(end, 'do MMM yyyy')}`;
     } else {
       const formatOptions: Intl.DateTimeFormatOptions = {
         month: 'short',
@@ -541,13 +543,13 @@ export function ChartPeriodPicker({
           ) : (
             <div className="w-72 p-3">
               <div className="mb-3 flex items-center justify-between">
-                <Button
+                {/* <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setView('periods')}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                </Button>
+                </Button> */}
                 <h3 className="text-sm font-medium text-gray-900">
                   Select Date Range
                 </h3>

@@ -60,24 +60,20 @@ const TotalTransactionsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
   const [selectedFilter, setSelectedFilter] = useState<
-    'All' | 'COMPLETED' | 'PENDING' | 'FAILED'
+    'All' | 'COMPLETED' | 'PENDING' | 'CANCELLED'
   >('All');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Use the debounce hook
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
-  const filterOptions = ['All', 'COMPLETED', 'PENDING', 'FAILED'];
+  const filterOptions = ['All', 'COMPLETED', 'PENDING', 'CANCELLED'];
 
   const [selectedTimeRange, setSelectedTimeRange] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState<CustomDateRange>(null);
 
-  const { data, isLoading, isError, error } = useQuery<
-    PageResponse<CustomerOrderResponse>,
-    Error
-  >({
+  const { data, isLoading, isError, error } = useQuery<UnknownObject, Error>({
     queryKey: [
       'salesOrders',
       currentPage,
@@ -131,7 +127,7 @@ const TotalTransactionsTable = () => {
   }, []);
 
   const handleFilterSelect = (
-    filter: 'All' | 'COMPLETED' | 'PENDING' | 'FAILED',
+    filter: 'All' | 'COMPLETED' | 'PENDING' | 'CANCELLED',
   ) => {
     setSelectedFilter(filter);
     setIsFilterOpen(false);
@@ -154,13 +150,13 @@ const TotalTransactionsTable = () => {
   const getStatusClass = (status: string) => {
     const statusLower = status.toLowerCase();
     if (statusLower === 'completed') return 'bg-green-100 text-green-800';
-    if (statusLower === 'failed') return 'bg-red-100 text-red-800';
+    if (statusLower === 'cancelled') return 'bg-red-100 text-red-800';
     if (statusLower === 'pending') return 'bg-yellow-100 text-yellow-800';
     return 'bg-gray-100 text-gray-800';
   };
 
-  const transactions = data?.data || [];
-  const pagination = data?.pagination;
+  const transactions = data?.content || [];
+  const pagination = data;
 
   const EmptyState = () => (
     <Table.Row>
@@ -263,7 +259,11 @@ const TotalTransactionsTable = () => {
                       key={option}
                       onClick={() =>
                         handleFilterSelect(
-                          option as 'All' | 'COMPLETED' | 'PENDING' | 'FAILED',
+                          option as
+                            | 'All'
+                            | 'COMPLETED'
+                            | 'PENDING'
+                            | 'CANCELLED',
                         )
                       }
                       className={`w-full px-4 py-2 text-left transition-colors hover:bg-gray-50 ${
@@ -375,13 +375,13 @@ const TotalTransactionsTable = () => {
           </Table.Root>
         </div>
 
-        {pagination && pagination.totalItems > 0 && (
+        {pagination && pagination.totalElements > 0 && (
           <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
             <div className="text-sm text-gray-500">
-              Showing {(pagination.currentPage - 1) * pagination.limit + 1} to{' '}
+              Showing {(pagination.pageNo - 1) * pagination.pageSize + 1} to{' '}
               {Math.min(
-                pagination.currentPage * pagination.limit,
-                pagination.totalItems,
+                pagination.pageNo * pagination.pageSize,
+                pagination.totalElements,
               )}{' '}
               of {pagination.totalItems} entries
               {debouncedSearchTerm && (
@@ -391,7 +391,7 @@ const TotalTransactionsTable = () => {
               )}
             </div>
             <Pagination
-              currentPage={pagination.currentPage}
+              currentPage={pagination.pageNo}
               totalPages={pagination.totalPages}
               onPageChange={handlePageChange}
             />

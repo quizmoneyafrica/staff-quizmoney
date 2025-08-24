@@ -71,10 +71,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const adminTypes: ('Super Admin' | 'Sub Admin')[] = [
-    'Super Admin',
-    'Sub Admin',
-  ];
+  const adminTypes: ('SUPER_ADMIN' | 'ADMIN')[] = ['SUPER_ADMIN', 'ADMIN'];
 
   const containerVariants = {
     hidden: { opacity: 0 },

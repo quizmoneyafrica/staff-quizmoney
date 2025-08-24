@@ -1,6 +1,6 @@
-import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
+import { AxiosResponse } from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { request } from '@/app/api/config';
 
 export interface AdminResponse {
   firstName: string;
@@ -50,9 +50,7 @@ const AdminApi = {
   ): Promise<
     AxiosResponse<{ success: boolean; message: string; data: AdminResponse }>
   > => {
-    return axios.post(`${BASE_URL}/admins`, data, {
-      headers: await getSessionTokenHeaders(),
-    });
+    return request.post(`/admins`, data);
   },
 
   getAdmins: async (
@@ -60,22 +58,15 @@ const AdminApi = {
   ): Promise<
     AxiosResponse<{ success: boolean; data: PaginatedResponse<AdminResponse> }>
   > => {
-    return axios.get(`${BASE_URL}/admins`, {
-      params,
-      headers: await getSessionTokenHeaders(),
-    });
+    return request.get(`/admins`, { params });
   },
 
   updateAdminStatus: async (
     data: UpdateAdminStatusPayload,
   ): Promise<AxiosResponse<{ success: boolean; message: string }>> => {
-    return axios.patch(
-      `${BASE_URL}/admins/${data.adminId}`,
-      { activate: data.activate },
-      {
-        headers: await getSessionTokenHeaders(),
-      },
-    );
+    return request.patch(`/admins/${data.adminId}`, {
+      activate: data.activate,
+    });
   },
 };
 

@@ -1,7 +1,7 @@
-import axios, { AxiosResponse } from 'axios';
-import { BASE_URL, getSessionTokenHeaders } from './userApi';
+import { AxiosResponse } from 'axios';
 import { useRequestInstance } from './config';
 import { useMutation } from '@tanstack/react-query';
+import { request } from '@/app/api/config';
 
 interface FetchPlayersParams {
   page: number;
@@ -94,9 +94,7 @@ const PlayersApi = {
       data: CustomerSummaryResponse;
     }>
   > {
-    return axios.get(`${BASE_URL}/customers/summary`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`/customers/summary`, {});
   },
 
   getCustomers(params: {
@@ -123,9 +121,7 @@ const PlayersApi = {
     query.append('size', String(params.size || 10));
     if (params.search) query.append('search', params.search);
 
-    return axios.get(`${BASE_URL}/customers?${query.toString()}`, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.get(`/customers?${query.toString()}`, {});
   },
 
   fetchPlayers(
@@ -136,9 +132,7 @@ const PlayersApi = {
       limit: params.limit || 10,
     };
 
-    return axios.post(`${BASE_URL}/fetchPlayers`, requestParams, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/fetchPlayers`, requestParams, {});
   },
 
   exportPlayersData(
@@ -150,9 +144,7 @@ const PlayersApi = {
       ...(params.dateRange && { dateRange: params.dateRange }),
     };
 
-    return axios.post(`${BASE_URL}/exportPlayersData`, requestParams, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/exportPlayersData`, requestParams, {});
   },
 
   async fetchAllUsers(
@@ -167,8 +159,8 @@ const PlayersApi = {
     let totalInactiveUsers = 0;
 
     try {
-      const firstResponse = await axios.post<FetchPlayersApiResponse>(
-        `${BASE_URL}/fetchPlayers`,
+      const firstResponse = await request.post<FetchPlayersApiResponse>(
+        `/fetchPlayers`,
         {
           page: 1,
           limit: batchSize,
@@ -176,9 +168,7 @@ const PlayersApi = {
           ...(search && { search }),
           ...(dateRange && { dateRange }),
         },
-        {
-          headers: getSessionTokenHeaders(),
-        },
+        {},
       );
 
       const { result } = firstResponse.data;
@@ -194,8 +184,8 @@ const PlayersApi = {
 
         for (let page = 2; page <= totalPages; page++) {
           remainingRequests.push(
-            axios.post<FetchPlayersApiResponse>(
-              `${BASE_URL}/fetchPlayers`,
+            request.post<FetchPlayersApiResponse>(
+              `/fetchPlayers`,
               {
                 page,
                 limit: batchSize,
@@ -203,9 +193,7 @@ const PlayersApi = {
                 ...(search && { search }),
                 ...(dateRange && { dateRange }),
               },
-              {
-                headers: getSessionTokenHeaders(),
-              },
+              {},
             ),
           );
         }
@@ -247,9 +235,7 @@ const PlayersApi = {
       ...filters,
     };
 
-    return axios.post(`${BASE_URL}/fetchPlayers`, requestParams, {
-      headers: getSessionTokenHeaders(),
-    });
+    return request.post(`/fetchPlayers`, requestParams, {});
   },
 };
 

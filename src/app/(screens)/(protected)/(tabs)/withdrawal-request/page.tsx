@@ -164,11 +164,11 @@ function Page() {
   }, [data]);
 
   const paginationInfo = useMemo(() => {
-    if (data?.pageable) {
+    if (data) {
       return {
-        currentPage: data.pageable.pageNumber + 1,
-        totalPages: data.pageable.totalPages,
-        totalCount: data.pageable.totalElements,
+        currentPage: data.pageNo + 1,
+        totalPages: data.totalPages,
+        totalCount: data.totalElements,
       };
     }
 

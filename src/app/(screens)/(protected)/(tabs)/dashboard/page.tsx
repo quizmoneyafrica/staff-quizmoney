@@ -19,6 +19,7 @@ import {
 import { formatNaira } from '@/app/utils/utils';
 import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import { convertToLocaleString } from '@/app/utils';
 
 function Page() {
   const [showTotalAmount, setShowTotalAmount] = useState(false);
@@ -40,7 +41,7 @@ function Page() {
             bgColor="blue"
             icon={<UsersIcon />}
           >
-            <p>{dashboardSummary?.totalUsers || 0}</p>
+            <p>{convertToLocaleString(dashboardSummary?.totalUsers) ?? 0}</p>
           </DashboardCards>
         )}
         {isLoading ? (
@@ -52,7 +53,9 @@ function Page() {
             bgColor="green"
             icon={<GameIcon />}
           >
-            <p>{dashboardSummary?.lastGamePlayers || 0}</p>
+            <p>
+              {convertToLocaleString(dashboardSummary?.lastGamePlayers) ?? 0}
+            </p>
           </DashboardCards>
         )}
         {isLoading ? (

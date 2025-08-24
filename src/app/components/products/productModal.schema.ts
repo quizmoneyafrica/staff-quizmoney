@@ -102,7 +102,7 @@ export const prepareProductData = (
     name: formData.name.trim(),
     price: parseFloat(formData.price),
     quantity: parseInt(formData.quantity),
-    productCategory: formData.category || 'ERASER',
+    productCategory: formData.category,
     description: formData.description?.trim(),
   };
 };

@@ -5,6 +5,7 @@ import { useGetWithdrawalRequests } from '@/app/api/withdrawal';
 import RecentWithdrawTable from '../withdrawal/table';
 import QmDrawer from '../../drawer/drawer';
 import WithdrawDetailsModal from '../withdrawal/WithdrawDrawer';
+import { convertToLocaleString } from '@/app/utils';
 
 interface TableWithdrawalRequest {
   id: string;
@@ -118,7 +119,8 @@ const RecentWithdraw: React.FunctionComponent = () => {
     <div>
       <div className="p-4">
         <p className="font-heading text-base text-neutral-800">
-          Pending Withdrawal Request ({data?.pageable?.totalElements || 0})
+          Pending Withdrawal Request (
+          {convertToLocaleString(data?.totalElements)})
         </p>
       </div>
 
@@ -134,10 +136,10 @@ const RecentWithdraw: React.FunctionComponent = () => {
             data={withdrawalRequests}
             viewDetails={handleOpenViewDetails}
             pagination={{
-              currentPage: (data?.pageable?.pageNumber || 0) + 1,
-              totalPages: data?.pageable?.totalPages || 1,
-              totalItems: data?.pageable?.totalElements || 0,
-              limit: data?.pageable?.pageSize || pageSize,
+              currentPage: (data?.pageNo || 0) + 1,
+              totalPages: data?.totalPages || 1,
+              totalItems: data?.totalElements || 0,
+              limit: data?.pageSize || pageSize,
             }}
             onPageChange={handlePageChange}
             currentPage={currentPage + 1}

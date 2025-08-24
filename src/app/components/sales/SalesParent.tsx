@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { DateRange } from 'react-day-picker';
 import WalletStatCard, {
@@ -17,9 +17,10 @@ import {
   WalletCardIconLightGreen,
   PurchasedIcon,
 } from '@/app/icons/icons';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { startOfMonth, format } from 'date-fns';
 import { formatNaira } from '@/app/utils/utils';
 import { SalesChartResponse } from '@/app/api/salesApi';
+import { convertToLocaleString } from '@/app/utils';
 
 type WalletStat = {
   title: string;
@@ -30,19 +31,6 @@ type WalletStat = {
   bgImage?: React.ReactNode;
   isValueVisible?: boolean;
   onEyeToggle?: () => void;
-};
-
-const getDateRange = (period: string, monthRange?: DateRange) => {
-  const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
-  };
-
-  if (period === 'Years' && monthRange?.from && monthRange?.to) {
-    return {
-      start: formatDate(startOfMonth(monthRange.from)),
-      end: formatDate(endOfMonth(monthRange.to)),
-    };
-  }
 };
 
 function SalesParent() {
@@ -70,12 +58,9 @@ function SalesParent() {
     queryFn: () => SalesApi.getSalesSummary().then((res) => res.data.data),
   });
 
-  const {
-    data: salesChartData = [],
-    isLoading: isChartLoading,
-    isError: isChartError,
-    error: chartError,
-  } = useQuery<SalesChartResponse[]>({
+  const { data: salesChartData = [], isLoading: isChartLoading } = useQuery<
+    SalesChartResponse[]
+  >({
     queryKey: [
       'salesChart',
       formattedStartDate,
@@ -93,17 +78,13 @@ function SalesParent() {
     enabled: !!formattedStartDate && !!formattedEndDate,
   });
 
-  const chartData = salesChartData;
-
-  const isLoading = isSummaryLoading || isChartLoading;
-
   const toggleWithdrawalVisibility = () => setIsWithdrawalVisible((p) => !p);
 
   const walletStats: WalletStat[] = useMemo(() => {
     return [
       {
         title: 'Users Purchased',
-        value: (summaryData?.totalPurchases ?? 0).toString(),
+        value: convertToLocaleString(summaryData?.totalPurchases) ?? '',
         bgColor: 'blue',
         icon: <Shop />,
         bgImage: <BigShop />,
