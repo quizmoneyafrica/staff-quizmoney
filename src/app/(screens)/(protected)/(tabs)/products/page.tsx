@@ -280,7 +280,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     <div className="min-h-screen bg-white px-4 py-6 md:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
+          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
             All available Products
           </h1>
 
