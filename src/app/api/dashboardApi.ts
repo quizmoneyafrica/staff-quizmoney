@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import { request } from '@/app/api/config';
 
 interface DashboardSummary {
@@ -48,7 +48,7 @@ export interface NextGameApiResponse {
 
 const DashboardApi = {
   fetchDashboardSummary(): Promise<DashboardSummary> {
-    return axios
+    return request
       .get<DashboardSummaryApiResponse>(`/dashboard/summary`, {})
       .then((res) => res.data.data);
   },

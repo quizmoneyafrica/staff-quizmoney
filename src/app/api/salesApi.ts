@@ -34,7 +34,7 @@ export interface CustomerOrderResponse {
   orderId: string;
   description: string;
   amount: number;
-  status: 'COMPLETED' | 'PENDING' | 'FAILED';
+  status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
 }
 
 export interface SalesOrdersApiResponse {
@@ -141,7 +141,7 @@ const SalesApi = {
   getSalesOrders(params: {
     startDate?: string;
     endDate?: string;
-    status?: 'COMPLETED' | 'PENDING' | 'FAILED';
+    status?: 'COMPLETED' | 'PENDING' | 'CANCELLED';
     search?: string;
     page?: number;
     limit?: number;
@@ -165,7 +165,7 @@ const SalesApi = {
     if (params.status) urlParams.append('status', params.status);
     if (params.search) urlParams.append('search', params.search);
     if (params.page) urlParams.append('page', params.page.toString());
-    if (params.limit) urlParams.append('limit', params.limit.toString());
+    if (params.limit) urlParams.append('size', params.limit.toString());
 
     return request.get(`/sales/orders?${urlParams.toString()}`, {});
   },
