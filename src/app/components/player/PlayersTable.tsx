@@ -347,7 +347,7 @@ const PlayersTable = () => {
               className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
             />
           </div>
-          <div className="relative" ref={filterDropdownRef}>
+          {/* <div className="relative" ref={filterDropdownRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               disabled={isLoading}
@@ -394,7 +394,7 @@ const PlayersTable = () => {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
         </div>
 
         <div className="flex items-center gap-4">

@@ -200,7 +200,12 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     setEditProductData(null);
   }, []);
 
-  const handleEditSuccess = useCallback(() => {}, []);
+  const handleEditSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    setIsEditModalOpen(false);
+    setEditProductId(null);
+    setEditProductData(null);
+  }, [queryClient]);
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
@@ -267,7 +272,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           )}
         </div>
 
-        {totalPages > 1 && (
+        {totalPages > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

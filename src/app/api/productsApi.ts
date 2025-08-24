@@ -112,7 +112,7 @@ const createApiClient = () => {
       payload: GetProductsPayload,
     ): Promise<AxiosResponse<ProductsApiResponse>> {
       const params = {
-        searchText: payload.searchText || '',
+        search: payload.searchText || '',
         pageNumber: payload.pageNumber,
         pageSize: payload.pageSize,
       };
