@@ -113,15 +113,27 @@ const createApiClient = () => {
       payload: GetProductsPayload,
     ): Promise<AxiosResponse<ProductsApiResponse>> {
       try {
-        const params = {
-          searchText: payload.searchText || '',
+        type QueryParams = {
+          pageNumber: number;
+          pageSize: number;
+          search?: string;
+        };
+
+        const params: QueryParams = {
           pageNumber: payload.pageNumber,
           pageSize: payload.pageSize,
         };
 
+        if (payload.searchText && payload.searchText.trim() !== '') {
+          params.search = payload.searchText.trim();
+        }
+
         return await axios.get(`${BASE_URL}/products/filter`, {
           params,
           headers: getSessionTokenHeaders(),
+          paramsSerializer: {
+            indexes: null,
+          },
         });
       } catch (error) {
         handleApiError(error as AxiosError);

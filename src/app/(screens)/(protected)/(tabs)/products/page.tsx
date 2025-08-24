@@ -200,7 +200,12 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     setEditProductData(null);
   }, []);
 
-  const handleEditSuccess = useCallback(() => {}, []);
+  const handleEditSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    setIsEditModalOpen(false);
+    setEditProductId(null);
+    setEditProductData(null);
+  }, [queryClient]);
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
@@ -253,7 +258,6 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     if (!productsResponse?.data) return null;
 
     const { totalPages, totalElements: totalItems } = productsResponse.data;
-    if (totalPages <= 1) return null;
 
     return (
       <div className="flex flex-col items-end gap-4 pt-6">
@@ -266,7 +270,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           )}
         </div>
 
-        {totalPages > 1 && (
+        {totalPages > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
