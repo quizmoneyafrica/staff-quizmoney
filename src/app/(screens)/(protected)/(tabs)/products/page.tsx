@@ -92,7 +92,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           name: data.name,
           price: data.price,
           quantity: data.quantity,
-          productCategory: 'ERASER',
+          productCategory: data.category,
         };
         const response = await ProductsApi.createProduct(payload);
         return response.data;
@@ -251,9 +251,10 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
 
   const renderPaginationSection = () => {
     if (!productsResponse?.data) return null;
+    console.log('productsResponse: ', productsResponse);
 
     const { totalPages, totalElements: totalItems } = productsResponse.data;
-    if (totalPages <= 1) return null;
+    // if (totalPages <= 1) return null;
 
     return (
       <div className="flex flex-col items-end gap-4 pt-6">

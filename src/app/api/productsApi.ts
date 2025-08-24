@@ -134,7 +134,7 @@ const createApiClient = () => {
         name: payload.name,
         price: payload.price,
         quantity: payload.quantity,
-        productCategory: 'ERASER',
+        productCategory: payload.category,
       });
     },
 

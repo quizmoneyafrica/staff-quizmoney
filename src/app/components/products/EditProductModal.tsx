@@ -1,8 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  X,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  ChevronDown,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, ApiError } from '@/app/api/productsApi';
 
@@ -48,6 +54,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
     data: apiProductData,
@@ -59,7 +67,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   } = useProduct(productId, isOpen && !initialProductData);
 
   const {
-    mutate: updateProduct,
+    mutateAsync: updateProduct,
     isPending: isSubmitting,
     isSuccess,
     isError,
@@ -157,7 +165,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       quantity: parseInt(formData.quantity),
     };
 
-    updateProduct(updateData);
+    await updateProduct(updateData);
+
+    handleClose();
   };
 
   const handleClose = () => {
@@ -352,6 +362,72 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                         {errors.quantity && (
                           <p className="mt-1 text-sm text-red-600">
                             {errors.quantity}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Product Category *
+                        </label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            disabled={isSubmitting}
+                            className={`flex h-[46px] w-full items-center justify-between rounded-md border px-4 py-3 text-sm transition-colors ${
+                              errors.category
+                                ? 'border-red-500'
+                                : 'border-gray-300'
+                            } ${
+                              isSubmitting
+                                ? 'cursor-not-allowed bg-gray-100'
+                                : 'bg-white hover:border-gray-400'
+                            }`}
+                          >
+                            <span
+                              className={
+                                formData.category
+                                  ? 'text-gray-900'
+                                  : 'text-gray-500'
+                              }
+                            >
+                              {formData.category || 'Select category'}
+                            </span>
+                            <ChevronDown
+                              size={20}
+                              className={`text-gray-500 transition-transform ${
+                                isDropdownOpen ? 'rotate-180' : ''
+                              }`}
+                            />
+                          </button>
+
+                          {isDropdownOpen && !isSubmitting && (
+                            <div
+                              ref={dropdownRef}
+                              className="absolute right-0 top-full z-10 mt-1 w-full rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+                            >
+                              {['ERASER', 'SPINS', 'MOVES', 'TRIALS'].map(
+                                (option) => (
+                                  <button
+                                    key={option}
+                                    type="button"
+                                    onClick={() => {
+                                      handleInputChange('category', option);
+                                      setIsDropdownOpen(false);
+                                    }}
+                                    className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                                  >
+                                    {option}
+                                  </button>
+                                ),
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {errors.category && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.category}
                           </p>
                         )}
                       </div>
