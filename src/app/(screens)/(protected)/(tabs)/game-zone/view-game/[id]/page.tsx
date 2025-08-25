@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import GameApi, { GameQuestionResponse } from '@/app/api/game';
+import GameApi from '@/app/api/game';
 import AppLoader from '@/app/components/loader/loader';
 import {
   Game,
@@ -29,7 +29,7 @@ function Page() {
       try {
         setFetchingData(true);
         const res = await GameApi.getGameByIdV2(`${params.id}`);
-        const result: GameQuestionResponse = res.data;
+        const result = res?.data?.data;
 
         const transformedGame: Game = {
           objectId: result.gameId,
@@ -38,9 +38,9 @@ function Page() {
             iso: result.startTime,
           },
           completed: false,
-          entryFee: result.fee.toString(),
+          entryFee: String(result?.fee ?? 0),
           gamePrize: result.prize,
-          numOfShare: 0, //
+          numOfShare: 0,
           winners: [],
           users: [],
           userTimes: [],
@@ -48,8 +48,8 @@ function Page() {
           music: { name: '', url: '' },
           createdAt: '',
           updatedAt: '',
-          questions: result.questions.map((apiQuestion, index) => ({
-            number: apiQuestion.order.toString(),
+          questions: result.questions.map((apiQuestion) => ({
+            number: String(apiQuestion.order),
             question: apiQuestion.question,
             options: apiQuestion.options.map((option) => option.option),
             correctAnswer:

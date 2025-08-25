@@ -1,11 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import GameApi, {
-  GameQuestionResponse,
-  GameQuestion,
-  GameQuestionOption,
-} from '@/app/api/game';
+import GameApi, { GameQuestionResponse, GameQuestion } from '@/app/api/game';
 import AppLoader from '@/app/components/loader/loader';
 import {
   Game,
@@ -53,7 +49,7 @@ function Page() {
   ): QuestionState => {
     const correctOption = apiQuestion.options.find((option) => option.answer);
     return {
-      number: apiQuestion.order.toString(),
+      number: String(apiQuestion.order),
       question: apiQuestion.question,
       options: apiQuestion.options.map((option) => option.option),
       correctAnswer: correctOption?.option || '',
@@ -82,7 +78,7 @@ function Page() {
       try {
         setFetchingData(true);
         const res = await GameApi.getGameDetailsV2(`${params.id}`);
-        const result: GameQuestionResponse = res.data;
+        const result = res?.data?.data;
 
         const questionsWithIds: QuestionWithId[] =
           result.questions?.map((question: GameQuestion, index: number) => ({
@@ -97,7 +93,7 @@ function Page() {
             iso: result.startTime,
           },
           completed: false,
-          entryFee: result.fee.toString(),
+          entryFee: String(result.fee),
           gamePrize: result.prize,
           numOfShare: 0, //
           winners: [],

@@ -128,108 +128,74 @@ const GameApi = {
   createGame(
     payload: CreateGamePayload,
   ): Promise<AxiosResponse<CreateGameResponse>> {
-    return request.post(`/games`, payload, {});
+    return request.post(`/games`, payload);
   },
 
   updateGame(payload: UpdateGamePayload): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(`/updateGame`, payload, {});
+    return request.post(`/updateGame`, payload);
   },
 
   updateGameV2(
     gameId: string,
     payload: UpdateGamePayloadV2,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return request.patch(`/games/${gameId}`, payload, {});
+    return request.patch(`/games/${gameId}`, payload);
   },
 
   fetchNextGame(): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(`/errorLoad`, {}, { headers: appHeaders });
+    return request.post(`/errorLoad`);
   },
 
   getGamesWithQuery(
     queryParams: string,
   ): Promise<AxiosResponse<{ success: boolean; data: ApiGameResponse }>> {
-    return request.get(`/games?${queryParams}`, {});
+    return request.get(`/games?${queryParams}`);
   },
 
   getAllGamesOld(): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(
-      `/getAllGames`,
-      {},
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/getAllGames`);
   },
 
   deleteGame(objectId: string): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(
-      `/deleteGame`,
-      { gameId: objectId },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/deleteGame`, { gameId: objectId });
   },
 
   deleteGameV2(gameId: string): Promise<AxiosResponse<ApiResponse>> {
-    return request.delete(`/games/${gameId}`, {});
+    return request.delete(`/games/${gameId}`);
   },
 
   getGameById(objectId: string): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(
-      `/getGameById`,
-      { objectId },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/getGameById`, { objectId });
   },
 
-  getGameByIdV2(gameId: string): Promise<AxiosResponse<GameQuestionResponse>> {
-    return request.get(`/games/${gameId}`, {});
+  getGameByIdV2(gameId: string): Promise<AxiosResponse<UnknownObject>> {
+    return request.get(`/games/${gameId}/details`);
   },
 
-  getGameDetailsV2(
-    gameId: string,
-  ): Promise<AxiosResponse<GameQuestionResponse>> {
-    return request.get(`/games/${gameId}/details`, {});
+  getGameDetailsV2(gameId: string): Promise<AxiosResponse<UnknownObject>> {
+    return request.get(`/games/${gameId}/details`);
   },
 
   registerForGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(
-      `/registerForGame`,
-      { gameId },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/registerForGame`, { gameId });
   },
 
   removeUserFromGame(gameId: string): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(
-      `/removeUserFromGame`,
-      { gameId },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/removeUserFromGame`, { gameId });
   },
 
   deactivateSession(gameId: string) {
-    return request.post(
-      `/deactivateSession`,
-      { gameId },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/deactivateSession`, { gameId });
   },
 
   getLoggedinUserGameResults(
     gameId: string,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(
-      `/getLoggedinUserGameResults`,
-      { gameId },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/getLoggedinUserGameResults`, { gameId });
   },
 
   updateErasers(erasersUsed: number) {
-    return request.post(
-      `/updateErasers`,
-      { erasersUsed },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/updateErasers`, { erasersUsed });
   },
 
   recordGameAnswer(
@@ -238,16 +204,12 @@ const GameApi = {
     answer: string,
     totalTime?: string,
   ) {
-    return request.post(
-      `/recordGameAnswer`,
-      {
-        gameId,
-        questionNumber,
-        answer,
-        ...(totalTime && { totalTime }),
-      },
-      { headers: getSessionTokenHeaders() },
-    );
+    return request.post(`/recordGameAnswer`, {
+      gameId,
+      questionNumber,
+      answer,
+      ...(totalTime && { totalTime }),
+    });
   },
 };
 

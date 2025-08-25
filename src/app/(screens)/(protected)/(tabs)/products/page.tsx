@@ -168,16 +168,12 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     setIsEditModalOpen(true);
   }, []);
 
-  const handleOpenDeleteModal = useCallback(
-    (productId: string) => {
-      const product = allProducts.find((p) => p.id === productId);
-      if (product) {
-        setProductToDelete(product);
-        setIsDeleteModalOpen(true);
-      }
-    },
-    [allProducts],
-  );
+  const handleOpenDeleteModal = (product) => {
+    if (product) {
+      setProductToDelete(product);
+      setIsDeleteModalOpen(true);
+    }
+  };
 
   const confirmDeleteProduct = useCallback(async () => {
     if (!productToDelete) return;
@@ -256,10 +252,9 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
 
   const renderPaginationSection = () => {
     if (!productsResponse?.data) return null;
-    console.log('productsResponse: ', productsResponse);
 
     const { totalPages, totalElements: totalItems } = productsResponse.data;
-    // if (totalPages <= 1) return null;
+    if (totalPages <= 1) return null;
 
     return (
       <div className="flex flex-col items-end gap-4 pt-6">
@@ -359,7 +354,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
                     iconName: product.productImage?.name,
                   }}
                   onEdit={() => handleEditProduct(product)}
-                  onDelete={handleOpenDeleteModal}
+                  onDelete={() => handleOpenDeleteModal(product)}
                 />
               ))}
             </div>

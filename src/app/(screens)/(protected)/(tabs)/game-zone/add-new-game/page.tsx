@@ -9,11 +9,11 @@ import {
 import CustomTextField from '@/app/utils/CustomTextField';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import QuestionsSection from './questionsection';
+// import QuestionsSection from './questionsection';
 import { useCreateGame } from '@/app/hooks/useGameCreate';
 import {
-  transformGameDataForAPI,
   validateGamePayload,
+  transformGameDataForAPI,
 } from '@/app/utils/gameTransformers';
 
 interface Option {
@@ -50,7 +50,6 @@ function Page() {
   const createGameMutation = useCreateGame({
     onSuccess: () => {
       toast.success('Game created successfully!');
-
       dispatch(clearCreateGame());
       setDatetimeInput('');
       setQuestions([]);
@@ -259,7 +258,9 @@ function Page() {
     return true;
   };
 
-  const handleSubmitGame = async (submittedQuestions: Question[]) => {
+  const handleSubmitGameWithQuestions = async (
+    submittedQuestions: Question[],
+  ) => {
     try {
       const questionsToValidate = submittedQuestions || questions;
       setQuestions(questionsToValidate);
@@ -273,6 +274,26 @@ function Page() {
       }
 
       const apiPayload = transformGameDataForAPI(game, questionsToValidate);
+
+      const validationErrors = validateGamePayload(apiPayload);
+      if (validationErrors.length > 0) {
+        toast.error(validationErrors[0]);
+        return;
+      }
+
+      await createGameMutation.mutateAsync(apiPayload);
+    } catch (error) {
+      console.error('Error creating game:', error);
+    }
+  };
+
+  const handleSubmitGame = async () => {
+    try {
+      if (!validateGameDetailsStepByStep()) {
+        return;
+      }
+
+      const apiPayload = transformGameDataForAPI(game, []);
 
       const validationErrors = validateGamePayload(apiPayload);
       if (validationErrors.length > 0) {
@@ -392,12 +413,24 @@ function Page() {
         </div>
       </div>
 
-      <QuestionsSection
+      <button
+        disabled={createGameMutation.isPending}
+        onClick={handleSubmitGame}
+        className={`mt-5 w-full cursor-pointer rounded-lg px-6 py-3 font-medium text-white transition-colors md:w-auto ${
+          createGameMutation.isPending
+            ? 'cursor-not-allowed bg-gray-400'
+            : 'bg-blue-600 hover:bg-blue-700'
+        }`}
+      >
+        {createGameMutation.isPending ? 'Creating Game...' : `Create Game`}
+      </button>
+
+      {/* <QuestionsSection
         onQuestionsChange={handleQuestionsChange}
         onSubmit={handleSubmitGame}
         isSubmitting={createGameMutation.isPending}
         questionsLimit={questionsLimit}
-      />
+      /> */}
     </>
   );
 }

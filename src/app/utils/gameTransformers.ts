@@ -1,4 +1,4 @@
-import { Game, QuestionState } from '../store/gameSlice';
+import { Game } from '../store/gameSlice';
 import { CreateGamePayload } from '../api/game';
 
 interface Option {
@@ -15,7 +15,7 @@ interface Question {
 }
 
 interface TransformedQuestion {
-  number: number;
+  order: number;
   question: string;
   options: string[];
   correctAnswer: string;
@@ -50,7 +50,7 @@ export const transformGameDataWithQuestions = (
 
   const transformedQuestions: TransformedQuestion[] = questions.map(
     (question, index) => ({
-      number: index + 1,
+      order: index + 1,
       question: question.question,
       options: question.options.map((option) => option.text),
       correctAnswer: question.options[question.correctOptionIndex]?.text || '',
@@ -87,9 +87,9 @@ export const validateGamePayload = (payload: CreateGamePayload): string[] => {
     }
   }
 
-  if (payload.questionLimit < 1) {
-    errors.push('Question limit must be at least 1');
-  }
+  // if (payload.questionLimit < 1) {
+  //   errors.push('Question limit must be at least 1');
+  // }
 
   if (payload.duration && payload.duration < 1) {
     errors.push('Duration must be at least 1 minute');

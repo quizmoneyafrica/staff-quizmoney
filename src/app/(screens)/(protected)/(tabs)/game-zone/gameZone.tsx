@@ -81,7 +81,7 @@ function GameZone() {
   ): Promise<PageResponse<Game>> => {
     const params = new URLSearchParams();
     params.append('page', (page - 1).toString());
-    params.append('limit', GAMES_PER_PAGE.toString());
+    params.append('size', GAMES_PER_PAGE.toString());
     if (search) {
       params.append('search', search);
     }
@@ -127,13 +127,6 @@ function GameZone() {
       dispatch(setAdminGames(gamesData.data));
     }
   }, [gamesData?.data, dispatch]);
-
-  React.useEffect(() => {
-    if (isError) {
-      console.error('Error fetching games:', error);
-      toast.error('An error occurred loading games, please refresh.');
-    }
-  }, [isError, error]);
 
   const paginationInfo = useMemo(() => {
     return (
