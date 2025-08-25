@@ -30,9 +30,6 @@ export const useCreateGame = (options?: UseCreateGameOptions) => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
-
-      toast.success('Game created successfully!');
-
       if (options?.redirectOnSuccess !== false) {
         const redirectPath = options?.redirectPath || '/game-zone';
         router.push(redirectPath);
