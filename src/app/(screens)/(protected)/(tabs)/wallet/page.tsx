@@ -17,24 +17,12 @@ import {
 
 import WalletApi, { WalletSummaryResponse } from '@/app/api/wallet';
 import { formatNaira } from '@/app/utils/utils';
-import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
-import { calculateDateRange } from '@/app/utils/date-range';
 
 function Page() {
   const [showTotalBalance, setShowTotalBalance] = useState(false);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [showTotalExpenses, setShowTotalExpenses] = useState(false);
-
-  const [selected, setSelected] = useState('All Time');
-  const [customDateRange, setCustomDateRange] = useState(null);
-
-  const handleSelect = (option) => {
-    setSelected(option);
-    if (option !== 'Custom') setCustomDateRange(null);
-  };
-
-  const handleCustomDateChange = (dateRange) => setCustomDateRange(dateRange);
 
   const {
     data: summaryData,
@@ -53,7 +41,7 @@ function Page() {
   const walletStats = [
     {
       title: 'Total Wallet Balance',
-      value: formatNaira(summaryData?.data?.totalBalance || 0),
+      value: formatNaira(summaryData?.data?.totalBalance, true),
       bgColor: 'lightBlue',
       icon: <WalletCardIconLightBlue />,
       bgImage: <WalletIconBig />,
@@ -63,7 +51,7 @@ function Page() {
     },
     {
       title: 'Total Deposit',
-      value: formatNaira(summaryData?.data?.totalDeposit || 0),
+      value: formatNaira(summaryData?.data?.totalDeposit, true),
       bgColor: 'lightCyan',
       icon: <WalletCardIconLightCyan />,
       bgImage: <WalletIconBigLightCyan />,
@@ -73,7 +61,7 @@ function Page() {
     },
     {
       title: 'Total Withdrawal',
-      value: formatNaira(summaryData?.data?.totalWithdrawal || 0),
+      value: formatNaira(summaryData?.data?.totalWithdrawal, true),
       bgColor: 'lightGreen',
       icon: <WalletCardIconLightGreen />,
       bgImage: <WalletIconBigGreen />,
@@ -83,7 +71,7 @@ function Page() {
     },
     {
       title: 'Total Expenses',
-      value: formatNaira(summaryData?.data?.totalExpenses || 0),
+      value: formatNaira(summaryData?.data?.totalExpenses, true),
       bgColor: 'redError',
       icon: <SmallRedWallet />,
       bgImage: <WalletIconBigRedError />,
@@ -97,13 +85,6 @@ function Page() {
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
       <div className="flex items-center justify-between ">
         <h2 className="text-2xl font-semibold">Wallet Statistics</h2>
-        <TimeRangeDropdown
-          options={['All Time', 'This week', 'Last 30 days', 'Custom']}
-          selected={selected}
-          onSelect={handleSelect}
-          customDateRange={customDateRange}
-          onCustomDateChange={handleCustomDateChange}
-        />
       </div>
 
       <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">

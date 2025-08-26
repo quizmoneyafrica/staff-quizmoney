@@ -119,7 +119,6 @@ function GameZone() {
   } = useQuery<PageResponse<Game>, Error>({
     queryKey: gamesQueryKey(currentPage, debouncedSearchQuery),
     queryFn: () => fetchGamesFromAPI(currentPage, debouncedSearchQuery),
-    placeholderData: (previousData) => previousData,
   });
 
   React.useEffect(() => {

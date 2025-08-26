@@ -106,7 +106,6 @@ const TotalTransactionsTable = () => {
 
       return response.data.data;
     },
-    placeholderData: (previousData) => previousData,
   });
 
   useEffect(() => {

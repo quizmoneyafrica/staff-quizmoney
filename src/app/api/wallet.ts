@@ -203,7 +203,7 @@ const WalletApi = {
       data: WalletSummaryResponse;
     }>
   > {
-    return request.get(`/wallets/summary`, {});
+    return request.get(`/wallets/summary`);
   },
 
   getWalletTransactions(params: {
@@ -227,15 +227,14 @@ const WalletApi = {
       };
     }>
   > {
-    const queryParams = new URLSearchParams();
-
-    if (params.type) queryParams.append('type', params.type);
-    if (params.status) queryParams.append('status', params.status);
-    if (params.search) queryParams.append('search', params.search);
-    if (params.page) queryParams.append('pageNo', params.page.toString());
-    if (params.limit) queryParams.append('pageSize', params.limit.toString());
-
-    return request.get(`/wallet-transactions?${queryParams.toString()}`, {});
+    return request.get(`/wallets/transactions`, {
+      params: {
+        page: params?.page,
+        size: params?.limit,
+        search: params?.search,
+        status: params?.status,
+      },
+    });
   },
 
   getTransactionById(

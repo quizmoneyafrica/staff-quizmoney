@@ -7,7 +7,7 @@ import QmCoinsTabs from '@/app/components/qm-coins/QmCoinsTabs';
 import { UsersWithCoinsTable } from '@/app/components/qm-coins/UsersWithCoinsTable';
 import RedemptionHistoryTable from '@/app/components/qm-coins/RedemptionHistoryTable';
 import QmCoinSettings from '@/app/components/qm-coins/QmCoinSettings';
-
+import { convertToLocaleString } from '@/app/utils';
 import { useQuery } from '@tanstack/react-query';
 import QmCoinsApi from '@/app/api/QmCoinsApi';
 
@@ -26,7 +26,7 @@ function QmCoinsPage() {
         <QmCoinStatCard
           title="Total Earned Coin"
           value={
-            statsLoading ? '...' : statsData?.totalEarned?.toLocaleString()
+            statsLoading ? '...' : convertToLocaleString(statsData?.totalEarned)
           }
           bgColor="lightCyan"
           icon={<Wallet size={20} className="text-cyan-700" />}
@@ -34,7 +34,9 @@ function QmCoinsPage() {
         <QmCoinStatCard
           title="Total Redeemed"
           value={
-            statsLoading ? '...' : statsData?.totalRedeemed?.toLocaleString()
+            statsLoading
+              ? '...'
+              : convertToLocaleString(statsData?.totalRedeemed)
           }
           bgColor="lightBlue"
           icon={<Wallet size={20} className="text-blue-800" />}
