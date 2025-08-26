@@ -106,7 +106,7 @@ const ChangePasswordPage = () => {
 
   const onSubmit = async (data: FormData) => {
     const changePasswordData: ChangePasswordRequest = {
-      currentPassword: data.currentPassword,
+      oldPassword: data.currentPassword,
       newPassword: data.newPassword,
     };
 

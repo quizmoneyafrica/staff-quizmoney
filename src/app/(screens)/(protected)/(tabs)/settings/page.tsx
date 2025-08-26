@@ -3,16 +3,18 @@ import { UpdateUserForm } from '@/app/api/interface';
 import userApi, {
   getAuthUser,
   AdminResponse,
-  AvatarProjection,
+  // AvatarProjection,
 } from '@/app/api/userApi';
 import { useAppSelector, useAuth } from '@/app/hooks/useAuth';
-import { ArrowDownIcon, MailIcon, PersonIcon } from '@/app/icons/icons';
-import { encryptData } from '@/app/utils/crypto';
+import { MailIcon, PersonIcon } from '@/app/icons/icons';
 import CustomButton from '@/app/utils/CustomBtn';
-import CustomSelect from '@/app/utils/CustomSelect';
+// import CustomSelect from '@/app/utils/CustomSelect';
 import CustomTextField from '@/app/utils/CustomTextField';
 import { formatDateTime } from '@/app/utils/utils';
-import { CalendarIcon, GlobeIcon, Pencil1Icon } from '@radix-ui/react-icons';
+import {
+  // CalendarIcon, GlobeIcon,
+  Pencil1Icon,
+} from '@radix-ui/react-icons';
 import { Flex, Grid } from '@radix-ui/themes';
 
 import { motion } from 'framer-motion';
@@ -101,7 +103,7 @@ const Page = () => {
   );
 
   const [isEditing, setIsEditing] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [, setIsUpdating] = useState(false);
 
   const { loginUser } = useAuth();
   const queryClient = useQueryClient();
@@ -125,23 +127,21 @@ const Page = () => {
     enabled: !!user?.objectId,
   });
 
-  // Get avatars list
-  const { data: avatarsData, isLoading: avatarsLoading } = useQuery<{
-    success: boolean;
-    code: string;
-    message: string;
-    data: AvatarProjection[];
-  }>({
-    queryKey: ['avatars'],
-    queryFn: async () => {
-      const response = await userApi.getAvatarsList();
-      return response.data;
-    },
-  });
+  // const { data: avatarsData, isLoading: avatarsLoading } = useQuery<{
+  //   success: boolean;
+  //   code: string;
+  //   message: string;
+  //   data: AvatarProjection[];
+  // }>({
+  //   queryKey: ['avatars'],
+  //   queryFn: async () => {
+  //     const response = await userApi.getAvatarsList();
+  //     return response.data;
+  //   },
+  // });
 
-  // Update profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: (formData: UpdateUserForm) => userApi.updateUser(formData),
+  const { mutateAsync: updateAdmin, isPending: isUpdating } = useMutation({
+    mutationFn: (formData: UpdateUserForm) => userApi.updateAdmin(formData),
     onSuccess: (res) => {
       if (res.status === 200) {
         setIsEditing(false);
@@ -149,12 +149,18 @@ const Page = () => {
           position: 'top-center',
         });
 
-        const userData = res.data.result.updatedUser;
-        const encryptedUser = encryptData(userData);
+        const userData = res.data.data;
 
-        loginUser(encryptedUser);
+        const userPlayload: UnknownObject = {
+          user: {
+            email: userData?.emailAddress,
+            firstName: userData?.firstName,
+            lastName: userData?.lastName,
+          },
+        };
+        loginUser(userPlayload);
 
-        queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
+        // queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
       }
     },
     onError: (error: unknown) => {
@@ -186,57 +192,11 @@ const Page = () => {
   };
 
   const updateUser = async () => {
-    setIsUpdating(true);
-
-    await userApi
-      .updateUser({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        dob: formData.dob,
-        gender: formData.gender,
-        country: formData.country,
-        facebook: formData.facebook ?? '',
-        instagram: formData.instagram ?? '',
-        twitter: formData.twitter ?? '',
-        whatsapp: formData.whatsapp ?? '',
-        avatar: user?.avatar ?? '',
-        promotionalMails: user?.promotionalMails ?? false,
-      })
-      .then((res) => {
-        if (res.status === 200) {
-          setIsEditing(false);
-          toast.success('Profile updated successfully', {
-            position: 'top-center',
-          });
-
-          const userData = res.data.result.updatedUser;
-          // const encryptedUser = encryptData(userData);
-
-          // ✅ Dispatch to Redux
-          loginUser(userData);
-        }
-      })
-      .catch((error: unknown) => {
-        const errorMessage =
-          error &&
-          typeof error === 'object' &&
-          'response' in error &&
-          error.response &&
-          typeof error.response === 'object' &&
-          'data' in error.response &&
-          error.response.data &&
-          typeof error.response.data === 'object' &&
-          'error' in error.response.data
-            ? (error.response.data as { error: string }).error
-            : 'Failed to update profile. Please try again later.';
-
-        toast.error(errorMessage, {
-          position: 'top-center',
-        });
-      })
-      .finally(() => {
-        setIsUpdating(false);
-      });
+    updateAdmin({
+      firstName: formData?.firstName,
+      lastName: formData?.lastName,
+      gender: 'MALE',
+    });
   };
 
   return (

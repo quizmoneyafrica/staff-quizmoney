@@ -10,8 +10,8 @@ export const useAuth = () => {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
-  const loginUser = (email: string) => {
-    dispatch(login(email));
+  const loginUser = (payload: UnknownObject) => {
+    dispatch(login(payload));
   };
 
   const logoutUser = () => {

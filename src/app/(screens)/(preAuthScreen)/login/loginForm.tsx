@@ -3,8 +3,8 @@ import UserAPI from '@/app/api/userApi';
 import { useAuth } from '@/app/hooks/useAuth';
 import useFcmToken from '@/app/hooks/useFcmToken';
 import { EyeIcon, EyeSlash, MailIcon } from '@/app/icons/icons';
-import getDeviceId from '@/app/pwa/deviceId';
-import { encryptData } from '@/app/utils/crypto';
+// import getDeviceId from '@/app/pwa/deviceId';
+// import { encryptData } from '@/app/utils/crypto';
 import CustomButton from '@/app/utils/CustomBtn';
 import CustomTextField from '@/app/utils/CustomTextField';
 import {
@@ -59,9 +59,6 @@ const LoginForm = ({ loading, setLoading }: Props) => {
     try {
       const response = await UserAPI.login(newValues);
       const userData = response.data.data;
-
-      // Encrypt the user data
-      // const encryptedUser = encryptData(userData);
 
       // Dispatch to Redux
       loginUser(userData);

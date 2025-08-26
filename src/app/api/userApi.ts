@@ -31,7 +31,7 @@ export interface AdminResponse {
 }
 
 export interface ChangePasswordRequest {
-  currentPassword: string;
+  oldPassword: string;
   newPassword: string;
 }
 
@@ -110,10 +110,8 @@ const UserAPI = {
   ): Promise<AxiosResponse<ApiResponse>> {
     return request.post(`/inAppChangePassword`, form);
   },
-  updateUser(form: UpdateUserForm): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(
-      `/updateProfile?firstName=${form.firstName}&lastName=${form.lastName}&dob=${form.dob}&gender=${form.gender}&country=${form.country}&facebook=${form.facebook}&instagram=${form.instagram}&twitter=${form.twitter}&whatsapp=${form.whatsapp}&avatar=${form.avatar}`,
-    );
+  updateAdmin(form: UpdateUserForm): Promise<AxiosResponse<ApiResponse>> {
+    return request.patch(`/admins`, form);
   },
   getAvatars(): Promise<AxiosResponse<ApiResponse>> {
     return request.get(`https://quizmoney.b4a.io/classes/Avatars`);
@@ -137,7 +135,7 @@ const UserAPI = {
   changePassword(
     payload: ChangePasswordRequest,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return request.patch(`/admins/password`, payload);
+    return request.patch(`/admins/change-password`, payload);
   },
   getAvatarsList(): Promise<
     AxiosResponse<{
