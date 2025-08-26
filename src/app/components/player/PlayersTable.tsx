@@ -467,14 +467,14 @@ const PlayersTable = () => {
                   onSort={handleSort}
                   disabled={isLoading}
                 />
-                <Th
+                {/* <Th
                   label="Account Type"
                   sortField="accountType"
                   currentSortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
                   disabled={isLoading}
-                />
+                /> */}
                 <Th
                   label="Date of Registration"
                   sortField="createdAt"
@@ -537,7 +537,7 @@ const PlayersTable = () => {
                           {player.email}
                         </div>
                       </Table.Cell>
-                      <Table.Cell className="px-4 py-4">
+                      {/* <Table.Cell className="px-4 py-4">
                         <p
                           className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
                             player.accountType === 'admin'
@@ -547,7 +547,7 @@ const PlayersTable = () => {
                         >
                           {player.accountType}
                         </p>
-                      </Table.Cell>
+                      </Table.Cell> */}
                       <Table.Cell className="px-4 py-4 text-sm text-gray-500">
                         {fullDate}
                       </Table.Cell>

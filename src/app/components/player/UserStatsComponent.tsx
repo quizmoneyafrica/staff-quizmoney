@@ -1,16 +1,11 @@
 'use client';
-import React, { useEffect, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import CustomImage from '../CustomImage';
-import { useSelector, useDispatch } from 'react-redux';
-import {
-  selectPlayers,
-  setStatsLoading,
-  setStatsData,
-} from '@/app/store/playersSlice';
 import PlayersApi from '@/app/api/playersApi';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@radix-ui/themes';
+import { convertToLocaleString } from '@/app/utils';
 
 interface Stat {
   title: string;
@@ -62,30 +57,31 @@ const LoadingStatCard: React.FC<{ index: number }> = ({ index }) => {
 };
 
 const UserStatsComponent: React.FC = () => {
-  const dispatch = useDispatch();
-  const { statsData, isStatsLoading } = useSelector(selectPlayers);
-
   const { data, isLoading } = useQuery({
     queryKey: ['customerSummary'],
     queryFn: () => PlayersApi.getCustomerSummary().then((res) => res.data.data),
   });
 
-  useEffect(() => {
-    if (data) {
-      dispatch(
-        setStatsData({
+  const { totalNoOfUsers, totalActiveUsers, totalInactiveUsers } =
+    useMemo(() => {
+      if (data) {
+        return {
           totalNoOfUsers: data.totalCustomers,
           totalActiveUsers: data.activeCustomers,
           totalInactiveUsers: data.inactiveCustomers,
-        }),
-      );
-    }
-  }, [data, dispatch]);
+        };
+      } else
+        return {
+          totalNoOfUsers: null,
+          totalActiveUsers: null,
+          totalInactiveUsers: null,
+        };
+    }, [data]);
 
   const stats: Stat[] = [
     {
       title: 'Total No of Users',
-      value: `${statsData?.totalNoOfUsers?.toLocaleString() ?? 0}`,
+      value: `${convertToLocaleString(totalNoOfUsers)}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -97,7 +93,7 @@ const UserStatsComponent: React.FC = () => {
     },
     {
       title: 'Total active Users',
-      value: `${statsData?.totalActiveUsers?.toLocaleString() ?? 0}`,
+      value: `${convertToLocaleString(totalActiveUsers)}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -109,7 +105,7 @@ const UserStatsComponent: React.FC = () => {
     },
     {
       title: 'Total No of inactive Users',
-      value: `${statsData?.totalInactiveUsers?.toLocaleString() ?? 0}`,
+      value: `${convertToLocaleString(totalInactiveUsers)}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -132,7 +128,7 @@ const UserStatsComponent: React.FC = () => {
     },
   };
 
-  if (isStatsLoading || isLoading) {
+  if (isLoading) {
     return (
       <motion.div
         className="w-full"

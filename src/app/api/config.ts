@@ -25,7 +25,6 @@ const requestConfiguration = (config) => {
 };
 
 const errorHandler = async (error) => {
-  console.log('error: ', error);
   if (error?.response?.status === 401) {
     if (
       error?.response?.data?.message === 'Token expired, please login again'

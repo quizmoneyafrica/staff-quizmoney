@@ -27,9 +27,9 @@ const InstallAppButton: React.FC = () => {
       deferredPrompt.prompt();
       const result = await deferredPrompt.userChoice;
       if (result.outcome === 'accepted') {
-        console.log('User accepted install');
+        console.info('User accepted install');
       } else {
-        console.log('User dismissed install');
+        console.info('User dismissed install');
       }
       setShowPrompt(false);
     }

@@ -17,11 +17,9 @@ function HomeQueries() {
       gameSubscription = await liveQueryClient.subscribe(query);
 
       gameSubscription?.on('create', (object: Parse.Object) => {
-        console.log('this object was updated: ', object.toJSON());
         // dispatch(setDashboardDetails(object.toJSON()));
       });
       gameSubscription?.on('update', (object: Parse.Object) => {
-        console.log('this object was updated: ', object.toJSON());
         // dispatch(setNextGameData(object.toJSON()));
       });
     };

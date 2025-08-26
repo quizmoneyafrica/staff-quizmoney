@@ -300,7 +300,6 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
           ...(formData.profileImage && { profileImage: formData.profileImage }),
         };
 
-        console.log('Creating admin with data:', adminData);
         await createAdminMutation.mutateAsync(adminData);
         setIsAddModalOpen(false);
         refetch();
