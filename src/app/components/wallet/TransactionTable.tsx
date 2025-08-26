@@ -1,30 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-
-import {
-  useQuery,
-  keepPreviousData,
-  useQueryClient,
-} from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Avatar, Table } from '@radix-ui/themes';
 import { Search, ListFilter, Loader2, ReceiptText } from 'lucide-react';
-
-import { calculateDateRange } from '@/app/utils/date-range';
+import { calculateDateRange, formatDateRange } from '@/app/utils/date-range';
 import Pagination from '../leaderboard/Pagination';
 import TransactionDetailsModal from './TransactionDetailsModal';
-
-import WalletApi, {
-  WalletTransactionResponse,
-  PageResponse,
-} from '@/app/api/wallet';
+import WalletApi, { WalletTransactionResponse } from '@/app/api/wallet';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { useDebounce } from '@/app/hooks/useDebounce';
-import { VerifiedIcon } from '@/app/icons/icons';
+// import { VerifiedIcon } from '@/app/icons/icons';
 
 const TransactionTable: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<
     string | null
   >(null);
@@ -37,11 +26,24 @@ const TransactionTable: React.FC = () => {
     'All' | 'WITHDRAWAL' | 'FUNDING'
   >('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const queryClient = useQueryClient();
-
   const [selected, setSelected] = useState('All Time');
+  const [customDateRange, setCustomDateRange] = useState(null);
 
-  // Query to fetch transaction details
+  const debouncedSearchTerm = useDebounce(searchTerm);
+  const itemsPerPage = 10;
+
+  const dateRange = useMemo(() => {
+    if (selected === 'Custom' && customDateRange) {
+      return formatDateRange(customDateRange);
+    }
+
+    if (selected !== 'All Time') {
+      return calculateDateRange(selected, null);
+    }
+
+    return null;
+  }, [selected, customDateRange]);
+
   const { data: transactionDetails } = useQuery({
     queryKey: ['transactionDetails', selectedTransactionId],
     queryFn: () => {
@@ -56,10 +58,6 @@ const TransactionTable: React.FC = () => {
   const handleRowClick = (transactionId: string) => {
     setSelectedTransactionId(transactionId);
   };
-  const [customDateRange, setCustomDateRange] = useState(null);
-
-  const debouncedSearchTerm = useDebounce(searchTerm);
-  const itemsPerPage = 10;
 
   const { data, isLoading, error, refetch } = useQuery<
     {
@@ -80,35 +78,31 @@ const TransactionTable: React.FC = () => {
     queryKey: [
       'walletTransactions',
       currentPage,
+      itemsPerPage,
       debouncedSearchTerm,
       statusFilter,
-      typeFilter,
       selected,
-      customDateRange,
-      itemsPerPage,
+      dateRange,
     ],
     queryFn: () => {
       const apiStatus = statusFilter === 'All' ? undefined : statusFilter;
-      const apiType = typeFilter === 'All' ? undefined : typeFilter;
 
       const params = {
-        page: currentPage,
+        page: currentPage - 1,
         limit: itemsPerPage,
         search: debouncedSearchTerm || undefined,
         status: apiStatus,
-        type: apiType,
+        // startDate:dateRange?.start,
+        // endDate:dateRange?.end,
       };
 
       return WalletApi.getWalletTransactions(params).then((res) => res.data);
     },
-
-    placeholderData: keepPreviousData,
   });
 
   const transactions = data?.data?.content || [];
   const pagination = data?.data;
   const totalCount = pagination?.totalElements || 0;
-
   const totalPages = pagination?.totalPages || 1;
 
   const handleFilterSelect = (
@@ -219,7 +213,7 @@ const TransactionTable: React.FC = () => {
                         </button>
                       ),
                     )}
-                    <div className="my-2 border-t border-gray-200"></div>
+                    {/* <div className="my-2 border-t border-gray-200"></div>
                     <div className="px-4 py-2 text-xs font-semibold uppercase text-gray-500">
                       Type
                     </div>
@@ -237,7 +231,7 @@ const TransactionTable: React.FC = () => {
                       >
                         {type}
                       </button>
-                    ))}
+                    ))} */}
                   </div>
                 </div>
               )}

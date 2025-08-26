@@ -20,6 +20,7 @@ import {
   WalletIconBigLightestYellow,
 } from '@/app/icons/icons';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
+import { convertToLocaleString } from '@/app/utils';
 
 interface WithdrawalRequest {
   id: string;
@@ -63,7 +64,15 @@ function Page() {
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const kycFilterDropdownRef = useRef<HTMLDivElement>(null);
 
-  const filterOptions = ['All', 'APPROVED', 'PENDING', 'REJECTED'];
+  const filterOptions = [
+    'All',
+    'PENDING',
+    'APPROVED',
+    'REJECTED',
+    'PROCESSED',
+    'FAILED',
+    'PROCESSING',
+  ];
   const kycFilterOptions = ['All', 'Verified', 'Unverified'];
 
   const options = ['All Time', 'This week', 'Last 30 days', 'Custom'];
@@ -102,6 +111,40 @@ function Page() {
     setCustomStatsDateRange(dateRange);
   };
 
+  const dateRange: DateRange | undefined = useMemo(() => {
+    const endDate = new Date();
+    const startDate = new Date();
+
+    if (selected === 'Custom' && customDateRange) {
+      return {
+        start: customDateRange.startDate.toISOString().split('T')[0],
+        end: customDateRange.endDate.toISOString().split('T')[0],
+      };
+    }
+
+    switch (selected) {
+      case 'This week': {
+        const day = endDate.getDay();
+        const diff = endDate.getDate() - day + (day === 0 ? -6 : 1);
+        startDate.setDate(diff);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      }
+      case 'Last 30 days':
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+      case 'All Time':
+      default:
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        break;
+    }
+
+    return {
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0],
+    };
+  }, [selected, customDateRange]);
+
   const statsDateRange: DateRange | undefined = useMemo(() => {
     const endDate = new Date();
     const startDate = new Date();
@@ -118,6 +161,7 @@ function Page() {
         const day = endDate.getDay();
         const diff = endDate.getDate() - day + (day === 0 ? -6 : 1);
         startDate.setDate(diff);
+        startDate.setHours(0, 0, 0, 0);
         break;
       }
       case 'Last 30 days':
@@ -151,6 +195,7 @@ function Page() {
     itemsPerPage,
     selectedFilter === 'All' ? undefined : selectedFilter,
     debouncedSearchTerm,
+    dateRange,
   );
 
   const { data: statsData, isPending: fetchingStats } =
@@ -304,24 +349,27 @@ function Page() {
   const getStatusStyling = (status: string) => {
     switch (status) {
       case 'APPROVED':
+      case 'PROCESSED':
         return 'bg-green-100 text-green-800';
       case 'REJECTED':
+      case 'FAILED':
         return 'bg-red-100 text-red-800';
       case 'PENDING':
+      case 'PROCESSING':
       default:
         return 'bg-yellow-100 text-yellow-800';
     }
   };
 
-  const getPeriodText = () => {
-    if (selectedStats === 'All Time') return 'all time';
-    if (selectedStats === 'This week') return 'this week';
-    if (selectedStats === 'Last 30 days') return 'last 30 days';
-    if (selectedStats === 'Custom' && customStatsDateRange) {
-      return `${customStatsDateRange.startDate.toLocaleDateString()} to ${customStatsDateRange.endDate.toLocaleDateString()}`;
-    }
-    return 'selected period';
-  };
+  // const getPeriodText = () => {
+  //   if (selectedStats === 'All Time') return 'all time';
+  //   if (selectedStats === 'This week') return 'this week';
+  //   if (selectedStats === 'Last 30 days') return 'last 30 days';
+  //   if (selectedStats === 'Custom' && customStatsDateRange) {
+  //     return `${customStatsDateRange.startDate.toLocaleDateString()} to ${customStatsDateRange.endDate.toLocaleDateString()}`;
+  //   }
+  //   return 'selected period';
+  // };
 
   return (
     <div className="space-y-10">
@@ -346,53 +394,53 @@ function Page() {
         />
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {fetchingStats || fetchingDashData ? (
+        {fetchingStats ? (
           <WithdrawalCardsLoading />
         ) : (
           <WithdrawalCards
             title="All Withdrawal Request"
-            value={withdrawalStats.totalRequests.toString()}
+            value={convertToLocaleString(withdrawalStats.totalRequests)}
             bgColor="blue"
             icon={<WalletCardIcon />}
             bgImage={<WalletIconBig />}
-            analytics={{
-              percentage: withdrawalStats.totalChangePercent,
-              period: getPeriodText(),
-            }}
+            // analytics={{
+            //   percentage: withdrawalStats.totalChangePercent,
+            //   period: getPeriodText(),
+            // }}
           />
         )}
 
-        {fetchingStats || fetchingDashData ? (
+        {fetchingStats ? (
           <WithdrawalCardsLoading />
         ) : (
           <WithdrawalCards
             title="Total Approved Request"
-            value={withdrawalStats.approvedRequests.toString()}
+            value={convertToLocaleString(withdrawalStats.approvedRequests)}
             bgColor="green"
             icon={<WalletCardIconGreen />}
             bgImage={<WalletIconBigGreen />}
-            analytics={{
-              percentage: withdrawalStats.approvedChangePercent,
-              period: getPeriodText(),
-            }}
+            // analytics={{
+            //   percentage: withdrawalStats.approvedChangePercent,
+            //   period: getPeriodText(),
+            // }}
           />
         )}
 
-        {fetchingStats || fetchingDashData ? (
+        {fetchingStats ? (
           <WithdrawalCardsLoading />
         ) : (
           <WithdrawalCards
             title="Total Pending Request"
-            value={withdrawalStats.pendingRequests.toString()}
+            value={convertToLocaleString(withdrawalStats.pendingRequests)}
             bgColor="yellow"
             isValueVisible={showPendingAmount}
             onEyeToggle={() => setShowPendingAmount(!showPendingAmount)}
             icon={<WalletCardIconDarkYellow />}
             bgImage={<WalletIconBigLightestYellow />}
-            analytics={{
-              percentage: withdrawalStats.pendingChangePercent,
-              period: getPeriodText(),
-            }}
+            // analytics={{
+            //   percentage: withdrawalStats.pendingChangePercent,
+            //   period: getPeriodText(),
+            // }}
           />
         )}
       </div>
@@ -403,7 +451,7 @@ function Page() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="relative w-full max-w-md">
+          <div className="relative w-[200px] max-w-md">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
             <input
               type="text"

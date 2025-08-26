@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 import Pagination from './Pagination';
 import { QmCoinIcon, VerifiedIcon } from '@/app/icons/icons';
 import { useRouter } from 'next/navigation';
+import { convertToLocaleString } from '@/app/utils';
 
 interface LeaderboardRowData {
   id: string;
@@ -182,7 +183,7 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
                         <div className="flex items-center gap-1">
                           <QmCoinIcon className="h-4 w-4" />
                           <span className="text-base font-medium leading-5 text-[#00B23D]">
-                            {row.coins.toLocaleString()}
+                            {convertToLocaleString(row.coins)}
                           </span>
                         </div>
                       )}

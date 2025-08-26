@@ -41,7 +41,7 @@ export interface GetAdminsParams {
   page?: number;
   size?: number;
   status?: 'ACTIVE' | 'INACTIVE';
-  accountType?: string;
+  adminType?: string;
 }
 
 const AdminApi = {
@@ -74,6 +74,7 @@ export const useAdmins = (params: GetAdminsParams = {}) => {
   return useQuery({
     queryKey: ['admins', params],
     queryFn: () => AdminApi.getAdmins(params).then((res) => res.data.data),
+    retry: false,
   });
 };
 

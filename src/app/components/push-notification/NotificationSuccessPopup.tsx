@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Users, Send, X } from 'lucide-react';
+import { convertToLocaleString } from '@/app/utils';
 
 interface NotificationSuccessPopupProps {
   isOpen: boolean;
@@ -139,7 +140,7 @@ const NotificationSuccessPopup: React.FC<NotificationSuccessPopupProps> = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold text-blue-600">
-                        {recipientCount.toLocaleString()}
+                        {convertToLocaleString(recipientCount)}
                       </span>
                       <span className="text-sm text-gray-600">
                         {isAllUsers ? 'all users' : 'selected users'}

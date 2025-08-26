@@ -1,8 +1,10 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+
+import React from 'react';
 import { motion } from 'framer-motion';
 import CustomImage from '../CustomImage';
 import { Skeleton } from '@radix-ui/themes';
+import { useAdmins } from '@/app/api/adminApi';
 
 interface Stat {
   title: string;
@@ -14,10 +16,6 @@ interface Stat {
 
 interface StatCardProps {
   stat: Stat;
-}
-
-interface AdminStatsCardsProps {
-  refreshTrigger?: number;
 }
 
 const LoadingStatCard: React.FC<{ cardBg?: string }> = ({
@@ -60,49 +58,23 @@ const LoadingStatCard: React.FC<{ cardBg?: string }> = ({
   );
 };
 
-const AdminStatsCards: React.FC<AdminStatsCardsProps> = ({
-  refreshTrigger = 0,
-}) => {
-  const [adminStats, setAdminStats] = useState({
-    totalAdmins: 0,
-    totalSuperAdmins: 0,
+const AdminStatsCards = () => {
+  const { data: admin, isLoading: isFetching } = useAdmins({
+    page: 0,
+    adminType: 'ADMIN',
   });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchAdminStats = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
+  const { data: superAdmin, isLoading: isPending } = useAdmins({
+    page: 0,
+    adminType: 'SUPER_ADMIN',
+  });
 
-      setTimeout(() => {
-        setAdminStats({
-          totalAdmins: 100,
-          totalSuperAdmins: 100,
-        });
-        setIsLoading(false);
-      }, 1000);
-    } catch (err) {
-      setError('Network error - please check connection');
-      console.error('Error fetching admin stats:', err);
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAdminStats();
-  }, []);
-
-  useEffect(() => {
-    if (refreshTrigger > 0) {
-      fetchAdminStats();
-    }
-  }, [refreshTrigger]);
+  const isLoading = isFetching || isPending;
 
   const stats: Stat[] = [
     {
       title: 'Total No Admin',
-      value: error ? '0' : `${adminStats.totalAdmins}`,
+      value: `${admin?.totalElements ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -115,7 +87,7 @@ const AdminStatsCards: React.FC<AdminStatsCardsProps> = ({
     },
     {
       title: 'Total Super Admin',
-      value: error ? '0' : `${adminStats.totalSuperAdmins}`,
+      value: `${0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}

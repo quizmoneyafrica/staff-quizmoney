@@ -78,21 +78,33 @@ export const useGetWithdrawalRequests = (
   pageSize: number,
   status?: string,
   search?: string,
+  dateRange?: UnknownObject,
 ) => {
   const request = useRequestInstance();
 
   return useQuery({
-    queryKey: ['withdrawal_requests', page, pageSize, status, search],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: String(page),
-        size: String(pageSize),
-        search: search || '',
-        ...(status && { status }),
-      });
-
+    queryKey: [
+      'withdrawal_requests',
+      page,
+      pageSize,
+      status,
+      search,
+      dateRange,
+    ],
+    queryFn: async ({ signal }) => {
       const response = await request.get<WithdrawalApiResponse>(
-        `/withdrawal-requests?${params.toString()}`,
+        `/withdrawal-requests`,
+        {
+          signal,
+          params: {
+            page,
+            size: pageSize,
+            search,
+            status,
+            startDate: dateRange?.start,
+            endDate: dateRange?.end,
+          },
+        },
       );
 
       return response.data.data;

@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import React, { useEffect, useCallback } from 'react';
+
+import React, { useEffect } from 'react';
 import PlayersTable from './PlayersTable';
 import UserStatsComponent from './UserStatsComponent';
 import {
@@ -15,13 +15,8 @@ import { useDebounce } from '@/app/hooks/useDebounce';
 import { useQuery } from '@tanstack/react-query';
 
 export default function PlayersParent() {
-  const {
-    currentPage,
-    itemsPerPage,
-    searchQuery,
-    selectedAccountType,
-    dateRange,
-  } = useSelector(selectPlayers);
+  const { currentPage, itemsPerPage, searchQuery, dateRange } =
+    useSelector(selectPlayers);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -31,13 +26,15 @@ export default function PlayersParent() {
       currentPage,
       itemsPerPage,
       debouncedSearchQuery,
-      selectedAccountType,
+      dateRange,
     ],
     queryFn: () =>
       PlayersApi.getCustomers({
         page: currentPage,
         size: itemsPerPage,
         search: debouncedSearchQuery || undefined,
+        startDate: dateRange?.start,
+        endDate: dateRange?.end,
       }).then((res) => res.data),
   });
 
@@ -79,7 +76,6 @@ export default function PlayersParent() {
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
       <UserStatsComponent />
-
       <PlayersTable />
     </div>
   );

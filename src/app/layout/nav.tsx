@@ -6,7 +6,7 @@ import {
   StoreIcon,
   SupportIcon,
   WalletIcon,
-  BellIcon,
+  // BellIcon,
   UsersIcon,
   GameIconSP,
   WithdrawalIcon,
@@ -102,11 +102,11 @@ export const navs: NavItem[] = [
     path: ROUTES.ADMIN_MANAGEMENT,
     name: 'Admin Management',
   },
-  {
-    icon: <BellIcon />,
-    path: ROUTES.PUSH_NOTIFICATION,
-    name: 'Push Notification',
-  },
+  // {
+  //   icon: <BellIcon />,
+  //   path: ROUTES.PUSH_NOTIFICATION,
+  //   name: 'Push Notification',
+  // },
   {
     icon: <SettingIcon />,
     path: ROUTES.SETTINGS,

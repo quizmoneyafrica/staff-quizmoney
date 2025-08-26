@@ -27,6 +27,7 @@ import PlayersApi, {
 } from '@/app/api/playersApi';
 import NotificationSuccessPopup from './NotificationSuccessPopup';
 import { AxiosError } from 'axios';
+import { convertToLocaleString } from '@/app/utils';
 
 interface SendNotificationModalProps {
   isOpen: boolean;
@@ -84,7 +85,6 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
       return failureCount < 2;
     },
     select: (data) => data.result,
-    placeholderData: (previousData) => previousData,
   });
 
   const { data: totalUsersData, isLoading: isLoadingTotalUsers } = useQuery<
@@ -304,12 +304,12 @@ const SendNotificationModal: React.FC<SendNotificationModalProps> = ({
                     <Users className="h-5 w-5 text-blue-600" />
                     <div className="text-sm text-blue-800">
                       <span className="font-medium">
-                        {totalUsers.toLocaleString()}
+                        {convertToLocaleString(totalUsers)}
                       </span>{' '}
                       total users
                       {' • '}
                       <span className="font-medium">
-                        {activeUsers.toLocaleString()}
+                        {convertToLocaleString(activeUsers)}
                       </span>{' '}
                       active
                     </div>

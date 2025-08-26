@@ -1,18 +1,20 @@
 'use client';
-import { UpdateUserForm, User } from '@/app/api/interface';
+import { UpdateUserForm } from '@/app/api/interface';
 import userApi, {
   getAuthUser,
   AdminResponse,
-  AvatarProjection,
+  // AvatarProjection,
 } from '@/app/api/userApi';
 import { useAppSelector, useAuth } from '@/app/hooks/useAuth';
-import { ArrowDownIcon, MailIcon, PersonIcon } from '@/app/icons/icons';
-import { decryptData, encryptData } from '@/app/utils/crypto';
+import { MailIcon, PersonIcon } from '@/app/icons/icons';
 import CustomButton from '@/app/utils/CustomBtn';
-import CustomSelect from '@/app/utils/CustomSelect';
+// import CustomSelect from '@/app/utils/CustomSelect';
 import CustomTextField from '@/app/utils/CustomTextField';
 import { formatDateTime } from '@/app/utils/utils';
-import { CalendarIcon, GlobeIcon, Pencil1Icon } from '@radix-ui/react-icons';
+import {
+  // CalendarIcon, GlobeIcon,
+  Pencil1Icon,
+} from '@radix-ui/react-icons';
 import { Flex, Grid } from '@radix-ui/themes';
 
 import { motion } from 'framer-motion';
@@ -20,7 +22,7 @@ import Image from 'next/image';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, ChevronRight } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const initialForm = {
@@ -101,7 +103,7 @@ const Page = () => {
   );
 
   const [isEditing, setIsEditing] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [, setIsUpdating] = useState(false);
 
   const { loginUser } = useAuth();
   const queryClient = useQueryClient();
@@ -125,23 +127,21 @@ const Page = () => {
     enabled: !!user?.objectId,
   });
 
-  // Get avatars list
-  const { data: avatarsData, isLoading: avatarsLoading } = useQuery<{
-    success: boolean;
-    code: string;
-    message: string;
-    data: AvatarProjection[];
-  }>({
-    queryKey: ['avatars'],
-    queryFn: async () => {
-      const response = await userApi.getAvatarsList();
-      return response.data;
-    },
-  });
+  // const { data: avatarsData, isLoading: avatarsLoading } = useQuery<{
+  //   success: boolean;
+  //   code: string;
+  //   message: string;
+  //   data: AvatarProjection[];
+  // }>({
+  //   queryKey: ['avatars'],
+  //   queryFn: async () => {
+  //     const response = await userApi.getAvatarsList();
+  //     return response.data;
+  //   },
+  // });
 
-  // Update profile mutation
-  const updateProfileMutation = useMutation({
-    mutationFn: (formData: UpdateUserForm) => userApi.updateUser(formData),
+  const { mutateAsync: updateAdmin, isPending: isUpdating } = useMutation({
+    mutationFn: (formData: UpdateUserForm) => userApi.updateAdmin(formData),
     onSuccess: (res) => {
       if (res.status === 200) {
         setIsEditing(false);
@@ -149,12 +149,18 @@ const Page = () => {
           position: 'top-center',
         });
 
-        const userData = res.data.result.updatedUser;
-        const encryptedUser = encryptData(userData);
+        const userData = res.data.data;
 
-        loginUser(encryptedUser);
+        const userPlayload: UnknownObject = {
+          user: {
+            email: userData?.emailAddress,
+            firstName: userData?.firstName,
+            lastName: userData?.lastName,
+          },
+        };
+        loginUser(userPlayload);
 
-        queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
+        // queryClient.invalidateQueries({ queryKey: ['adminProfile'] });
       }
     },
     onError: (error: unknown) => {
@@ -186,57 +192,11 @@ const Page = () => {
   };
 
   const updateUser = async () => {
-    setIsUpdating(true);
-
-    await userApi
-      .updateUser({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        dob: formData.dob,
-        gender: formData.gender,
-        country: formData.country,
-        facebook: formData.facebook ?? '',
-        instagram: formData.instagram ?? '',
-        twitter: formData.twitter ?? '',
-        whatsapp: formData.whatsapp ?? '',
-        avatar: user?.avatar ?? '',
-        promotionalMails: user?.promotionalMails ?? false,
-      })
-      .then((res) => {
-        if (res.status === 200) {
-          setIsEditing(false);
-          toast.success('Profile updated successfully', {
-            position: 'top-center',
-          });
-
-          const userData = res.data.result.updatedUser;
-          // const encryptedUser = encryptData(userData);
-
-          // ✅ Dispatch to Redux
-          loginUser(userData);
-        }
-      })
-      .catch((error: unknown) => {
-        const errorMessage =
-          error &&
-          typeof error === 'object' &&
-          'response' in error &&
-          error.response &&
-          typeof error.response === 'object' &&
-          'data' in error.response &&
-          error.response.data &&
-          typeof error.response.data === 'object' &&
-          'error' in error.response.data
-            ? (error.response.data as { error: string }).error
-            : 'Failed to update profile. Please try again later.';
-
-        toast.error(errorMessage, {
-          position: 'top-center',
-        });
-      })
-      .finally(() => {
-        setIsUpdating(false);
-      });
+    updateAdmin({
+      firstName: formData?.firstName,
+      lastName: formData?.lastName,
+      gender: 'MALE',
+    });
   };
 
   return (
@@ -260,8 +220,8 @@ const Page = () => {
           <div className="  relative min-h-[80vh] w-full ">
             <div className=" h-fit w-full -translate-y-12 border-b border-gray-200 pb-10">
               {/* profile pic */}
-              <div
-                // onClick={() => setIsImageModalOpen(true)}
+              {/* <div
+                onClick={() => setIsImageModalOpen(true)}
                 className="border-primary-400 z-10 h-[80px] w-[80px] cursor-pointer rounded-full  border-2 bg-white/50  backdrop-blur-sm sm:h-[100px] sm:w-[100px]"
               >
                 <div className="relative flex h-full w-full items-center justify-center">
@@ -284,16 +244,16 @@ const Page = () => {
                     className="absolute bottom-0 right-0 z-40 h-6 w-6 bg-white fill-black text-black"
                   />
                 </div>
-              </div>
+              </div> */}
 
               <Flex justify="between" className="mt-4 w-full">
                 <div className="flex flex-col gap-2">
-                  <p
+                  {/* <p
                     // onClick={() => setIsImageModalOpen(true)}
                     className=" text-primary-500 cursor-pointer font-medium"
                   >
                     Change Image
-                  </p>
+                  </p> */}
                   <p className=" font-semibold capitalize">
                     {adminData?.data?.firstName || user?.firstName}{' '}
                     {adminData?.data?.lastName || user?.lastName}
@@ -321,7 +281,7 @@ const Page = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end justify-between">
+                <div className="mt-10 flex flex-col items-end justify-between">
                   {!isEditing && (
                     <div className="space-y-2">
                       <div
@@ -390,7 +350,7 @@ const Page = () => {
                   icon={<MailIcon className="text-[#A6ABC4]" />}
                   required
                 />
-                <CustomSelect
+                {/* <CustomSelect
                   label="Gender"
                   name="gender"
                   value={formData.gender}
@@ -399,8 +359,8 @@ const Page = () => {
                   disabledOption="Select your gender"
                   icon={<ArrowDownIcon className="text-[#A6ABC4]" />}
                   disabled={!isEditing}
-                />
-                <CustomTextField
+                /> */}
+                {/* <CustomTextField
                   label="Date of Birth"
                   name="dob"
                   value={formData.dob}
@@ -411,9 +371,9 @@ const Page = () => {
                   icon={<CalendarIcon className="h-6 w-6 text-[#A6ABC4]" />}
                   required
                   // className="min-0 !w-full"
-                />
+                /> */}
 
-                <CustomSelect
+                {/* <CustomSelect
                   label="Country"
                   name="country"
                   value={formData.country}
@@ -422,7 +382,7 @@ const Page = () => {
                   disabled={!isEditing}
                   disabledOption="Select your country"
                   icon={<GlobeIcon className="h-6 w-6 text-[#A6ABC4]" />}
-                />
+                /> */}
               </Grid>
 
               {isEditing && (

@@ -94,13 +94,15 @@ const PlayersApi = {
       data: CustomerSummaryResponse;
     }>
   > {
-    return request.get(`/customers/summary`, {});
+    return request.get(`/customers/summary`);
   },
 
   getCustomers(params: {
     page?: number;
     size?: number;
     search?: string;
+    startDate?: string;
+    endDate?: string;
   }): Promise<
     AxiosResponse<{
       success: boolean;
@@ -116,12 +118,15 @@ const PlayersApi = {
       };
     }>
   > {
-    const query = new URLSearchParams();
-    query.append('page', String(Math.max(0, (params.page || 1) - 1)));
-    query.append('size', String(params.size || 10));
-    if (params.search) query.append('search', params.search);
-
-    return request.get(`/customers?${query.toString()}`, {});
+    return request.get(`/customers`, {
+      params: {
+        page: Math.max(0, (params.page || 1) - 1),
+        size: params.size || 10,
+        search: params.search,
+        startDate: params?.startDate,
+        endDate: params?.endDate,
+      },
+    });
   },
 
   fetchPlayers(

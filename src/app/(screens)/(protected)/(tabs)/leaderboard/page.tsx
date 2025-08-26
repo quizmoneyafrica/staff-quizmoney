@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import LeaderboardAPI, {
   LastGameAdminRanking,
   AllTimeAdminRanking,
@@ -124,7 +124,6 @@ function Page() {
         kycVerified: false,
       }));
     },
-    placeholderData: keepPreviousData,
   });
 
   const {
@@ -166,7 +165,6 @@ function Page() {
         },
       };
     },
-    placeholderData: keepPreviousData,
   });
 
   const handleTabChange = (tab: string) => {
