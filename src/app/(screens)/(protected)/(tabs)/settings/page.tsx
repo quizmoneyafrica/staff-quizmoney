@@ -1,5 +1,5 @@
 'use client';
-import { UpdateUserForm, User } from '@/app/api/interface';
+import { UpdateUserForm } from '@/app/api/interface';
 import userApi, {
   getAuthUser,
   AdminResponse,
@@ -7,7 +7,7 @@ import userApi, {
 } from '@/app/api/userApi';
 import { useAppSelector, useAuth } from '@/app/hooks/useAuth';
 import { ArrowDownIcon, MailIcon, PersonIcon } from '@/app/icons/icons';
-import { decryptData, encryptData } from '@/app/utils/crypto';
+import { encryptData } from '@/app/utils/crypto';
 import CustomButton from '@/app/utils/CustomBtn';
 import CustomSelect from '@/app/utils/CustomSelect';
 import CustomTextField from '@/app/utils/CustomTextField';
@@ -20,7 +20,7 @@ import Image from 'next/image';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { KeyRound, ChevronRight } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const initialForm = {
@@ -260,8 +260,8 @@ const Page = () => {
           <div className="  relative min-h-[80vh] w-full ">
             <div className=" h-fit w-full -translate-y-12 border-b border-gray-200 pb-10">
               {/* profile pic */}
-              <div
-                // onClick={() => setIsImageModalOpen(true)}
+              {/* <div
+                onClick={() => setIsImageModalOpen(true)}
                 className="border-primary-400 z-10 h-[80px] w-[80px] cursor-pointer rounded-full  border-2 bg-white/50  backdrop-blur-sm sm:h-[100px] sm:w-[100px]"
               >
                 <div className="relative flex h-full w-full items-center justify-center">
@@ -284,16 +284,16 @@ const Page = () => {
                     className="absolute bottom-0 right-0 z-40 h-6 w-6 bg-white fill-black text-black"
                   />
                 </div>
-              </div>
+              </div> */}
 
               <Flex justify="between" className="mt-4 w-full">
                 <div className="flex flex-col gap-2">
-                  <p
+                  {/* <p
                     // onClick={() => setIsImageModalOpen(true)}
                     className=" text-primary-500 cursor-pointer font-medium"
                   >
                     Change Image
-                  </p>
+                  </p> */}
                   <p className=" font-semibold capitalize">
                     {adminData?.data?.firstName || user?.firstName}{' '}
                     {adminData?.data?.lastName || user?.lastName}
@@ -321,7 +321,7 @@ const Page = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-col items-end justify-between">
+                <div className="mt-10 flex flex-col items-end justify-between">
                   {!isEditing && (
                     <div className="space-y-2">
                       <div
@@ -390,7 +390,7 @@ const Page = () => {
                   icon={<MailIcon className="text-[#A6ABC4]" />}
                   required
                 />
-                <CustomSelect
+                {/* <CustomSelect
                   label="Gender"
                   name="gender"
                   value={formData.gender}
@@ -399,8 +399,8 @@ const Page = () => {
                   disabledOption="Select your gender"
                   icon={<ArrowDownIcon className="text-[#A6ABC4]" />}
                   disabled={!isEditing}
-                />
-                <CustomTextField
+                /> */}
+                {/* <CustomTextField
                   label="Date of Birth"
                   name="dob"
                   value={formData.dob}
@@ -411,9 +411,9 @@ const Page = () => {
                   icon={<CalendarIcon className="h-6 w-6 text-[#A6ABC4]" />}
                   required
                   // className="min-0 !w-full"
-                />
+                /> */}
 
-                <CustomSelect
+                {/* <CustomSelect
                   label="Country"
                   name="country"
                   value={formData.country}
@@ -422,7 +422,7 @@ const Page = () => {
                   disabled={!isEditing}
                   disabledOption="Select your country"
                   icon={<GlobeIcon className="h-6 w-6 text-[#A6ABC4]" />}
-                />
+                /> */}
               </Grid>
 
               {isEditing && (

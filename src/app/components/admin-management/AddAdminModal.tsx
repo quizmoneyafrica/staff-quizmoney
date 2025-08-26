@@ -64,11 +64,11 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     } else if (!/^[0-9+\s-]{10,}$/.test(formData.phoneNumber)) {
       newErrors.phoneNumber = 'Please enter a valid phone number';
     }
-    if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
+    // if (!formData.password.trim()) {
+    //   newErrors.password = 'Password is required';
+    // } else if (formData.password.length < 8) {
+    //   newErrors.password = 'Password must be at least 8 characters';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -136,8 +136,6 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
         lastName: formData.lastName,
         emailAddress: formData.email,
         phoneNumber: phoneNumber.replace(/[^0-9+]/g, ''),
-        password: formData.password,
-        ...(formData.profileImage && { profileImage: formData.profileImage }),
       };
 
       return onSubmit(apiPayload);
@@ -342,7 +340,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                       )}
                     </motion.div>
 
-                    <motion.div variants={itemVariants}>
+                    {/* <motion.div variants={itemVariants}>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
                         Password
                       </label>
@@ -360,7 +358,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                           {errors.password}
                         </p>
                       )}
-                    </motion.div>
+                    </motion.div> */}
 
                     <motion.div variants={itemVariants} className="pt-4">
                       <button
