@@ -7,14 +7,7 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
-import {
-  Search,
-  Loader2,
-  Eye,
-  UserCheck,
-  UserX,
-  MoreVertical,
-} from 'lucide-react';
+import { Search, Loader2, UserCheck, UserX, MoreVertical } from 'lucide-react';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import { toast } from 'sonner';
@@ -26,9 +19,11 @@ import {
   UpdateAdminStatusPayload,
 } from '@/app/api/adminApi';
 import type { AdminResponse } from '@/app/api/adminApi';
+import { useDebounce } from '@/app/hooks/useDebounce';
+import { formatDateTime } from '@/app/utils/utils';
 
 interface AdminUpdateData {
-  adminType: 'Super Admin' | 'Sub Admin';
+  adminType: 'ADMIN';
   firstName: string;
   lastName: string;
   email: string;
@@ -42,7 +37,7 @@ import AdminDetailsModal from './AdminDetailsModal';
 
 interface AdminData extends Omit<AdminResponse, 'status'> {
   username: string;
-  status: 'Active' | 'Inactive';
+  status: string;
   avatar?: string;
   accountType: string;
   registrationDate: string;
@@ -62,9 +57,11 @@ const mapApiToAdminData = (admin: AdminResponse): AdminData => {
   return {
     ...admin,
     username: `${admin.firstName} ${admin.lastName}`,
-    status: admin.status === 'ACTIVE' ? 'Active' : 'Inactive',
-    registrationDate: new Date(admin.dateJoined).toLocaleDateString(),
-    accountType: admin.adminType === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin',
+    status: admin.status,
+    registrationDate: `${formatDateTime(admin.dateJoined).fullDate} ${
+      formatDateTime(admin.dateJoined).time
+    }`,
+    accountType: admin.adminType,
     avatar: admin.avatarUrl,
     email: admin.emailAddress,
     id: admin.adminId,
@@ -183,16 +180,12 @@ const ActionDropdown: React.FC<ActionDropdownProps> = ({ options }) => {
   );
 };
 
-interface AdminManagementTableProps {
-  onDataChange?: () => void;
-}
-
 interface SearchHeaderProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onAddNewAdmin: () => void;
   addLoading: boolean;
-  isFetching: boolean;
+  isLoading: boolean;
 }
 
 const SearchHeader = memo<SearchHeaderProps>(
@@ -241,9 +234,7 @@ const SearchHeader = memo<SearchHeaderProps>(
 
 SearchHeader.displayName = 'SearchHeader';
 
-const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
-  onDataChange,
-}: AdminManagementTableProps) => {
+const AdminManagementTable: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<AdminData | null>(null);
@@ -254,12 +245,17 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
   const [addLoading, setAddLoading] = useState(false);
   const pageSize = 10;
 
-  const { data, isFetching, refetch } = useAdmins({
-    search: searchQuery,
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  const { data, isLoading, refetch } = useAdmins({
+    search: debouncedSearchQuery,
     page: currentPage - 1,
     size: pageSize,
-    status: 'ACTIVE',
+    adminType: 'ADMIN',
   });
+
+  const totalPages = data?.totalPages || 1;
+  const totalElements = data?.totalElements;
 
   const updateStatusMutation = useUpdateAdminStatus();
   const createAdminMutation = useCreateAdmin();
@@ -269,54 +265,24 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
   }, []);
 
   const handleCreateAdmin = useCallback(
-    async (formData: {
-      adminType: 'Super Admin' | 'Sub Admin';
-      firstName: string;
-      lastName: string;
-      email: string;
-      phoneNumber: string;
-      password: string;
-      profileImage?: string;
-    }) => {
+    async (data) => {
       try {
-        const adminType =
-          formData.adminType === 'Super Admin' ? 'ADMIN' : 'USER';
-
-        let phoneNumber = formData.phoneNumber?.trim() || '';
-        if (phoneNumber.startsWith('0')) {
-          phoneNumber = `+234${phoneNumber.substring(1)}`;
-        } else if (phoneNumber && !phoneNumber.startsWith('+')) {
-          phoneNumber = `+234${phoneNumber}`;
-        }
-
-        const adminData = {
-          adminType,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          emailAddress: formData.email,
-          phoneNumber: phoneNumber.replace(/[^0-9+]/g, ''),
-          password: formData.password,
-          ...(formData.profileImage && { profileImage: formData.profileImage }),
-        };
-
-        await createAdminMutation.mutateAsync(adminData);
+        await createAdminMutation.mutateAsync(data);
         setIsAddModalOpen(false);
         refetch();
-        onDataChange?.();
         toast.success('Admin created successfully');
       } catch (error) {
         console.error('Error creating admin:', error);
         toast.error(error?.response?.data?.message || 'Failed to create admin');
       }
     },
-    [createAdminMutation, refetch, onDataChange],
+    [createAdminMutation, refetch],
   );
 
   const handleStatusToggle = useCallback(
-    async (adminId: string, currentStatus: 'Active' | 'Inactive') => {
+    async (adminId: string, currentStatus) => {
       try {
-        const newStatus = currentStatus === 'Inactive';
+        const newStatus = currentStatus === 'DEACTIVATED';
         await updateStatusMutation.mutateAsync(
           {
             adminId,
@@ -376,81 +342,38 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
     [data],
   );
 
-  const totalPages = data?.totalPages || 1;
-
-  const filteredAdmins = useMemo(() => {
-    if (!admins) return [];
-    return admins.filter(
-      (admin) =>
-        admin.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        '' ||
-        admin.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        '',
-    );
-  }, [admins, searchQuery]);
-
-  const sortedAdmins = useMemo(() => {
-    if (!filteredAdmins) return [];
-
-    return [...filteredAdmins].sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortField) {
-        case 'username':
-          comparison = (a.username || '').localeCompare(b.username || '');
-          break;
-        case 'email':
-          comparison = (a.email || '').localeCompare(b.email || '');
-          break;
-        case 'accountType':
-          comparison = (a.accountType || '').localeCompare(b.accountType || '');
-          break;
-        case 'registrationDate':
-          comparison =
-            new Date(a.registrationDate).getTime() -
-            new Date(b.registrationDate).getTime();
-          break;
-        case 'status':
-          comparison = (a.status || '').localeCompare(b.status || '');
-          break;
-      }
-
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-  }, [filteredAdmins, sortField, sortDirection]);
-
   const getActionOptions = useCallback(
     (admin: AdminData) => {
       return [
-        {
-          label: 'View Details',
-          onClick: () => {
-            setSelectedAdmin(admin);
-            setIsDetailsModalOpen(true);
-          },
-          icon: <Eye className="h-4 w-4" />,
-          className: 'text-gray-700 hover:text-blue-600',
-        },
-        {
-          label: admin.status === 'Active' ? 'Deactivate' : 'Activate',
+        // {
+        //   label: 'View Details',
+        //   onClick: () => {
+        //     setSelectedAdmin(admin);
+        //     setIsDetailsModalOpen(true);
+        //   },
+        //   icon: <Eye className="h-4 w-4" />,
+        //   className: 'text-gray-700 hover:text-blue-600',
+        // },
+        ['ACTIVE', 'DEACTIVATED'].includes(admin?.status) && {
+          label: admin.status === 'ACTIVE' ? 'Deactivate' : 'Activate',
           onClick: () => handleStatusToggle(admin.id, admin.status),
           icon:
-            admin.status === 'Active' ? (
+            admin.status === 'ACTIVE' ? (
               <UserX className="h-4 w-4" />
             ) : (
               <UserCheck className="h-4 w-4" />
             ),
           className:
-            admin.status === 'Active'
+            admin.status === 'ACTIVE'
               ? 'text-red-600 hover:text-red-700'
               : 'text-green-600 hover:text-green-700',
         },
-      ];
+      ].filter(Boolean);
     },
     [handleStatusToggle],
   );
 
-  if (isFetching && !data) {
+  if (isLoading && !data) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#0F4F80]" />
@@ -465,14 +388,14 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
         onSearchChange={setSearchQuery}
         onAddNewAdmin={handleAddAdmin}
         addLoading={addLoading}
-        isFetching={isFetching}
+        isLoading={isLoading}
       />
 
-      {isFetching ? (
+      {isLoading ? (
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-[#0F4F80]" />
         </div>
-      ) : filteredAdmins.length === 0 ? (
+      ) : admins.length === 0 ? (
         <div className="p-8 text-center text-gray-500">
           No admins found. Try adjusting your search.
         </div>
@@ -523,13 +446,13 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
             </Table.Header>
 
             <Table.Body>
-              {sortedAdmins.map((admin) => (
+              {admins.map((admin) => (
                 <Table.Row key={admin.id}>
-                  <Table.Cell className="flex items-center gap-3">
+                  <Table.Cell className="space-x-2">
                     <Avatar
                       src={admin.avatar}
                       fallback={admin.username?.charAt(0)?.toUpperCase() || 'A'}
-                      size="2"
+                      size="1"
                       radius="full"
                       className="border border-gray-200"
                     />
@@ -555,7 +478,7 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
                   <Table.Cell>
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${
-                        admin.status === 'Active'
+                        admin.status === 'ACTIVE'
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}
@@ -577,7 +500,7 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
 
       <div className="mt-6 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
         <div className="text-sm text-gray-500">
-          Showing {filteredAdmins.length} of {admins.length} entries
+          Showing {admins.length} of {totalElements} entries
         </div>
         <Pagination
           currentPage={currentPage}
@@ -597,21 +520,7 @@ const AdminManagementTable: React.FC<AdminManagementTableProps> = ({
           isOpen={isDetailsModalOpen}
           onClose={() => setIsDetailsModalOpen(false)}
           onUpdate={handleUpdateAdmin}
-          adminData={{
-            ...selectedAdmin,
-
-            accountType:
-              selectedAdmin.accountType === 'Super Admin'
-                ? 'Super Admin'
-                : 'Sub Admin',
-
-            firstName:
-              selectedAdmin.firstName || selectedAdmin.username.split(' ')[0],
-            lastName:
-              selectedAdmin.lastName ||
-              selectedAdmin.username.split(' ')[1] ||
-              '',
-          }}
+          adminData={selectedAdmin}
           loading={updateStatusMutation.isPending}
         />
       )}

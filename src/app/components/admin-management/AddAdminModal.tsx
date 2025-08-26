@@ -2,19 +2,22 @@
 
 import React, { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Camera, ChevronDown } from 'lucide-react';
-import { Avatar } from '@radix-ui/themes';
+import {
+  X,
+  // Camera, ChevronDown
+} from 'lucide-react';
+// import { Avatar } from '@radix-ui/themes';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AddAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: AdminFormData) => Promise<void>;
+  onSubmit: (data: UnknownObject) => Promise<void>;
   loading?: boolean;
 }
 
 interface AdminFormData {
-  adminType: 'Super Admin' | 'Sub Admin';
+  adminType: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -30,7 +33,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
   loading = false,
 }) => {
   const [formData, setFormData] = useState<AdminFormData>({
-    adminType: 'Super Admin',
+    adminType: 'ADMIN',
     firstName: '',
     lastName: '',
     email: '',
@@ -39,7 +42,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     profileImage: '',
   });
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  // const [dropdownOpen, setDropdownOpen] = useState(false);
   const [errors, setErrors] = useState<Partial<AdminFormData>>({});
 
   const validateForm = (): boolean => {
@@ -71,7 +74,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const adminTypes: ('SUPER_ADMIN' | 'ADMIN')[] = ['SUPER_ADMIN', 'ADMIN'];
+  // const adminTypes: ('SUPER_ADMIN' | 'ADMIN')[] = ['SUPER_ADMIN', 'ADMIN'];
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -127,24 +130,17 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
         phoneNumber = `+234${phoneNumber}`;
       }
 
-      const apiPayload: AdminFormData = {
+      const apiPayload: UnknownObject = {
         adminType: formData.adminType,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        email: formData.email,
+        emailAddress: formData.email,
         phoneNumber: phoneNumber.replace(/[^0-9+]/g, ''),
         password: formData.password,
         ...(formData.profileImage && { profileImage: formData.profileImage }),
       };
 
-      const apiRequest = {
-        ...apiPayload,
-        adminType:
-          apiPayload.adminType === 'Super Admin' ? 'SUPER_ADMIN' : 'ADMIN',
-        emailAddress: apiPayload.email,
-      };
-
-      return onSubmit(apiRequest as unknown as AdminFormData);
+      return onSubmit(apiPayload);
     }
   };
 
@@ -194,7 +190,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                     animate="visible"
                   >
                     {/* Profile Image Section */}
-                    <motion.div
+                    {/* <motion.div
                       variants={itemVariants}
                       className="flex flex-col items-center gap-3"
                     >
@@ -230,9 +226,9 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                       >
                         Change Profile image
                       </button>
-                    </motion.div>
+                    </motion.div> */}
 
-                    <motion.div variants={itemVariants}>
+                    {/* <motion.div variants={itemVariants}>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
                         Select Admin type
                       </label>
@@ -266,7 +262,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                           </div>
                         )}
                       </div>
-                    </motion.div>
+                    </motion.div> */}
 
                     <motion.div variants={itemVariants}>
                       <label className="mb-2 block text-sm font-medium text-gray-700">

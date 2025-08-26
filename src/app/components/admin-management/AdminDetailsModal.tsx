@@ -3,14 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Camera } from 'lucide-react';
-import { Avatar } from '@radix-ui/themes';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AdminDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (data: AdminUpdateData) => Promise<void>;
-  adminData: AdminData | null;
+  adminData: UnknownObject | null;
   loading?: boolean;
 }
 
@@ -18,7 +17,7 @@ interface AdminData {
   id: string;
   username: string;
   email: string;
-  accountType: 'Super Admin' | 'Sub Admin';
+  accountType: string;
   registrationDate: string;
   status: 'Active' | 'Inactive';
   avatar?: string;
@@ -27,7 +26,7 @@ interface AdminData {
 }
 
 interface AdminUpdateData {
-  adminType: 'Super Admin' | 'Sub Admin';
+  adminType: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -71,16 +70,11 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = ({
 
   useEffect(() => {
     if (adminData) {
-      const nameParts = adminData.username.split(' ');
-      const firstName = adminData.firstName || nameParts[0] || '';
-      const lastName = adminData.lastName || nameParts.slice(1).join(' ') || '';
-
       setFormData({
         adminType: adminData.accountType,
-        firstName,
-        lastName,
+        firstName: adminData.firstName,
+        lastName: adminData.lastName,
         email: adminData.email,
-        profileImage: adminData.avatar || '',
       });
     }
   }, [adminData]);
@@ -102,11 +96,11 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = ({
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
     }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
+    // if (!formData.email.trim()) {
+    //   newErrors.email = 'Email is required';
+    // } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    //   newErrors.email = 'Email is invalid';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -121,8 +115,8 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = ({
 
     try {
       await onUpdate(formData);
-      setErrors({});
-      setIsEditing(false);
+      // setErrors({});
+      // setIsEditing(false);
     } catch (error) {
       console.error('Error updating admin:', error);
     }
@@ -176,7 +170,7 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = ({
                     animate="visible"
                   >
                     {/* Profile Image Section */}
-                    <motion.div
+                    {/* <motion.div
                       variants={itemVariants}
                       className="flex flex-col items-center gap-3"
                     >
@@ -225,7 +219,7 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = ({
                           Change Profile image
                         </button>
                       )}
-                    </motion.div>
+                    </motion.div> */}
 
                     <motion.div variants={itemVariants}>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -237,13 +231,13 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = ({
                           onChange={(e) =>
                             handleInputChange(
                               'adminType',
-                              e.target.value as 'Super Admin' | 'Sub Admin',
+                              e.target.value as string,
                             )
                           }
                           className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                          <option value="Super Admin">Super Admin</option>
-                          <option value="Sub Admin">Sub Admin</option>
+                          <option value="SUPER_ADMIN">Super Admin</option>
+                          <option value="ADMIN">Admin</option>
                         </select>
                       ) : (
                         <div className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-gray-900">
@@ -315,6 +309,7 @@ const AdminDetailsModal: React.FC<AdminDetailsModalProps> = ({
                           <input
                             type="email"
                             value={formData.email}
+                            disabled
                             onChange={(e) =>
                               handleInputChange('email', e.target.value)
                             }
