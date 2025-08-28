@@ -6,13 +6,17 @@ import MemoryGameHistory, {
   type MemoryGameHistoryProps,
 } from './MemoryGameHistory';
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
+// interface PageProps {
+//   params: {
+//     id: string;
+//   };
+// }
 
-export default function Page({ params }: PageProps): ReactElement {
+export default function Page({
+  params,
+}: {
+  params: { id: string };
+}: PageProps): ReactElement {
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
 
