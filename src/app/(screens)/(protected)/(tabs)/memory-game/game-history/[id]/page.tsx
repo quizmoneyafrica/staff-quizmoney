@@ -16,7 +16,7 @@ export default function Page({
   params,
 }: {
   params: { id: string };
-}: PageProps): ReactElement {
+}): ReactElement {
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
 
