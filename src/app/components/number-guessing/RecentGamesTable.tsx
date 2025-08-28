@@ -56,7 +56,7 @@ const RecentGamesTable: React.FC = () => {
     placeholderData: keepPreviousData,
   });
 
-  const games = data?.content || [];
+  const games = (data?.content || []) as NumberGuessingGameSession[];
   const pagination = data;
   const totalCount = pagination?.totalElements || 0;
   const totalPages = pagination?.totalPages || 1;
@@ -67,24 +67,21 @@ const RecentGamesTable: React.FC = () => {
     setCurrentPage(1);
   };
 
-  interface GameSession {
+  interface NumberGuessingGameSession {
     id: string;
-    gameId?: string;
-    result?: string;
+    name: string;
+    email: string;
+    hiddenNo: number;
+    extraTrials: number;
+    result: string;
+    amountWon: number;
     startTime?: string;
     endTime?: string;
-    playerName?: string;
-    playerEmail?: string;
-    hiddenNumber?: number;
-    extraTrials?: number;
-    totalWinnings?: number;
   }
 
-  const handleViewDetailsClick = (game: GameSession) => {
+  const handleViewDetailsClick = (game: NumberGuessingGameSession) => {
     router.push(
-      `/number-guessing/game-history/${game.id}?gameId=${
-        game.gameId || game.id
-      }&status=${game.result}`,
+      `/number-guessing/game-history/${game.id}?gameId=${game.id}&status=${game.result}`,
     );
   };
 
@@ -113,24 +110,6 @@ const RecentGamesTable: React.FC = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return { time: 'N/A', fullDate: 'N/A' };
-
-    const time = new Intl.DateTimeFormat('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-
-    const fullDate = new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(date);
-
-    return { time, fullDate };
   };
 
   const formatResultDisplay = (result: string) => {
@@ -163,17 +142,20 @@ const RecentGamesTable: React.FC = () => {
   return (
     <div className="overflow-x-auto">
       <div className="mb-4 flex flex-col items-start justify-between gap-4 rounded-md bg-white px-5 py-5 md:flex-row md:items-center">
-        <div className="relative w-full md:w-80">
-          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by player name, email, or game ID"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
-          />
-        </div>
         <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Games</h2>
+        </div>
+        <div className="flex w-full flex-col gap-4 md:w-auto md:flex-row md:items-center">
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
+            />
+          </div>
           <div className="relative">
             <button
               className="flex cursor-pointer items-center gap-1 rounded-md border border-[#D9D9D9] px-4 py-2 outline-none"
@@ -205,13 +187,6 @@ const RecentGamesTable: React.FC = () => {
               </div>
             )}
           </div>
-          <TimeRangeDropdown
-            options={['All Time', 'This week', 'Last 30 days', 'Custom']}
-            selected={selected}
-            onSelect={handleTimeRangeSelect}
-            customDateRange={customDateRange}
-            onCustomDateChange={setCustomDateRange}
-          />
         </div>
       </div>
 
@@ -220,109 +195,131 @@ const RecentGamesTable: React.FC = () => {
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       ) : (
-        <Table.Root
-          variant="ghost"
-          className="min-h-[600px] min-w-full text-sm"
-        >
-          <Table.Header className="bg-primary-50">
-            <Table.Row>
-              <Table.Cell className="px-4 py-2 text-left">Game ID</Table.Cell>
-              <Table.Cell className="px-4 py-2 text-left">Player</Table.Cell>
-              <Table.Cell className="px-4 py-2 text-left">Stake</Table.Cell>
-              <Table.Cell className="px-4 py-2 text-left">Result</Table.Cell>
-              <Table.Cell className="px-4 py-2 text-left">Actions</Table.Cell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {games.length > 0 ? (
-              games.map((game: GameSession) => {
-                const { time, fullDate } = formatDateTime(game.startTime || '');
-                return (
-                  <Table.Row
-                    key={game.id}
-                    className="cursor-pointer transition-colors hover:bg-gray-50"
-                  >
-                    <Table.Cell className="whitespace-nowrap px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-50">
-                          <Gamepad2 className="h-6 w-6 text-gray-500" />
-                        </div>
-                        <div>
-                          <p className="font-bold uppercase text-neutral-800">
-                            {game.id.substring(0, 8)}...
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            {fullDate} • {time}
-                          </p>
-                        </div>
-                      </div>
-                    </Table.Cell>
-
-                    <Table.Cell className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <Avatar
-                            src={''}
-                            fallback={game.playerName?.[0] || 'U'}
-                            size="3"
-                            radius="full"
-                          />
-                        </div>
-                        <div>
-                          <p className="font-medium capitalize">
-                            {game.playerName || 'Anonymous'}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {game.playerEmail || ''}
-                          </p>
-                        </div>
-                      </div>
-                    </Table.Cell>
-
-                    <Table.Cell className="px-4 py-4 font-semibold">
-                      {game.totalWinnings
-                        ? formatNaira(game.totalWinnings)
-                        : 'N/A'}
-                    </Table.Cell>
-
-                    <Table.Cell className="px-4 py-4">
-                      <p
-                        className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getResultClass(
-                          game.result || '',
-                        )}`}
-                      >
-                        {formatResultDisplay(game.result || '')}
-                      </p>
-                    </Table.Cell>
-
-                    <Table.Cell className="px-4 py-4">
-                      <button
-                        onClick={() => handleViewDetailsClick(game)}
-                        className="hover:bg-primary-50 text-primary-900 border-primary-200 cursor-pointer rounded border px-3 py-2 text-sm font-medium transition-colors"
-                      >
-                        View Details
-                      </button>
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })
-            ) : (
+        <div className="rounded-md bg-white">
+          <Table.Root
+            variant="ghost"
+            className="min-h-[600px] min-w-full text-sm"
+          >
+            <Table.Header className="bg-primary-50">
               <Table.Row>
-                <Table.Cell colSpan={5} className="py-12 text-center font-bold">
-                  No game sessions found
+                <Table.Cell className="px-4 py-2 text-left">Game ID</Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">Users</Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Hidden No
                 </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Extra Trials
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">Result</Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
+                  Amount won
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
               </Table.Row>
-            )}
-          </Table.Body>
-        </Table.Root>
+            </Table.Header>
+            <Table.Body>
+              {games.length > 0 ? (
+                games.map((game: NumberGuessingGameSession) => {
+                  const { time, fullDate } = formatDateTime(
+                    game.startTime || new Date().toISOString(),
+                  );
+                  return (
+                    <Table.Row
+                      key={game.id}
+                      className="cursor-pointer transition-colors hover:bg-gray-50"
+                    >
+                      <Table.Cell className="whitespace-nowrap px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-50">
+                            <Gamepad2 className="h-6 w-6 text-gray-500" />
+                          </div>
+                          <div>
+                            <p className="font-bold uppercase text-neutral-800">
+                              {game.id}
+                            </p>
+                            <p className="text-xs text-neutral-500">
+                              {fullDate} • {time}
+                            </p>
+                          </div>
+                        </div>
+                      </Table.Cell>
+
+                      <Table.Cell className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <Avatar
+                              src={''}
+                              fallback={game.name?.[0] || 'U'}
+                              size="3"
+                              radius="full"
+                            />
+                            <div className="absolute -bottom-1 -right-1">
+                              <VerifiedIcon />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="font-medium capitalize">
+                              {game.name || 'Anonymous'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {game.email || ''}
+                            </p>
+                          </div>
+                        </div>
+                      </Table.Cell>
+
+                      <Table.Cell className="px-4 py-4 font-semibold">
+                        {game.hiddenNo}
+                      </Table.Cell>
+
+                      <Table.Cell className="px-4 py-4 font-semibold">
+                        {game.extraTrials}
+                      </Table.Cell>
+
+                      <Table.Cell className="px-4 py-4">
+                        <p
+                          className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${getResultClass(
+                            game.result || '',
+                          )}`}
+                        >
+                          {formatResultDisplay(game.result || '')}
+                        </p>
+                      </Table.Cell>
+
+                      <Table.Cell className="px-4 py-4 font-semibold">
+                        {game.amountWon ? formatNaira(game.amountWon) : '₦0'}
+                      </Table.Cell>
+
+                      <Table.Cell className="px-4 py-4">
+                        <button
+                          onClick={() => handleViewDetailsClick(game)}
+                          className="hover:bg-primary-50 text-primary-900 border-primary-200 cursor-pointer rounded border px-3 py-2 text-sm font-medium transition-colors"
+                        >
+                          View Details
+                        </button>
+                      </Table.Cell>
+                    </Table.Row>
+                  );
+                })
+              ) : (
+                <Table.Row>
+                  <Table.Cell
+                    colSpan={7}
+                    className="py-12 text-center font-bold"
+                  >
+                    No game sessions found
+                  </Table.Cell>
+                </Table.Row>
+              )}
+            </Table.Body>
+          </Table.Root>
+        </div>
       )}
 
       {pagination && totalCount > 0 && (
         <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
           <div className="text-sm text-gray-500">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
-            entries
+            Showing data 1 to 7 of {totalCount} entries
           </div>
           <Pagination
             currentPage={currentPage}
