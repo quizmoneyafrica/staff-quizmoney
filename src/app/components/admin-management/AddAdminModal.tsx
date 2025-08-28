@@ -89,9 +89,12 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3, ease: 'easeOut' },
+      transition: {
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1], // Using cubic-bezier values instead of string
+      },
     },
-  };
+  } as const;
 
   const handleInputChange = (field: keyof AdminFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

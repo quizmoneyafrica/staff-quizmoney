@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Copy, Check } from 'lucide-react';
 import classNames from 'classnames';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { StoreTransaction } from '@/app/store/salesSlice';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 
@@ -25,25 +25,27 @@ const TotalTransactionModal: React.FC<TotalTransactionModalProps> = ({
   // const { mutateAsync: approveTransaction, isPending } = useApproveTransaction();
   // const { mutateAsync: rejectTransaction, isPending: isRejecting } = useRejectTransaction();
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
         delayChildren: 0.2,
+        type: 'tween' as const,
       },
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
         duration: 0.3,
-        ease: 'easeOut',
+        type: 'tween' as const,
+        ease: [0.4, 0, 0.2, 1] as const,
       },
     },
   };

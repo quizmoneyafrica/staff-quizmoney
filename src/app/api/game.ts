@@ -36,10 +36,10 @@ export interface GameQuestionOption {
 }
 
 export interface GameQuestion {
-  questionId: string;
+  questionId?: string;
   order: number;
   question: string;
-  options: GameQuestionOption[];
+  options?: GameQuestionOption[];
 }
 
 export interface GameQuestionResponse {
@@ -124,6 +124,175 @@ interface ApiGameResponse {
   last: boolean;
 }
 
+export type GameType = 'NUMBER_GUESSER' | 'MEMORY_GAME' | 'PERFECT_SCORE';
+export type GameResult = 'WON' | 'LOSS' | 'IN_PROGRESS';
+
+export interface MemoryGame {
+  gameId: string;
+  name: string;
+  description: string;
+  type: GameType;
+  config: {
+    minimumStake: number;
+    maximumStake: number;
+    baseMoves: number;
+    maxMovePurchase: number;
+    costPerExtraMove: number;
+    stakeMultiplier: number;
+    numberOfCards: number;
+  };
+}
+
+export interface PerfectScoreGame {
+  gameId: string;
+  name: string;
+  description: string;
+  type: GameType;
+  config: {
+    costPerSpin: number;
+    maximumSpinPerUser: number;
+    respinFeatureEnabled: boolean;
+  };
+}
+
+export interface NumberGuessingGame {
+  gameId: string;
+  name: string;
+  description: string;
+  type: GameType;
+  config: {
+    minimumStake: number;
+    maximumStake: number;
+  };
+}
+
+export interface GameSession {
+  id: string;
+  gameId?: string;
+  playerId?: string;
+  playerName?: string;
+  playerEmail?: string;
+  stake?: number;
+  result?: GameResult;
+  startTime?: string;
+  endTime?: string;
+  duration?: number;
+  attempts?: GameAttempt[];
+  totalWinnings?: number;
+  extraTrials?: number;
+  extraMoves?: number;
+  matchedPairs?: number;
+  hiddenNumber?: number;
+  initialQuestions?: number;
+  respinQuestions?: number;
+  finalQuestions?: number;
+  questions?: PerfectScoreAttempt[];
+  moves?: PerfectScoreAttempt[];
+}
+
+export interface GameAttempt {
+  attemptNumber: number;
+  guess: number;
+  result: string;
+  timeTaken: string;
+  isCorrect: boolean;
+}
+
+export interface PerfectScoreAttempt {
+  question: string;
+  answer: string;
+  isCorrect: boolean;
+  score: number;
+  timestamp: string;
+}
+
+export interface GameSessionsResponse {
+  content: GameSession[];
+  pageNo: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+  data?: {
+    content: GameSession[];
+    pageNo: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    last: boolean;
+  };
+}
+
+export interface GetGameSessionsParams {
+  gameType: GameType;
+  page?: number;
+  size?: number;
+  search?: string;
+  result?: GameResult | '--';
+}
+
+export interface UpdateMemoryGamePayload {
+  type: string;
+  gameId: string;
+  minimumStake: number;
+  maximumStake: number;
+  baseMoves: number;
+  maxMovePurchase: number;
+  costPerExtraMove: number;
+  stakeMultiplier: number;
+  numberOfCards: number;
+}
+
+export interface UpdatePerfectScoreGamePayload {
+  type: string;
+  gameId: string;
+  costPerSpin: number;
+  maximumSpinPerUser: number;
+  respinFeatureEnabled: boolean;
+}
+
+export interface UpdateNumberGuessingGamePayload {
+  type: string;
+  gameId: string;
+  minimumStake: number;
+  maximumStake: number;
+  range: number;
+  stakeMultiplier: number;
+  numberOfAttempts: number;
+  costPerTrial: number;
+  maxTrials: number;
+}
+
+export interface ApiSuccessResponse<T> {
+  success: boolean;
+  code: string;
+  message: string;
+  data: T;
+}
+
+export interface GenericApiResponse {
+  success?: boolean;
+  code?: string;
+  message?: string;
+  data?: unknown;
+  [key: string]: unknown;
+}
+
+export interface GameDetailsResponse {
+  gameId: string;
+  name: string;
+  description: string;
+  status: string;
+  fee: number;
+  duration: number;
+  startTime: string;
+  endTime?: string;
+  prize: number;
+  questionCount?: number;
+  questions?: GameQuestion[];
+  [key: string]: unknown;
+}
+
 const GameApi = {
   createGame(
     payload: CreateGamePayload,
@@ -168,11 +337,15 @@ const GameApi = {
     return request.post(`/getGameById`, { objectId });
   },
 
-  getGameByIdV2(gameId: string): Promise<AxiosResponse<UnknownObject>> {
+  getGameByIdV2(
+    gameId: string,
+  ): Promise<AxiosResponse<ApiSuccessResponse<GameDetailsResponse>>> {
     return request.get(`/games/${gameId}/details`);
   },
 
-  getGameDetailsV2(gameId: string): Promise<AxiosResponse<UnknownObject>> {
+  getGameDetailsV2(
+    gameId: string,
+  ): Promise<AxiosResponse<ApiSuccessResponse<GameDetailsResponse>>> {
     return request.get(`/games/${gameId}/details`);
   },
 
@@ -209,6 +382,71 @@ const GameApi = {
       questionNumber,
       answer,
       ...(totalTime && { totalTime }),
+    });
+  },
+
+  getGame<T extends NumberGuessingGame | MemoryGame | PerfectScoreGame>(
+    gameType: GameType,
+  ): Promise<AxiosResponse<ApiSuccessResponse<T>>> {
+    return request.get(`/qm-games/game`, {
+      params: {
+        'game-type': gameType,
+      },
+    });
+  },
+
+  getNumberGuessingGame(
+    gameType: GameType,
+  ): Promise<AxiosResponse<ApiSuccessResponse<NumberGuessingGame>>> {
+    return request.get(`/qm-games/game`, {
+      params: {
+        'game-type': gameType,
+      },
+    });
+  },
+
+  updateMemoryGame(
+    payload: UpdateMemoryGamePayload,
+  ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
+    return request.patch(`/memory-game`, payload);
+  },
+
+  updatePerfectScoreGame(
+    payload: UpdatePerfectScoreGamePayload,
+  ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
+    return request.patch(`/perfect-score`, payload);
+  },
+
+  updateNumberGuessingGame(
+    payload: UpdateNumberGuessingGamePayload,
+  ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
+    return request.patch(`/number-guesser`, payload);
+  },
+
+  getGameSessions(
+    params: GetGameSessionsParams,
+  ): Promise<AxiosResponse<ApiSuccessResponse<GameSessionsResponse>>> {
+    const { gameType, page = 0, size = 10, search, result } = params;
+
+    const queryParams = new URLSearchParams({
+      'game-type': gameType,
+      page: page.toString(),
+      size: size.toString(),
+      ...(search && { search }),
+      ...(result && result !== '--' && { result }),
+    });
+
+    return request.get(`/qm-games/game-sessions?${queryParams.toString()}`);
+  },
+
+  getGameSessionById(
+    id: string,
+    gameType: GameType,
+  ): Promise<AxiosResponse<ApiSuccessResponse<GameSession>>> {
+    return request.get(`/qm-games/game-sessions/${id}`, {
+      params: {
+        'game-type': gameType,
+      },
     });
   },
 };
