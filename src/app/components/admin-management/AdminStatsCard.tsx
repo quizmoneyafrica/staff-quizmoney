@@ -36,7 +36,7 @@ const LoadingStatCard: React.FC<{ cardBg?: string }> = ({
         ease: [0.4, 0, 0.2, 1],
       },
     },
-  };
+  } as const;
 
   return (
     <motion.div
@@ -138,10 +138,10 @@ const StatCard: React.FC<StatCardProps> = ({ stat }) => {
       scale: 1.02,
       transition: {
         duration: 0.2,
-        ease: 'easeOut',
+        ease: [0.4, 0, 0.2, 1],
       },
     },
-  };
+  } as const;
 
   const iconVariants = {
     hidden: { scale: 0.8, opacity: 0 },
@@ -151,9 +151,10 @@ const StatCard: React.FC<StatCardProps> = ({ stat }) => {
       transition: {
         delay: 0.2,
         duration: 0.3,
+        ease: [0.4, 0, 0.2, 1],
       },
     },
-  };
+  } as const;
 
   return (
     <motion.div

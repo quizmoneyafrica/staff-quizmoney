@@ -1,7 +1,7 @@
 import React from 'react';
 import { Check, X } from 'lucide-react';
 import { Question } from './types';
-import { BlueClock, GreenClock, SmallEraserIcon } from '@/app/icons/icons';
+import { BlueClock, SmallEraserIcon } from '@/app/icons/icons';
 
 interface QuestionCardProps {
   question: Question;
@@ -67,7 +67,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question }) => {
               Database Time
             </div>
             <div className="flex items-center space-x-2">
-              <GreenClock className="h-4 w-4 text-white" />
+              <BlueClock className="h-4 w-4 text-white" />
 
               <span className="text-xs font-normal leading-[18px] text-[#009028]">
                 {question.databaseTime}

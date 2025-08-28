@@ -3,6 +3,7 @@ import CustomTextField from '@/app/utils/CustomTextField';
 import { ChevronDown, ChevronUp, X, Plus, GripVertical } from 'lucide-react';
 import React, { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
+import DeleteConfirmationModal from '@/app/components/gamezone/deleteconfirmation';
 
 interface IQuestionBoxProps {
   questionNumber: number;
@@ -11,19 +12,25 @@ interface IQuestionBoxProps {
     questionIndex: number,
     updatedQuestion: QuestionState,
   ) => void;
+  onQuestionDelete: (questionId: string) => void;
   questionId: string;
   isDragging?: boolean;
+  errorMessage?: string;
 }
 
 const QuestionBox: React.FC<IQuestionBoxProps> = ({
   questionNumber,
   question,
   onQuestionUpdate,
+  onQuestionDelete,
   questionId,
   isDragging = false,
+  errorMessage: validationError,
 }) => {
   const [opened, setOpened] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [optionLimitError, setOptionLimitError] = useState<string>('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const toggleOpened = () => {
     setOpened(!opened);
@@ -60,8 +67,8 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
 
   const addOption = () => {
     if (question.options.length >= 6) {
-      setErrorMessage('Each question can have at most 6 options');
-      setTimeout(() => setErrorMessage(''), 3000);
+      setOptionLimitError('Each question can have at most 6 options');
+      setTimeout(() => setOptionLimitError(''), 3000);
       return;
     }
 
@@ -71,15 +78,15 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
       options: updatedOptions,
     };
     onQuestionUpdate(questionNumber, updatedQuestion);
-    setErrorMessage('');
+    setOptionLimitError('');
   };
 
   const removeOption = (optionIndex: number) => {
     if (question.options.length <= 4) {
-      setErrorMessage(
+      setOptionLimitError(
         'Each question must have at least 4 options (A, B, C, D)',
       );
-      setTimeout(() => setErrorMessage(''), 3000);
+      setTimeout(() => setOptionLimitError(''), 3000);
       return;
     }
 
@@ -98,7 +105,21 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
       correctAnswer: updatedCorrectAnswer,
     };
     onQuestionUpdate(questionNumber, updatedQuestion);
-    setErrorMessage('');
+    setOptionLimitError('');
+  };
+
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onQuestionDelete(questionId);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   return (
@@ -119,7 +140,7 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
               : 'none',
           }}
         >
-          <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <div
               {...provided.dragHandleProps}
               className="-m-2 flex flex-1 cursor-grab items-center gap-3 rounded-lg p-2 transition-colors hover:bg-gray-50 active:cursor-grabbing"
@@ -160,14 +181,30 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
                 </div>
               </div>
             </div>
+            <button
+              onClick={handleDelete}
+              className="ml-4 rounded-full p-2 text-gray-400 hover:bg-red-100 hover:text-red-600"
+              title="Delete question"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <DeleteConfirmationModal
+              isOpen={showDeleteModal}
+              onClose={() => !isDeleting && setShowDeleteModal(false)}
+              onConfirm={confirmDelete}
+              title="Are you sure you want to delete this question?"
+              isLoading={isDeleting}
+            />
           </div>
 
-          {errorMessage && (
+          {(validationError || optionLimitError) && (
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
               <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-red-500">
                 <X className="h-2 w-2 text-white" />
               </div>
-              <p className="text-sm font-medium text-red-700">{errorMessage}</p>
+              <p className="text-sm font-medium text-red-700">
+                {validationError || optionLimitError}
+              </p>
             </div>
           )}
 
@@ -186,7 +223,9 @@ const QuestionBox: React.FC<IQuestionBoxProps> = ({
               <div className="space-y-3">
                 {question.options.map((option, index) => {
                   const optionLetter = String.fromCharCode(65 + index);
-                  const isCorrect = option === question.correctAnswer;
+                  const isCorrect =
+                    question.correctAnswer !== '' &&
+                    option === question.correctAnswer;
 
                   return (
                     <div key={index} className="flex items-center gap-3">

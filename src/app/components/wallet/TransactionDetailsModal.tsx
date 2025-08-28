@@ -5,7 +5,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { Avatar } from '@radix-ui/themes';
 import classNames from 'classnames';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { WalletTransactionResponse } from '@/app/api/wallet';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 // import { VerifiedIcon } from '@/app/icons/icons';
@@ -21,20 +21,29 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
   onClose,
   transactionData,
 }) => {
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+        type: 'tween' as const,
+        ease: [0.4, 0, 0.2, 1] as const,
+      },
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3, ease: 'easeOut' },
+      transition: {
+        duration: 0.3,
+        type: 'tween' as const,
+        ease: [0.4, 0, 0.2, 1] as const,
+      },
     },
   };
 

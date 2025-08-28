@@ -17,10 +17,17 @@ import QuestionBox from './questionBox';
 import { NoQuestions } from '../../noQuestion';
 import { useUpdateGame } from '@/app/hooks/useUpdateGame';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { PlusCircle } from 'lucide-react';
 import { useDispatch } from 'react-redux';
+import { gameSchema, questionSchema } from '@/lib/validation';
 
 interface QuestionWithId extends QuestionState {
   id: string;
+  optionIds?: Record<string, string>;
+  originalOptions?: Array<{
+    option: string;
+    optionId?: string;
+  }>;
 }
 
 interface GameWithIds extends Omit<Game, 'questions'> {
@@ -36,6 +43,9 @@ function Page() {
   });
   const [datetimeInput, setDatetimeInput] = useState('');
   const [fetchingData, setFetchingData] = useState(true);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
 
   const { updateGame } = useUpdateGame();
 
@@ -46,30 +56,70 @@ function Page() {
 
   const transformApiQuestionToQuestionState = (
     apiQuestion: GameQuestion,
-  ): QuestionState => {
+  ): QuestionWithId => {
     const correctOption = apiQuestion.options.find((option) => option.answer);
-    return {
+
+    const question: QuestionWithId = {
+      id: apiQuestion.questionId,
       number: String(apiQuestion.order),
       question: apiQuestion.question,
       options: apiQuestion.options.map((option) => option.option),
       correctAnswer: correctOption?.option || '',
     };
+
+    question.originalOptions = apiQuestion.options.map((option) => ({
+      option: option.option,
+      optionId: option.optionId,
+    }));
+
+    return question;
   };
 
   const transformQuestionStateToApiQuestion = (
-    question: QuestionState,
+    question: QuestionWithId,
     order: number,
   ): GameQuestion => {
-    return {
-      questionId: `Q${order}`,
-      order: order,
-      question: question.question,
-      options: question.options.map((option, index) => ({
-        optionId: `O${order}${index + 1}`,
+    const options = question.options.map((option, index) => {
+      const optionData: {
+        optionId?: string;
+        option: string;
+        answer: boolean;
+      } = {
         option: option,
         answer: option === question.correctAnswer,
+      };
+
+      if (
+        !question.id.startsWith('new-question-') &&
+        question.originalOptions
+      ) {
+        const originalOption = question.originalOptions.find(
+          (o) => o.option === option,
+        );
+        if (originalOption?.optionId) {
+          optionData.optionId = originalOption.optionId;
+        }
+      }
+
+      return optionData;
+    });
+
+    const questionData: GameQuestion = {
+      question: question.question,
+      order: order,
+      options: options.map((opt) => ({
+        optionId:
+          opt.optionId || `opt-${Math.random().toString(36).substr(2, 9)}`,
+        option: opt.option,
+        answer: opt.answer,
       })),
     };
+
+    if (!question.id.startsWith('new-question-')) {
+      questionData.questionId = question.id;
+    }
+
+    return questionData;
   };
 
   React.useEffect(() => {
@@ -78,13 +128,17 @@ function Page() {
       try {
         setFetchingData(true);
         const res = await GameApi.getGameDetailsV2(`${params.id}`);
-        const result = res?.data?.data;
+        const result = res?.data?.data as GameQuestionResponse;
 
         const questionsWithIds: QuestionWithId[] =
-          result.questions?.map((question: GameQuestion, index: number) => ({
-            ...transformApiQuestionToQuestionState(question),
-            id: `question-${index}-${Date.now()}`,
-          })) || [];
+          result.questions?.map((question) =>
+            transformApiQuestionToQuestionState({
+              questionId: question.questionId,
+              order: question.order,
+              question: question.question,
+              options: question.options,
+            }),
+          ) || [];
 
         const transformedGame: GameWithIds = {
           objectId: result.gameId,
@@ -219,7 +273,79 @@ function Page() {
     toast.success('Question order updated');
   };
 
+  const handleAddNewQuestion = () => {
+    const newQuestion: QuestionWithId = {
+      id: `new-question-${Date.now()}`,
+      number: String(fetchedData.questions.length + 1),
+      question: '',
+      options: ['', '', '', ''],
+      correctAnswer: '',
+    };
+    setFetchedData((prev) => ({
+      ...prev,
+      questions: [...prev.questions, newQuestion],
+    }));
+    toast.success('New question added');
+  };
+
+  const handleDeleteQuestion = (questionId: string) => {
+    setFetchedData((prev) => {
+      const updatedQuestions = prev.questions.filter(
+        (q) => q.id !== questionId,
+      );
+
+      const renumberedQuestions = updatedQuestions.map((q, index) => ({
+        ...q,
+        number: String(index + 1),
+      }));
+
+      return {
+        ...prev,
+        questions: renumberedQuestions,
+      };
+    });
+  };
+
   const handleSave = async () => {
+    setValidationErrors({});
+
+    const dataToValidate = {
+      name: fetchedData.name,
+      entryFee: Number(fetchedData.entryFee),
+      gamePrize: fetchedData.gamePrize,
+      questions: fetchedData.questions,
+    };
+
+    const { error } = gameSchema.validate(dataToValidate, {
+      abortEarly: false,
+    });
+
+    if (error) {
+      const newErrors: Record<string, string> = {};
+      let generalErrorShown = false;
+      error.details.forEach((detail) => {
+        const isQuestionError = detail.path[0] === 'questions';
+
+        if (isQuestionError && detail.path.length > 1) {
+          const questionIndex = detail.path[1] as number;
+          const questionId = fetchedData.questions[questionIndex]?.id;
+          if (questionId && !newErrors[questionId]) {
+            newErrors[questionId] = detail.message;
+          }
+        } else if (!generalErrorShown) {
+          toast.error(detail.message);
+          generalErrorShown = true;
+        }
+      });
+
+      setValidationErrors(newErrors);
+
+      if (Object.keys(newErrors).length > 0 && !generalErrorShown) {
+        toast.error('Please fix the errors in the questions below.');
+      }
+      return;
+    }
+
     try {
       if (!params.id || !fetchedData) {
         toast.error('Game ID or data is missing');
@@ -275,23 +401,15 @@ function Page() {
 
   return (
     <>
-      <div className="space-y-10">
-        <div className="w-full space-y-8 rounded-lg bg-white p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-heading text-xl font-medium">Game Details</h3>
-            <button
-              onClick={handleSave}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
-            >
-              Save Changes
-            </button>
-          </div>
-
-          <div className="font-heading grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="p-4 md:p-8">
+        <div className="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-6 text-xl font-semibold text-gray-800">
+            Edit Game Details
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <CustomTextField
               label="Game Name"
-              placeholder="Trivia"
-              type="text"
+              placeholder="Enter game name"
               name="name"
               value={fetchedData?.name || ''}
               className="capitalize"
@@ -358,6 +476,8 @@ function Page() {
                       question={question}
                       questionId={question.id}
                       onQuestionUpdate={handleQuestionUpdate}
+                      onQuestionDelete={handleDeleteQuestion}
+                      errorMessage={validationErrors[question.id]}
                     />
                   ))}
                   {provided.placeholder}
@@ -368,6 +488,22 @@ function Page() {
         ) : (
           <NoQuestions />
         )}
+
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <button
+            onClick={handleSave}
+            className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Save Changes
+          </button>
+          <button
+            onClick={handleAddNewQuestion}
+            className="flex items-center rounded-md bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+          >
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Add New Question
+          </button>
+        </div>
       </div>
     </>
   );

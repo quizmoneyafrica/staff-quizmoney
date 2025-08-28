@@ -77,10 +77,10 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
       y: 0,
       transition: {
         duration: 0.3,
-        ease: 'easeOut',
+        ease: [0.4, 0, 0.2, 1], // Using cubic-bezier values
       },
     },
-  };
+  } as const;
 
   const copyToClipboard = async (text: string, fieldName: string) => {
     try {
@@ -199,7 +199,7 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                 className="fixed left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform rounded-xl bg-white px-8 py-8 shadow-xl focus:outline-none"
               >
                 <motion.div

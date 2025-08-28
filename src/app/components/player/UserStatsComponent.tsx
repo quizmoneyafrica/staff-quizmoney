@@ -1,6 +1,6 @@
 'use client';
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import CustomImage from '../CustomImage';
 import PlayersApi from '@/app/api/playersApi';
 import { useQuery } from '@tanstack/react-query';
@@ -20,7 +20,7 @@ interface StatCardProps {
 }
 
 const LoadingStatCard: React.FC<{ index: number }> = ({ index }) => {
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: {
       opacity: 0,
       y: 20,
@@ -32,7 +32,7 @@ const LoadingStatCard: React.FC<{ index: number }> = ({ index }) => {
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: [0.4, 0, 0.2, 1],
+        ease: [0.4, 0, 0.2, 1] as const,
         delay: index * 0.1,
       },
     },
@@ -194,7 +194,7 @@ const UserStatsComponent: React.FC = () => {
 };
 
 const StatCard: React.FC<StatCardProps> = ({ stat, index }) => {
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: {
       opacity: 0,
       y: 20,
@@ -206,7 +206,7 @@ const StatCard: React.FC<StatCardProps> = ({ stat, index }) => {
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: [0.4, 0, 0.2, 1],
+        ease: [0.4, 0, 0.2, 1] as const,
         delay: index * 0.1,
       },
     },
@@ -214,12 +214,12 @@ const StatCard: React.FC<StatCardProps> = ({ stat, index }) => {
       scale: 1.02,
       transition: {
         duration: 0.2,
-        ease: 'easeOut',
+        ease: [0.4, 0, 0.2, 1] as const,
       },
     },
   };
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     hidden: { scale: 0.8, opacity: 0 },
     visible: {
       scale: 1,

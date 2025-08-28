@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 import CustomImage from '../CustomImage';
 import { Skeleton } from '@radix-ui/themes';
 import { notificationService } from '@/app/api/pushNotification';
@@ -21,7 +21,7 @@ interface PushNotificationCardProps {
 }
 
 const LoadingStatCard: React.FC = () => {
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: {
       opacity: 0,
       y: 20,
@@ -33,7 +33,7 @@ const LoadingStatCard: React.FC = () => {
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: [0.4, 0, 0.2, 1],
+        ease: [0.4, 0, 0.2, 1] as const,
       },
     },
   };
@@ -137,7 +137,7 @@ const PushNotificationCard: React.FC<PushNotificationCardProps> = ({
 };
 
 const StatCard: React.FC<StatCardProps> = ({ stat }) => {
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: {
       opacity: 0,
       y: 20,
@@ -149,19 +149,19 @@ const StatCard: React.FC<StatCardProps> = ({ stat }) => {
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: [0.4, 0, 0.2, 1],
+        ease: [0.4, 0, 0.2, 1] as const,
       },
     },
     hover: {
       scale: 1.02,
       transition: {
         duration: 0.2,
-        ease: 'easeOut',
+        ease: [0.4, 0, 0.2, 1] as const,
       },
     },
   };
 
-  const iconVariants = {
+  const iconVariants: Variants = {
     hidden: { scale: 0.8, opacity: 0 },
     visible: {
       scale: 1,
