@@ -20,7 +20,7 @@ interface GameHistoryDetailsProps {
   isLoading: boolean;
 }
 
-const GameHistoryDetails: React.FC<GameHistoryDetailsProps> = ({
+const PerfectScoreGameHistoryDetails: React.FC<GameHistoryDetailsProps> = ({
   session,
   isLoading,
 }) => {
@@ -195,4 +195,4 @@ const InfoItem = ({ icon, label, value, email, result }: InfoItemProps) => {
   );
 };
 
-export default GameHistoryDetails;
+export default PerfectScoreGameHistoryDetails;

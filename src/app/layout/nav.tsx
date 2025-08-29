@@ -14,6 +14,7 @@ import {
   QmCoinNavIcon,
   MissedQuestionIcon,
 } from '../icons/icons';
+import { UserPlus } from 'lucide-react';
 import { ROUTES } from '@/app/utils';
 
 export interface NavItem {
@@ -96,6 +97,11 @@ export const navs: NavItem[] = [
     icon: <QmCoinNavIcon />,
     path: ROUTES.QM_COINS,
     name: 'QM Coins',
+  },
+  {
+    icon: <UserPlus />,
+    path: ROUTES.REFERRAL_MANAGEMENT,
+    name: 'Referral Management',
   },
   {
     icon: <AdminManagementIcon />,
