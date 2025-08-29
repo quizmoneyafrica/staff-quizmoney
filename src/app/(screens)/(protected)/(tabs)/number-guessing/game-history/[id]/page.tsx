@@ -1,18 +1,13 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import NumberGuessingGameHistory from './NumberGuessingGameHistory';
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
+export default function Page() {
+  const params = useParams();
 
-export default function Page({ params }: PageProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -33,7 +28,7 @@ export default function Page({ params }: PageProps) {
 
   return (
     <NumberGuessingGameHistory
-      params={params}
+      params={params as { id: string }}
       searchParams={{ gameId, status }}
     />
   );
