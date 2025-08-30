@@ -44,6 +44,10 @@ const baseConfig = {
         protocol: 'https' as const,
       },
       {
+        hostname: 'res.cloudinary.com',
+        protocol: 'https' as const,
+      },
+      {
         protocol: 'https' as const,
         hostname: 'github.com',
         pathname: '/**',

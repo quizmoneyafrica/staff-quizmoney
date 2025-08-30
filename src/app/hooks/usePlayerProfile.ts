@@ -23,7 +23,7 @@ const DEFAULT_TRANSACTION_PARAMS = {
 export const usePlayerProfile = (
   userId: string,
   options?: Partial<Omit<ViewPlayerProfileRequest, 'userId'>>,
-): UseQueryResult<PlayerProfileData, Error> => {
+): UseQueryResult<UnknownObject, Error> => {
   const requestParams: ViewPlayerProfileRequest = {
     userId,
     ...DEFAULT_PARAMS,
@@ -32,11 +32,11 @@ export const usePlayerProfile = (
 
   return useQuery({
     queryKey: ['playerProfile', userId, requestParams],
-    queryFn: async (): Promise<PlayerProfileData> => {
+    queryFn: async (): Promise<UnknownObject> => {
       try {
         const response = await PlayerApi.viewPlayerProfile(requestParams);
-        if (response.data.result) {
-          return response.data.result;
+        if (response.data.data) {
+          return response.data.data;
         } else {
           console.error('Debug - No result in API response');
           throw new Error('No data returned from API');
@@ -123,7 +123,7 @@ export const usePlayerProfileWithFilters = (
     gameHistoryPage?: number;
     gameHistoryLimit?: number;
   },
-): UseQueryResult<PlayerProfileData, Error> => {
+): UseQueryResult<UnknownObject, Error> => {
   return usePlayerProfile(userId, {
     ...transactionFilters,
     ...gameHistoryFilters,

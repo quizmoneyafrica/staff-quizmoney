@@ -42,7 +42,7 @@ interface ProfileData {
 }
 
 interface PlayerInfoSectionProps {
-  profileData: ProfileData;
+  profileData: UnknownObject;
 }
 
 export default function PlayerInfoSection({
@@ -58,8 +58,8 @@ export default function PlayerInfoSection({
     },
     {
       label: 'Date of Birth',
-      value: profileData.dateOfBirth
-        ? new Date(profileData.dateOfBirth?.iso).toLocaleDateString('en-US', {
+      value: profileData.dob
+        ? new Date(profileData.dob).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -76,7 +76,7 @@ export default function PlayerInfoSection({
     { label: 'Referred By', value: profileData.referredBy || 'N/A' },
   ];
 
-  const avatarUrl = profileData.avatar || 'https://github.com/shadcn.png';
+  const avatarUrl = profileData.avatarUrl || 'https://github.com/shadcn.png';
 
   return (
     <motion.div
