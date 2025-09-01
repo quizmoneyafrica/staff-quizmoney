@@ -13,11 +13,7 @@ import CustomImage from '@/app/components/CustomImage';
 import Pagination from '../leaderboard/Pagination';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
-import SalesApi, {
-  CustomerOrderResponse,
-  PageResponse,
-  SalesOrdersApiResponse,
-} from '@/app/api/salesApi';
+import SalesApi from '@/app/api/salesApi';
 import { VerifiedIcon } from '@/app/icons/icons';
 
 type CustomDateRange = { startDate: Date; endDate: Date } | null;
@@ -319,6 +315,23 @@ const TotalTransactionsTable = () => {
                         <div>
                           <p className="font-heading font-bold uppercase text-neutral-800">
                             {transaction.orderId}
+                          </p>
+                          <p className="text-neutral-800">
+                            {transaction.createdAt
+                              ? new Date(transaction.createdAt)
+                                  .toLocaleString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                  })
+                                  .replace(',', '')
+                                  .replace(/(\d{2}:\d{2})/, (match) =>
+                                    match.replace(':', ':'),
+                                  )
+                              : '-'}
                           </p>
                         </div>
                       </div>
