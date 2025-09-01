@@ -13,23 +13,16 @@ import {
   SupportIcon,
 } from '../icons/icons';
 import { useAppSelector } from '../hooks/useAuth';
-import { decryptData } from '../utils/crypto';
 import { DropdownMenu } from 'radix-ui';
 import LogoutDialog from '../components/logout/logout';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import NotificationApi from '../api/notification';
-import Parse, { liveQueryClient } from '@/app/api/parse/parseClient';
 import { setNotifications } from '../store/notificationSlice';
 import { bottomNav, navs } from './nav';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
-
-// Types
-interface ParseSubscription {
-  on: (event: string, callback: () => void) => void;
-  unsubscribe: () => void;
-}
+import { NavDropdown } from '../components/ui/NavDropdown';
 
 interface NotificationError {
   message: string;
@@ -148,6 +141,17 @@ function AppHeader() {
   const renderMobileNavItems = () => (
     <>
       {navs.map((nav, index) => {
+        if (nav.isDropdown && nav.items) {
+          return (
+            <NavDropdown
+              key={index}
+              icon={nav.icon}
+              title={nav.name}
+              items={nav.items}
+            />
+          );
+        }
+
         const isActive =
           pathname === nav.path || pathname.startsWith(nav.path + '/');
         return (
