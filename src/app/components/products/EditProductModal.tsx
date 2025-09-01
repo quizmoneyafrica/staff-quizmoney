@@ -163,6 +163,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
       name: formData.name.trim(),
       price: parseFloat(formData.price),
       quantity: parseInt(formData.quantity),
+      category: formData.category,
     };
 
     await updateProduct(updateData);

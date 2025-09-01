@@ -92,7 +92,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
           name: data.name,
           price: data.price,
           quantity: data.quantity,
-          productCategory: data.category,
+          category: data.category,
         };
         const response = await ProductsApi.createProduct(payload);
         return response.data;
