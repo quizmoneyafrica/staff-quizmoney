@@ -8,7 +8,6 @@ import classNames from 'classnames';
 import { Avatar, Table } from '@radix-ui/themes';
 import { subDays } from 'date-fns';
 import { useDebounce } from '@/app/hooks/useDebounce';
-
 import CustomImage from '@/app/components/CustomImage';
 import Pagination from '../leaderboard/Pagination';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
@@ -72,7 +71,7 @@ const TotalTransactionsTable = () => {
   const { data, isLoading, isError, error } = useQuery<UnknownObject, Error>({
     queryKey: [
       'salesOrders',
-      currentPage,
+      currentPage - 1,
       itemsPerPage,
       debouncedSearchTerm,
       selectedFilter,
@@ -88,7 +87,7 @@ const TotalTransactionsTable = () => {
         selectedFilter === 'All' ? undefined : selectedFilter;
 
       const params = {
-        page: currentPage,
+        page: currentPage - 1,
         limit: itemsPerPage,
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
         ...(statusForApi && { status: statusForApi }),
@@ -403,7 +402,7 @@ const TotalTransactionsTable = () => {
               )}
             </div>
             <Pagination
-              currentPage={pagination.pageNo}
+              currentPage={pagination.pageNo + 1}
               totalPages={pagination.totalPages}
               onPageChange={handlePageChange}
             />
