@@ -59,6 +59,7 @@ export interface UpdateProductPayload {
   name?: string;
   price?: number;
   quantity?: number;
+  category?: string;
 }
 
 export interface DeleteProductPayload {
@@ -134,7 +135,7 @@ const createApiClient = () => {
         name: payload.name,
         price: payload.price,
         quantity: payload.quantity,
-        productCategory: payload.category,
+        category: payload.category,
       });
     },
 

@@ -12,7 +12,7 @@ export interface ProductSubmitData {
   name: string;
   price: number;
   quantity: number;
-  productCategory: string;
+  category: string;
   description?: string;
 }
 
@@ -102,7 +102,7 @@ export const prepareProductData = (
     name: formData.name.trim(),
     price: parseFloat(formData.price),
     quantity: parseInt(formData.quantity),
-    productCategory: formData.category,
+    category: formData.category,
     description: formData.description?.trim(),
   };
 };

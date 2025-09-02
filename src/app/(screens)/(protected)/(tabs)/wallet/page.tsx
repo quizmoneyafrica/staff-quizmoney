@@ -87,7 +87,7 @@ function Page() {
         <h2 className="text-2xl font-semibold">Wallet Statistics</h2>
       </div>
 
-      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         {summaryLoading ? (
           Array.from({ length: 4 }).map((_, index) => (
             <div

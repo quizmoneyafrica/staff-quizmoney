@@ -1,5 +1,6 @@
 import { AxiosResponse } from 'axios';
 import { request } from '@/app/api/config';
+import { UnknownAction } from '@reduxjs/toolkit';
 
 export interface PlayerGameQuestion {
   questionNumber: string;
@@ -240,8 +241,10 @@ interface UpdatePlayerVerificationResponse {
 const PlayerApi = {
   viewPlayerProfile(
     data: ViewPlayerProfileRequest,
-  ): Promise<AxiosResponse<{ result: PlayerProfileData }>> {
-    return request.post(`/getPlayerProfileDetails`, data, {});
+  ): Promise<AxiosResponse<UnknownObject>> {
+    return request.get(`/customers/profile/${data?.userId}`, {
+      params: {},
+    });
   },
 
   getPlayerGameDetails(data: {

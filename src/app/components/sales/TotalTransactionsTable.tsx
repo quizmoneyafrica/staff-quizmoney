@@ -8,16 +8,11 @@ import classNames from 'classnames';
 import { Avatar, Table } from '@radix-ui/themes';
 import { subDays } from 'date-fns';
 import { useDebounce } from '@/app/hooks/useDebounce';
-
 import CustomImage from '@/app/components/CustomImage';
 import Pagination from '../leaderboard/Pagination';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
-import SalesApi, {
-  CustomerOrderResponse,
-  PageResponse,
-  SalesOrdersApiResponse,
-} from '@/app/api/salesApi';
+import SalesApi from '@/app/api/salesApi';
 import { VerifiedIcon } from '@/app/icons/icons';
 
 type CustomDateRange = { startDate: Date; endDate: Date } | null;
@@ -76,7 +71,7 @@ const TotalTransactionsTable = () => {
   const { data, isLoading, isError, error } = useQuery<UnknownObject, Error>({
     queryKey: [
       'salesOrders',
-      currentPage,
+      currentPage - 1,
       itemsPerPage,
       debouncedSearchTerm,
       selectedFilter,
@@ -92,7 +87,7 @@ const TotalTransactionsTable = () => {
         selectedFilter === 'All' ? undefined : selectedFilter;
 
       const params = {
-        page: currentPage,
+        page: currentPage - 1,
         limit: itemsPerPage,
         ...(debouncedSearchTerm && { search: debouncedSearchTerm }),
         ...(statusForApi && { status: statusForApi }),
@@ -320,6 +315,23 @@ const TotalTransactionsTable = () => {
                           <p className="font-heading font-bold uppercase text-neutral-800">
                             {transaction.orderId}
                           </p>
+                          <p className="text-neutral-800">
+                            {transaction.createdAt
+                              ? new Date(transaction.createdAt)
+                                  .toLocaleString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                  })
+                                  .replace(',', '')
+                                  .replace(/(\d{2}:\d{2})/, (match) =>
+                                    match.replace(':', ':'),
+                                  )
+                              : '-'}
+                          </p>
                         </div>
                       </div>
                     </Table.Cell>
@@ -390,7 +402,7 @@ const TotalTransactionsTable = () => {
               )}
             </div>
             <Pagination
-              currentPage={pagination.pageNo}
+              currentPage={pagination.pageNo + 1}
               totalPages={pagination.totalPages}
               onPageChange={handlePageChange}
             />
