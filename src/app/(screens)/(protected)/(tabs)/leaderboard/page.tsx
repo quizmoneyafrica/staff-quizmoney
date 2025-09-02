@@ -106,20 +106,20 @@ function Page() {
   const itemsPerPage = 10;
 
   const { data: topThreeData, isLoading: isTopThreeLoading } = useQuery<
-    NormalizedPlayer[],
+    UnknownObject[],
     Error
   >({
     queryKey: ['leaderboardTopThree'],
     queryFn: async () => {
       const res = await LeaderboardAPI.getLeaderboard(1, 3, '');
       return (res.data.data.content || []).map((p) => ({
-        id: p.playerName,
+        id: p.id,
         rank: p.rank,
-        username: p.playerName,
-        games: p.gamesPlayed,
+        firstName: p.firstName,
+        gamesPlayed: p.gamesPlayed,
         price: p.prizeWon ? formatNaira(p.prizeWon) : undefined,
         coins: undefined,
-        avatarUrl: '',
+        avatarUrl: p.avatarUrl,
         date: p.lastGameDate,
         kycVerified: false,
       }));
@@ -145,13 +145,13 @@ function Page() {
       );
       const list = res.data.data;
       const normalizedData = (list.content || []).map((p) => ({
-        id: p.playerName,
+        id: p.id,
         rank: p.rank,
-        username: p.playerName,
+        username: p.firstName,
         games: p.gamesPlayed,
         price: p.prizeWon ? formatNaira(p.prizeWon) : undefined,
         coins: undefined,
-        avatarUrl: null,
+        avatarUrl: p.avatarUrl,
         date: p.lastGameDate,
         kycVerified: false,
       }));
@@ -181,6 +181,7 @@ function Page() {
   const tableData = tableApiData?.data || [];
   const pagination = tableApiData?.pagination;
   // const isLoading = isTopThreeLoading || isTableLoading;
+  console.log('topThree: ', topThree);
 
   return (
     <div className="w-full max-w-full overflow-x-hidden py-6">
@@ -200,8 +201,8 @@ function Page() {
                 key={data.id}
                 playerId={data.id}
                 rank={data.rank}
-                playerName={data.username}
-                gamesPlayed={data.games}
+                playerName={data?.firstName}
+                gamesPlayed={data.gamesPlayed}
                 prize={data.price}
                 avatarUrl={data.avatarUrl}
               />

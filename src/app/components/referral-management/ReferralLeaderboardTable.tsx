@@ -127,9 +127,9 @@ export const ReferralLeaderboardTable: React.FC = () => {
   );
 
   const handleViewDetailsClick = (referrer: ReferralUser) => {
-    router.push(
-      `/referral/user-details/${referrer.id}?userId=${referrer.id}&status=${referrer.status}`,
-    );
+    // router.push(
+    //   `/referral/user-details/${referrer.id}?userId=${referrer.id}&status=${referrer.status}`,
+    // );
   };
 
   const handlePageChange = (page: number) => {
@@ -292,6 +292,7 @@ export const ReferralLeaderboardTable: React.FC = () => {
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
                       <button
+                        type="button"
                         onClick={() => handleViewDetailsClick(referrer)}
                         className="text-lg font-bold text-gray-400 transition-colors hover:text-gray-600"
                       >
