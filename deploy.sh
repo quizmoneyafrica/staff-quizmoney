@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git pull origin main
+git pull origin dev
 
 # Check if the .gitignore file exists
 if [ ! -f .gitignore ]; then
@@ -27,4 +27,4 @@ echo "Added '$TEXT_TO_ADD' to .gitignore."
 git add .gitignore
 git commit -m "chore: '$TEXT_TO_ADD' to .gitignore"
 
-git push origin main
+git push origin dev

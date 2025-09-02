@@ -8,7 +8,7 @@ interface GameConfigurationProps {
   onConfigure: () => void;
 }
 
-const GameConfiguration: React.FC<GameConfigurationProps> = ({
+const PerfectScoreGameConfiguration: React.FC<GameConfigurationProps> = ({
   onConfigure,
 }) => {
   return (
@@ -29,4 +29,4 @@ const GameConfiguration: React.FC<GameConfigurationProps> = ({
   );
 };
 
-export default GameConfiguration;
+export default PerfectScoreGameConfiguration;

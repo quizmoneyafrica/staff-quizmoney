@@ -14,6 +14,7 @@ export const ROUTES = {
   LEADERBOARD: '/leaderboard',
   TOP_MISSED_QUESTION: '/top-missed-question',
   QM_COINS: '/qm-coins',
+  REFERRAL_MANAGEMENT: '/referral-management',
   ADMIN_MANAGEMENT: '/admin-management',
   PUSH_NOTIFICATION: '/push-notification',
   SETTINGS: '/settings',

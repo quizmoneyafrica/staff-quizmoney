@@ -2,39 +2,51 @@
 
 import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  X,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  ChevronDown,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  validateGameConfig,
-  prepareGameConfigData,
-  type GameConfigFormData,
-} from '@/app/components/perfect-score/GameConfigModal.schema';
-import { UpdatePerfectScoreGamePayload } from '@/app/api/game';
+  validateReferralSettings,
+  prepareReferralSettingsData,
+  type ReferralSettingsFormData,
+} from '@/app/components/referral-management/ReferralSettingsModal.shema';
 
 import { Switch } from '../ui/switch';
 
-interface GameConfigModalProps {
+interface UpdateReferralSettingsPayload {
+  rewardPerReferral: number;
+  monthlyLeaderboardRewards: number;
+  referralExpiryPolicy: string;
+  enableReferrals: boolean;
+}
+
+interface ReferralSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (
-    data: Omit<UpdatePerfectScoreGamePayload, 'gameId' | 'type'>,
-  ) => void;
+  onSubmit: (data: UpdateReferralSettingsPayload) => void;
   loading?: boolean;
   mode: 'view' | 'edit';
   initialData?: {
-    costPerSpin?: number;
-    maximumSpinPerUser?: number;
-    respinFeatureEnabled?: boolean;
+    rewardPerReferral?: number;
+    monthlyLeaderboardRewards?: number;
+    referralExpiryPolicy?: string;
+    enableReferrals?: boolean;
   };
 }
 
 interface FormErrors {
-  costPerSpin?: string;
-  maximumSpinPerUser?: string;
-  respinFeatureEnabled?: string;
+  rewardPerReferral?: string;
+  monthlyLeaderboardRewards?: string;
+  referralExpiryPolicy?: string;
+  enableReferrals?: string;
 }
 
-const GameConfigModal: React.FC<GameConfigModalProps> = ({
+const ReferralSettingsModal: React.FC<ReferralSettingsModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
@@ -42,10 +54,11 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
   mode,
   initialData,
 }) => {
-  const [formData, setFormData] = useState<GameConfigFormData>({
-    costPerSpin: '',
-    maximumSpinPerUser: '',
-    respinFeatureEnabled: false,
+  const [formData, setFormData] = useState<ReferralSettingsFormData>({
+    rewardPerReferral: '',
+    monthlyLeaderboardRewards: '',
+    referralExpiryPolicy: '30 days',
+    enableReferrals: false,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -54,13 +67,24 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
     'idle' | 'success' | 'error'
   >('idle');
   const [currentMode, setCurrentMode] = useState(mode);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const expiryOptions = [
+    '15 days',
+    '30 days',
+    '60 days',
+    '90 days',
+    'No expiry',
+  ];
 
   useEffect(() => {
     if (isOpen && initialData) {
       setFormData({
-        costPerSpin: initialData.costPerSpin?.toString() || '',
-        maximumSpinPerUser: initialData.maximumSpinPerUser?.toString() || '',
-        respinFeatureEnabled: initialData.respinFeatureEnabled || false,
+        rewardPerReferral: initialData.rewardPerReferral?.toString() || '',
+        monthlyLeaderboardRewards:
+          initialData.monthlyLeaderboardRewards?.toString() || '',
+        referralExpiryPolicy: initialData.referralExpiryPolicy || '30 days',
+        enableReferrals: initialData.enableReferrals || false,
       });
     }
     setCurrentMode(mode);
@@ -74,24 +98,27 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
 
   const resetForm = () => {
     setFormData({
-      costPerSpin: '',
-      maximumSpinPerUser: '',
-      respinFeatureEnabled: false,
+      rewardPerReferral: '',
+      monthlyLeaderboardRewards: '',
+      referralExpiryPolicy: '30 days',
+      enableReferrals: false,
     });
     setErrors({});
     setSubmitStatus('idle');
     setIsSubmitting(false);
     setCurrentMode(mode);
+    setIsDropdownOpen(false);
   };
 
   const validateForm = (): boolean => {
-    const { isValid, errors: validationErrors } = validateGameConfig(formData);
+    const { isValid, errors: validationErrors } =
+      validateReferralSettings(formData);
     setErrors(validationErrors);
     return isValid;
   };
 
   const handleInputChange = (
-    field: keyof Omit<GameConfigFormData, 'respinFeatureEnabled'>,
+    field: keyof Omit<ReferralSettingsFormData, 'enableReferrals'>,
     value: string,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -101,7 +128,12 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
   };
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, respinFeatureEnabled: checked }));
+    setFormData((prev) => ({ ...prev, enableReferrals: checked }));
+  };
+
+  const handleDropdownSelect = (value: string) => {
+    setFormData((prev) => ({ ...prev, referralExpiryPolicy: value }));
+    setIsDropdownOpen(false);
   };
 
   const handleSubmit = async () => {
@@ -111,14 +143,14 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
     setSubmitStatus('idle');
 
     try {
-      const submitData = prepareGameConfigData(formData);
+      const submitData = prepareReferralSettingsData(formData);
       await onSubmit(submitData);
       setSubmitStatus('success');
       setTimeout(() => {
         handleClose();
       }, 1000);
     } catch (error) {
-      console.error('Error updating game configuration:', error);
+      console.error('Error updating referral settings:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -139,8 +171,8 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
   };
 
   const isFormValid =
-    formData.costPerSpin.trim() &&
-    formData.maximumSpinPerUser.trim() &&
+    formData.rewardPerReferral.trim() &&
+    formData.monthlyLeaderboardRewards.trim() &&
     Object.keys(errors).length === 0;
   const isViewMode = currentMode === 'view';
 
@@ -159,9 +191,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                 className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform overflow-y-auto rounded-[20px] bg-white px-8 py-8 shadow-xl focus:outline-none"
               >
                 <Dialog.Title className="mb-6 text-xl font-bold text-gray-900">
-                  {isViewMode
-                    ? 'Spin Configuration'
-                    : 'Edit Spin Configuration'}
+                  {isViewMode ? 'Referral Settings' : 'Edit Referral Settings'}
                 </Dialog.Title>
                 <motion.div
                   className="flex flex-col gap-6"
@@ -171,73 +201,130 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                 >
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Cost per Spin
+                      Reward per Referral
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">
-                        ₦
-                      </span>
                       <input
                         type="number"
                         min="0"
-                        value={formData.costPerSpin}
+                        value={formData.rewardPerReferral}
                         onChange={(e) =>
-                          handleInputChange('costPerSpin', e.target.value)
+                          handleInputChange('rewardPerReferral', e.target.value)
                         }
-                        placeholder="100"
+                        placeholder="6"
                         disabled={isViewMode || loading || isSubmitting}
-                        className={`w-full rounded-md border py-3 pl-8 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                          errors.costPerSpin
+                        className={`w-full rounded-md border px-4 py-3 pr-20 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-50 disabled:text-gray-600 ${
+                          errors.rewardPerReferral
                             ? 'border-red-500'
                             : 'border-gray-300'
                         }`}
                       />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                        QM coins
+                      </span>
                     </div>
-                    {errors.costPerSpin && (
+                    {errors.rewardPerReferral && (
                       <p className="mt-1 text-sm text-red-600">
-                        {errors.costPerSpin}
+                        {errors.rewardPerReferral}
                       </p>
                     )}
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Maximum Spin per User
+                      Monthly Leaderboard rewards
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.maximumSpinPerUser}
-                      onChange={(e) =>
-                        handleInputChange('maximumSpinPerUser', e.target.value)
-                      }
-                      placeholder="10"
-                      disabled={isViewMode || loading || isSubmitting}
-                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                        errors.maximumSpinPerUser
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.maximumSpinPerUser && (
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.monthlyLeaderboardRewards}
+                        onChange={(e) =>
+                          handleInputChange(
+                            'monthlyLeaderboardRewards',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="2"
+                        disabled={isViewMode || loading || isSubmitting}
+                        className={`w-full rounded-md border px-4 py-3 pr-20 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-50 disabled:text-gray-600 ${
+                          errors.monthlyLeaderboardRewards
+                            ? 'border-red-500'
+                            : 'border-gray-300'
+                        }`}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                        QM coins
+                      </span>
+                    </div>
+                    {errors.monthlyLeaderboardRewards && (
                       <p className="mt-1 text-sm text-red-600">
-                        {errors.maximumSpinPerUser}
+                        {errors.monthlyLeaderboardRewards}
                       </p>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Referral Expiry policy
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          !isViewMode &&
+                          !loading &&
+                          !isSubmitting &&
+                          setIsDropdownOpen(!isDropdownOpen)
+                        }
+                        disabled={isViewMode || loading || isSubmitting}
+                        className={`w-full rounded-md border px-4 py-3 text-left text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-50 disabled:text-gray-600 ${
+                          errors.referralExpiryPolicy
+                            ? 'border-red-500'
+                            : 'border-gray-300'
+                        }`}
+                      >
+                        <span className="text-gray-900">
+                          {formData.referralExpiryPolicy}
+                        </span>
+                        <ChevronDown
+                          className={`absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 transition-transform ${
+                            isDropdownOpen ? 'rotate-180' : ''
+                          } ${isViewMode ? 'opacity-50' : ''}`}
+                        />
+                      </button>
+
+                      {isDropdownOpen && !isViewMode && (
+                        <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-lg">
+                          {expiryOptions.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => handleDropdownSelect(option)}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {errors.referralExpiryPolicy && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.referralExpiryPolicy}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between py-2">
                     <div>
                       <h4 className="font-medium text-gray-800">
-                        Re-spin Feature
+                        Enable Referrals
                       </h4>
-                      <p className="text-sm text-gray-500">
-                        Allow users to re-spin after a game
-                      </p>
                     </div>
                     <Switch
-                      id="respin-feature"
-                      checked={formData.respinFeatureEnabled}
+                      id="enable-referrals"
+                      checked={formData.enableReferrals}
                       onCheckedChange={handleSwitchChange}
                       disabled={isViewMode || loading || isSubmitting}
                     />
@@ -275,7 +362,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                         <span>Try Again</span>
                       </>
                     ) : isViewMode ? (
-                      <span>Edit game</span>
+                      <span>Edit settings</span>
                     ) : (
                       <span>Save changes</span>
                     )}
@@ -313,4 +400,4 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
   );
 };
 
-export default GameConfigModal;
+export default ReferralSettingsModal;
