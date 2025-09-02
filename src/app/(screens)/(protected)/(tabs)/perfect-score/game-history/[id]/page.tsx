@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import GameApi, { GameSession } from '@/app/api/game';
 
-import GameHistoryDetails from '@/app/components/perfect-score/GameHistoryDetails';
+import GameHistoryDetails from '@/app/components/perfect-score/PerfectScoreGameHistoryDetails';
 
 export default function PerfectScoreGameHistoryPage() {
   const router = useRouter();

@@ -7,14 +7,14 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { Avatar } from '@radix-ui/themes';
 import { formatNaira } from '@/app/utils/utils';
-
-import DashboardApi, { LeaderboardResponse } from '@/app/api/dashboardApi';
+import DashboardApi from '@/app/api/dashboardApi';
 
 const LastGameWinners: React.FunctionComponent = () => {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['lastGameWinners'],
     queryFn: () => DashboardApi.getLeaderboard(0, 5),
   });
+  console.log('data: ', data);
 
   if (isError) {
     toast.error('Error loading Last Game Winners, please refresh');
@@ -43,17 +43,15 @@ const LastGameWinners: React.FunctionComponent = () => {
 
       <div className="mt-3 space-y-4">
         {data?.data?.data?.content && data.data.data.content.length > 0 ? (
-          data.data.data.content.map(
-            (item: LeaderboardResponse, index: number) => (
-              <UserTable
-                key={index}
-                num={item.rank}
-                image={null}
-                name={item.playerName}
-                amount={item.prizeWon}
-              />
-            ),
-          )
+          data.data.data.content.map((item: UnknownObject, index: number) => (
+            <UserTable
+              key={index}
+              num={item?.rank}
+              image={item?.avatarUrl}
+              name={item?.firstName}
+              amount={item?.prizeWon}
+            />
+          ))
         ) : (
           <div className="flex h-48 items-center justify-center text-sm text-gray-500">
             No winners found for the last game.
@@ -79,8 +77,8 @@ const UserTable: React.FunctionComponent<UserTableProp> = ({
   amount,
 }) => {
   return (
-    <div className="grid grid-cols-2 items-center">
-      <div className="flex items-center gap-2 overflow-clip">
+    <div className="grid grid-cols-1 items-center">
+      <div className="flex items-center gap-2 overflow-auto">
         <p className="font-heading text-neutral-900">{num}</p>
         <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full">
           <Avatar
@@ -93,11 +91,11 @@ const UserTable: React.FunctionComponent<UserTableProp> = ({
         <p className="text-primary-800 font-bold capitalize">{name}</p>
       </div>
 
-      <div className="flex items-center justify-end overflow-clip">
+      {/* <div className="flex items-center justify-end overflow-clip">
         <p className="text-primary-800 bg-primary-50 inline-block rounded-xl px-2 py-1">
           {formatNaira(Number(amount), true)}
         </p>
-      </div>
+      </div> */}
     </div>
   );
 };

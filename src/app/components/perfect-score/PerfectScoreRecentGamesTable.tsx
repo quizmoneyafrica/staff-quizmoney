@@ -12,7 +12,7 @@ import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { useDebounce } from '@/app/hooks/useDebounce';
 import { VerifiedIcon } from '@/app/icons/icons';
 
-const RecentGamesTable: React.FC = () => {
+const PerfectScoreRecentGamesTable: React.FC = () => {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -313,4 +313,4 @@ const RecentGamesTable: React.FC = () => {
   );
 };
 
-export default RecentGamesTable;
+export default PerfectScoreRecentGamesTable;

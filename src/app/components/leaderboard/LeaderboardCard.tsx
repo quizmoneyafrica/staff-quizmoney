@@ -146,7 +146,7 @@ const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
             nameStyles,
           )}
         >
-          {gamesPlayed} games
+          {gamesPlayed} {gamesPlayed > 1 ? 'games' : 'game'}
         </span>
         {prize && (
           <span

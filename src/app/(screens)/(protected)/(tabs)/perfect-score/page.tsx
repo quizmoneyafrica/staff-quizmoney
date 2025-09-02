@@ -21,9 +21,9 @@ import {
 } from '@/app/icons/icons';
 
 import PerfectScoreStatCard from '@/app/components/perfect-score/PerfectScoreStatCard';
-import GameConfiguration from '@/app/components/perfect-score/GameConfiguration';
-import RecentGamesTable from '@/app/components/perfect-score/RecentGamesTable';
-import GameConfigModal from '@/app/components/perfect-score/GameConfigModal';
+import GameConfiguration from '@/app/components/perfect-score/PerfectScoreGameConfiguration';
+import RecentGamesTable from '@/app/components/perfect-score/PerfectScoreRecentGamesTable';
+import GameConfigModal from '@/app/components/perfect-score/PerfectScoreGameConfigModal';
 
 const formatNumber = (num: number) => {
   return num.toLocaleString();
@@ -117,7 +117,7 @@ function PerfectScorePage() {
       const totalSpins = sessions.reduce(
         (sum, session) => sum + (session.finalQuestions || 0),
         0,
-      ); // Assuming finalQuestions represents spins
+      );
       const totalDuration = sessions.reduce(
         (sum, session) => sum + (session.duration || 0),
         0,
@@ -232,7 +232,7 @@ function PerfectScorePage() {
       value: statsValues.totalAmountWon,
       bgColor: 'redError' as const,
       icon: <SmallRedWallet />,
-      // bgImage: <WalletIconBigGreen />,
+
       bgImage: <WalletIconBigRedError />,
       format: formatNaira,
       isLoading: isLoadingStats,
