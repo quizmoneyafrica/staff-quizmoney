@@ -15,7 +15,6 @@ import classNames from 'classnames';
 import {
   useAdmins,
   useUpdateAdminStatus,
-  useCreateAdmin,
   UpdateAdminStatusPayload,
 } from '@/app/api/adminApi';
 import type { AdminResponse } from '@/app/api/adminApi';
@@ -251,33 +250,16 @@ const AdminManagementTable: React.FC = () => {
     search: debouncedSearchQuery,
     page: currentPage - 1,
     size: pageSize,
-    adminType: 'ADMIN',
   });
 
   const totalPages = data?.totalPages || 1;
   const totalElements = data?.totalElements;
 
   const updateStatusMutation = useUpdateAdminStatus();
-  const createAdminMutation = useCreateAdmin();
 
   const handleAddAdmin = useCallback(() => {
     setIsAddModalOpen(true);
   }, []);
-
-  const handleCreateAdmin = useCallback(
-    async (data) => {
-      try {
-        await createAdminMutation.mutateAsync(data);
-        setIsAddModalOpen(false);
-        refetch();
-        toast.success('Admin created successfully');
-      } catch (error) {
-        console.error('Error creating admin:', error);
-        toast.error(error?.response?.data?.message || 'Failed to create admin');
-      }
-    },
-    [createAdminMutation, refetch],
-  );
 
   const handleStatusToggle = useCallback(
     async (adminId: string, currentStatus) => {
@@ -512,7 +494,6 @@ const AdminManagementTable: React.FC = () => {
       <AddAdminModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleCreateAdmin}
       />
 
       {selectedAdmin && (
