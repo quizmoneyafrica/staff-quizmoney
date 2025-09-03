@@ -101,8 +101,8 @@ export const useGetWithdrawalRequests = (
             size: pageSize,
             search,
             status,
-            startDate: dateRange?.start,
-            endDate: dateRange?.end,
+            'start-date': dateRange?.start,
+            'end-date': dateRange?.end,
           },
         },
       );

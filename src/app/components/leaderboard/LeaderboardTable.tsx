@@ -44,8 +44,6 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
   searchTerm,
   onSearchChange,
 }) => {
-  console.log('data: ', data);
-
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] =

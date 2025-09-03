@@ -181,7 +181,6 @@ function Page() {
   const tableData = tableApiData?.data || [];
   const pagination = tableApiData?.pagination;
   // const isLoading = isTopThreeLoading || isTableLoading;
-  console.log('topThree: ', topThree);
 
   return (
     <div className="w-full max-w-full overflow-x-hidden py-6">
