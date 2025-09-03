@@ -1,6 +1,14 @@
 import React from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
-import { ProductIcon, TreasureChestIcon } from '@/app/icons/icons';
+import {
+  ProductIcon,
+  TreasureChestIcon,
+  SpinsCategory,
+  MovesCategory,
+  TrialsCategory,
+  EraserIcon,
+} from '@/app/icons/icons';
+import { ProductCategory } from '@/app/api/productsApi';
 
 interface Product {
   id: string;
@@ -8,6 +16,7 @@ interface Product {
   quantity: number;
   price: number;
   currency: string;
+  category: ProductCategory;
   iconName?: string;
 }
 
@@ -67,19 +76,38 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       </div>
 
-      <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center space-x-4">
+      <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center space-x-6">
         {/* Icon */}
         <div
           className="flex items-center justify-center"
           style={{ width: 80, height: 80 }}
         >
-          <ProductIcon />
+          {(() => {
+            switch (product.category) {
+              case 'SPINS':
+                return <SpinsCategory width={72} height={72} />;
+              case 'MOVES':
+                return <MovesCategory width={72} height={72} />;
+              case 'TRIALS':
+                return <TrialsCategory width={72} height={72} />;
+              case 'ERASER':
+                return (
+                  <EraserIcon
+                    width={72}
+                    height={72}
+                    className="text-[#17478B]"
+                  />
+                );
+              default:
+                return <ProductIcon width={72} height={72} />;
+            }
+          })()}
         </div>
 
         <div
           className="flex items-end justify-center text-center text-[#17478B]"
           style={{
-            width: 26,
+            minWidth: 40,
             height: 32,
             fontFamily: "'DM Sans', sans-serif",
             fontWeight: 500,

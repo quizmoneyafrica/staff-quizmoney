@@ -7,13 +7,15 @@ export interface ProductImage {
   url: string;
 }
 
+export type ProductCategory = 'ERASER' | 'SPINS' | 'MOVES' | 'TRIALS';
+
 export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
   quantity: number;
-  category: string;
+  category: ProductCategory;
   productImage?: ProductImage;
 }
 

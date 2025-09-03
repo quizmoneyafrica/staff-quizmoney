@@ -7,6 +7,7 @@ import ProductModal from '@/app/components/products/ProductModal';
 import EditProductModal from '@/app/components/products/EditProductModal';
 import ProductDeleteModal from '@/app/components/products/ProductDeleteModal';
 import ProductCard from '@/app/components/products/ProductCard';
+import ErasersCard from '@/app/components/products/ErasersCard';
 import Pagination from '@/app/components/leaderboard/Pagination';
 
 import ProductsApi, {
@@ -14,6 +15,7 @@ import ProductsApi, {
   GetProductsPayload,
   AuthenticationError,
   ApiError,
+  ProductCategory,
 } from '@/app/api/productsApi';
 
 interface ProductsPageProps {
@@ -21,9 +23,12 @@ interface ProductsPageProps {
   onAddProduct?: () => void;
   onEditProduct?: (product: Product) => void;
   onDeleteProduct?: (productId: string) => void;
+  showOnlyErasers?: boolean;
 }
 
-const ProductsPage: React.FC<ProductsPageProps> = () => {
+const ProductsPage: React.FC<ProductsPageProps> = ({
+  showOnlyErasers = false,
+}) => {
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -141,13 +146,60 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     },
   });
 
-  const allProducts = useMemo(() => {
-    return productsResponse?.data.content || [];
+  const mockProducts = useMemo(() => {
+    const baseProducts = productsResponse?.data.content || [];
+
+    if (baseProducts.length > 0) {
+      const mockData: Product[] = [
+        ...baseProducts,
+        {
+          ...baseProducts[0],
+          id: 'mock-spin-1',
+          name: 'Spins',
+          category: 'SPINS' as ProductCategory,
+          price: 5000,
+          quantity: 100,
+          description: 'Spins Description',
+        },
+        {
+          ...baseProducts[0],
+          id: 'mock-moves-1',
+          name: 'Moves',
+          category: 'MOVES' as ProductCategory,
+          price: 7500,
+          quantity: 50,
+          description: 'Moves Description',
+        },
+        {
+          ...baseProducts[0],
+          id: 'mock-trials-1',
+          name: 'Trials',
+          category: 'TRIALS' as ProductCategory,
+          price: 3000,
+          quantity: 75,
+          description: 'Trials Description',
+        },
+      ];
+      return mockData;
+    }
+    return baseProducts;
   }, [productsResponse?.data.content]);
+
+  const { eraserProducts, otherProducts } = useMemo(() => {
+    const erasers = mockProducts.filter((p) => p.category === 'ERASER');
+    const others = mockProducts.filter((p) => p.category !== 'ERASER');
+    return { eraserProducts: erasers, otherProducts: others };
+  }, [mockProducts]);
+
+  const allProducts = useMemo(() => {
+    return showOnlyErasers ? eraserProducts : otherProducts;
+  }, [showOnlyErasers, eraserProducts, otherProducts]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
+
+  const { mutate: mutateCreate } = createProductMutation;
 
   const handleAddProduct = useCallback(
     async (data: {
@@ -157,9 +209,9 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
       category?: string;
       description?: string;
     }) => {
-      createProductMutation.mutate(data);
+      mutateCreate(data);
     },
-    [createProductMutation.mutate],
+    [mutateCreate],
   );
 
   const handleEditProduct = useCallback((product: Product) => {
@@ -175,11 +227,13 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
     }
   };
 
+  const { mutate: mutateDelete } = deleteProductMutation;
+
   const confirmDeleteProduct = useCallback(async () => {
     if (!productToDelete) return;
 
-    deleteProductMutation.mutate(productToDelete.id);
-  }, [productToDelete, deleteProductMutation.mutate]);
+    mutateDelete(productToDelete.id);
+  }, [productToDelete, mutateDelete]);
 
   const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
@@ -282,7 +336,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-            All available Products
+            {showOnlyErasers ? 'Eraser Products' : 'All Products'}
           </h1>
 
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-x-4 md:space-y-0">
@@ -342,6 +396,17 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
         {!isLoading && !isError && !authError && (
           <>
             <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
+              {!showOnlyErasers && (
+                <React.Fragment>
+                  <ErasersCard
+                    totalErasers={eraserProducts.length}
+                    totalQuantity={eraserProducts.reduce(
+                      (sum, p) => sum + p.quantity,
+                      0,
+                    )}
+                  />
+                </React.Fragment>
+              )}
               {allProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -351,6 +416,7 @@ const ProductsPage: React.FC<ProductsPageProps> = () => {
                     quantity: product.quantity,
                     price: product.price,
                     currency: '₦',
+                    category: product.category || 'ERASER',
                     iconName: product.productImage?.name,
                   }}
                   onEdit={() => handleEditProduct(product)}
