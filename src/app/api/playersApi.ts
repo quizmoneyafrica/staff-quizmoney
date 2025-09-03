@@ -260,9 +260,9 @@ export const useDeletePlayer = () => {
   const request = useRequestInstance();
 
   return useMutation({
-    mutationFn: (values: unknown) =>
+    mutationFn: (values: UnknownObject) =>
       request
-        .post(`/deletePlayer`, values)
+        .delete(`/customers/${values?.userId}`)
         .then((res) => res.data)
         .catch((error) => {
           throw error.response?.data || error;
