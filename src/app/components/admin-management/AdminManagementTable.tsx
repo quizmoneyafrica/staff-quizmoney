@@ -20,6 +20,7 @@ import {
 import type { AdminResponse } from '@/app/api/adminApi';
 import { useDebounce } from '@/app/hooks/useDebounce';
 import { formatDateTime } from '@/app/utils/utils';
+import { useAppSelector } from '@/app/hooks/useAuth';
 
 interface AdminUpdateData {
   adminType: 'ADMIN';
@@ -189,6 +190,9 @@ interface SearchHeaderProps {
 
 const SearchHeader = memo<SearchHeaderProps>(
   ({ searchQuery, onSearchChange, onAddNewAdmin, addLoading }) => {
+    const user = useAppSelector((s) => s.auth.userEncryptedData);
+    console.log('user: ', user);
+
     const handleSearchChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         onSearchChange(e.target.value);
@@ -210,22 +214,24 @@ const SearchHeader = memo<SearchHeaderProps>(
             />
           </div>
         </div>
-        <div className="flex-shrink-0">
-          <button
-            onClick={onAddNewAdmin}
-            disabled={addLoading}
-            className="cursor-pointer whitespace-nowrap rounded-md bg-[#1B4F72] px-4 py-2 text-white outline-none transition-colors hover:bg-[#154360] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {addLoading ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Adding...
-              </div>
-            ) : (
-              'Add New Admin'
-            )}
-          </button>
-        </div>
+        {user?.role === 'SUPER_ADMIN' && (
+          <div className="flex-shrink-0">
+            <button
+              onClick={onAddNewAdmin}
+              disabled={addLoading}
+              className="cursor-pointer whitespace-nowrap rounded-md bg-[#1B4F72] px-4 py-2 text-white outline-none transition-colors hover:bg-[#154360] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {addLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Adding...
+                </div>
+              ) : (
+                'Add New Admin'
+              )}
+            </button>
+          </div>
+        )}
       </div>
     );
   },

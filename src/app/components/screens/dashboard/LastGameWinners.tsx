@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { Avatar } from '@radix-ui/themes';
-import { formatNaira } from '@/app/utils/utils';
+// import { formatNaira } from '@/app/utils/utils';
 import DashboardApi from '@/app/api/dashboardApi';
 
 const LastGameWinners: React.FunctionComponent = () => {
@@ -14,8 +14,6 @@ const LastGameWinners: React.FunctionComponent = () => {
     queryKey: ['lastGameWinners'],
     queryFn: () => DashboardApi.getLeaderboard(0, 5),
   });
-  console.log('data: ', data);
-
   if (isError) {
     toast.error('Error loading Last Game Winners, please refresh');
   }
