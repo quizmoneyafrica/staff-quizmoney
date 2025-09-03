@@ -128,6 +128,15 @@ function Page() {
             />
 
             <CustomTextField
+              label="Coin Prize"
+              type="string"
+              placeholder="₦1,000"
+              name="coinPrize"
+              value={formatNaira(Number(fetchedData?.coinPrize))}
+              readOnly
+            />
+
+            <CustomTextField
               label="Game Date & Time"
               type="datetime-local"
               name="startDateTime"
