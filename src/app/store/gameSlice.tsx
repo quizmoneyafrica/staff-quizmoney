@@ -12,6 +12,7 @@ export interface Game {
   completed: boolean;
   entryFee: string;
   gamePrize: number;
+  coinPrize: number;
   numOfShare: number;
   winners: string[];
   users: string[];
@@ -48,6 +49,7 @@ export const initialGame: Game = {
   completed: false,
   entryFee: '200',
   gamePrize: 1000000,
+  coinPrize: 1000000,
   numOfShare: 20,
   winners: [],
   users: [],

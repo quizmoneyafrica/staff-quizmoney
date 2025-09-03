@@ -34,6 +34,7 @@ export const transformGameDataForAPI = (
   return {
     name: gameDetails.name || '',
     prize: Number(gameDetails.gamePrize) || 0,
+    coinPrize: Number(gameDetails.coinPrize) || 0,
     fee: Number(gameDetails.entryFee) || 0,
     startTime: startTime,
     questionLimit: questions.length,
@@ -76,6 +77,10 @@ export const validateGamePayload = (payload: CreateGamePayload): string[] => {
 
   if (payload.prize < 500) {
     errors.push('Game prize must be at least ₦500');
+  }
+
+  if (payload.coinPrize < 50) {
+    errors.push('Game coin prize must be at least 50QM');
   }
 
   if (!payload.startTime) {

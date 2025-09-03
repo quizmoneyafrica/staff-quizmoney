@@ -12,6 +12,8 @@ import {
   PersonIcon,
   SupportIcon,
 } from '../icons/icons';
+import { BuildingIcon } from '@/app/icons/icons';
+
 import { useAppSelector } from '../hooks/useAuth';
 import { DropdownMenu } from 'radix-ui';
 import LogoutDialog from '../components/logout/logout';
@@ -73,6 +75,8 @@ function AppHeader() {
     const list = state.notifications.notifications;
     return Array.isArray(list) ? list.filter((n) => !n.read).length : 0;
   });
+
+  const isDashboard = pathname === '/' || pathname === '/dashboard';
 
   //   const fetchNotifications = useCallback(async () => {
   //     try {
@@ -282,6 +286,20 @@ function AppHeader() {
 
   const ProfileAndNotification = () => (
     <div className="flex items-center gap-3 lg:gap-6">
+      {isDashboard && (
+        <div className="flex items-center gap-2 rounded-lg px-3 py-2">
+          <div className="bg-primary-100 rounded-full p-2">
+            <BuildingIcon className="text-blue-800" />
+          </div>
+          <span className="text-sm font-semibold text-[#17478B]">
+            Total DVA
+          </span>
+          <span className="text-primary-900 rounded-full border p-2 text-sm">
+            12000
+          </span>
+        </div>
+      )}
+
       <Link
         href="/notification"
         className="hover:text-primary-900 relative text-neutral-600"
@@ -501,17 +519,19 @@ function AppHeader() {
             </DropdownMenu.Portal>
           </DropdownMenu.Root>
 
-          <Link
-            href="/notification"
-            className="hover:text-primary-900 relative p-2 text-neutral-600"
-          >
-            <BellIcon />
-            {unreadCount > 0 && (
-              <div className="bg-primary-900 absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full text-xs text-white">
-                {unreadCount}
-              </div>
-            )}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/notification"
+              className="hover:text-primary-900 relative p-2 text-neutral-600"
+            >
+              <BellIcon />
+              {unreadCount > 0 && (
+                <div className="bg-primary-900 absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full text-xs text-white">
+                  {unreadCount}
+                </div>
+              )}
+            </Link>
+          </div>
         </div>
 
         <div className={`${isMobileMenuOpen ? 'flex' : 'block'} lg:block`}>

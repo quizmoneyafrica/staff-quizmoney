@@ -1,5 +1,5 @@
 import { AxiosResponse } from 'axios';
-import { appHeaders, getSessionTokenHeaders, SECRET_KEY } from './userApi';
+import { SECRET_KEY } from './userApi';
 import { ApiResponse } from './interface';
 import CryptoJS from 'crypto-js';
 import { request } from '@/app/api/config';
@@ -7,6 +7,7 @@ import { request } from '@/app/api/config';
 export interface CreateGamePayload {
   name: string;
   prize: number;
+  coinPrize: number;
   fee: number;
   startTime: string;
   questionLimit: number;
@@ -51,6 +52,7 @@ export interface GameQuestionResponse {
   endTime: string;
   description: string;
   prize: number;
+  coinPrize: number;
   name: string;
   questionCount: number;
   questions: GameQuestion[];
@@ -78,6 +80,7 @@ export interface UpdateGamePayloadV2 {
   startTime: string;
   description: string;
   prize: number;
+  coinPrize: number;
   name: string;
   questionLimit: number;
   questions: GameQuestion[];
@@ -288,6 +291,7 @@ export interface GameDetailsResponse {
   startTime: string;
   endTime?: string;
   prize: number;
+  coinPrize: number;
   questionCount?: number;
   questions?: GameQuestion[];
   [key: string]: unknown;
