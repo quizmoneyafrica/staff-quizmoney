@@ -108,8 +108,7 @@ function Page() {
       question: question.question,
       order: order,
       options: options.map((opt) => ({
-        optionId:
-          opt.optionId || `opt-${Math.random().toString(36).substr(2, 9)}`,
+        ...(opt.optionId && { optionId: opt.optionId }),
         option: opt.option,
         answer: opt.answer,
       })),
