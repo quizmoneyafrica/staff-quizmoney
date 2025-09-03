@@ -13,10 +13,13 @@ import PlayersApi from '@/app/api/playersApi';
 import { useSelector } from 'react-redux';
 import { useDebounce } from '@/app/hooks/useDebounce';
 import { useQuery } from '@tanstack/react-query';
+import { useAppSelector } from '@/app/hooks/useAuth';
 
 export default function PlayersParent() {
   const { currentPage, itemsPerPage, searchQuery, dateRange } =
     useSelector(selectPlayers);
+
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -75,7 +78,9 @@ export default function PlayersParent() {
 
   return (
     <div className="flex w-full max-w-full flex-col gap-5 overflow-x-hidden py-6">
-      <UserStatsComponent />
+      {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+        <UserStatsComponent />
+      )}
       <PlayersTable />
     </div>
   );

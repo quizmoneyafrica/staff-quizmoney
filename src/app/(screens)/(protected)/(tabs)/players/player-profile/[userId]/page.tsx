@@ -16,6 +16,7 @@ import FlagUserModal from '@/app/components/player-profile/FlagUserModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { toast } from 'sonner';
 import GameHistoryPage from '@/app/(screens)/(protected)/(tabs)/players/player-profile/[userId]/game-history/[game-id]/page';
+import { useAppSelector } from '@/app/hooks/useAuth';
 
 export default function Page() {
   const params = useParams();
@@ -28,6 +29,8 @@ export default function Page() {
     refetch,
   } = usePlayerProfile(userId);
 
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
+
   const [kycVerified, setKycVerified] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -38,9 +41,9 @@ export default function Page() {
   const handleCloseFlagModal = () => setIsFlagModalOpen(false);
 
   useEffect(() => {
-    if (playerData?.userDetails) {
-      setKycVerified(playerData.userDetails.kycVerified || false);
-      setIsBlacklisted(playerData.userDetails.blacklisted || false);
+    if (playerData) {
+      // setKycVerified(playerData.userDetails.kycVerified || false);
+      setIsBlacklisted(playerData?.status === 'FLAGGED' || false);
     }
   }, [playerData]);
 
@@ -113,20 +116,22 @@ export default function Page() {
     <div className="flex w-full flex-col gap-6 py-6">
       <div className="flex items-center justify-between">
         <BackButton />
-        <VerifyUserToggle
-          isEnabled={kycVerified}
-          onToggle={handleToggleVerification}
-          isUpdating={isUpdating}
-        />
+        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+          <VerifyUserToggle
+            isEnabled={kycVerified}
+            onToggle={handleToggleVerification}
+            isUpdating={isUpdating}
+          />
+        )}
       </div>
 
       <PlayerProfile
         playerData={{
           ...playerData,
+          blacklisted: isBlacklisted,
           userDetails: {
             ...playerData.userDetails,
             kycVerified,
-            blacklisted: isBlacklisted,
           },
         }}
         userId={userId}
@@ -141,11 +146,13 @@ export default function Page() {
           <KYCDocumentSection />
           <RankSection userId={userId} gameStats={playerData.gameStats} />
 
-          <ActionButtons
-            onFlagClick={handleOpenFlagModal}
-            isBlacklisted={isBlacklisted}
-            userId={userId}
-          />
+          {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+            <ActionButtons
+              onFlagClick={handleOpenFlagModal}
+              isBlacklisted={isBlacklisted}
+              userId={userId}
+            />
+          )}
         </div>
       </div>
 

@@ -26,21 +26,6 @@ const itemVariants = {
   },
 };
 
-interface ProfileData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  dateOfBirth?: UnknownObject;
-  gender?: string;
-  country?: string;
-  countryFlag?: string;
-  referredBy?: string;
-  avatar?: string;
-  kycVerified?: boolean;
-  blacklisted?: boolean;
-}
-
 interface PlayerInfoSectionProps {
   profileData: UnknownObject;
 }

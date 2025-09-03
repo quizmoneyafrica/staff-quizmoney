@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ProgressCircle from '@/app/components/player-profile/ProgressCircle';
 import GameHeader from '@/app/components/player-profile/game-history/GameHeader';
@@ -14,6 +14,7 @@ import { usePlayerGameDetails } from '@/app/hooks/usePlayerGameDetails';
 import FlagUserModal from '@/app/components/player-profile/FlagUserModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { toast } from 'sonner';
+import { usePlayerProfile } from '@/app/hooks/usePlayerProfile';
 
 const GameHistoryPage: React.FC = () => {
   const params = useParams();
@@ -29,6 +30,15 @@ const GameHistoryPage: React.FC = () => {
   const handleCloseDeleteModal = () => setIsDeleteModalOpen(false);
 
   const { data, isLoading, isError } = usePlayerGameDetails(userId, gameId);
+
+  const { data: playerData, refetch } = usePlayerProfile(userId);
+
+  useEffect(() => {
+    if (playerData) {
+      // setKycVerified(playerData.userDetails.kycVerified || false);
+      setIsBlacklisted(playerData?.status === 'FLAGGED' || false);
+    }
+  }, [playerData]);
 
   if (isLoading) return <p>Loading...</p>;
   if (isError || !data) return <p>Failed to load game details.</p>;
@@ -89,6 +99,7 @@ const GameHistoryPage: React.FC = () => {
       await PlayerApi.flagPlayer({ userId, flag: newFlagStatus });
       setIsBlacklisted(newFlagStatus);
       toast.success(`User has been ${newFlagStatus ? 'flagged' : 'unflagged'}`);
+      refetch();
     } catch (err) {
       console.error(err);
       toast.error('Failed to update flag status.');

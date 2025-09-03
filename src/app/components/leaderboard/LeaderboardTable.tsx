@@ -171,7 +171,9 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
                   <Table.Cell className="px-8 py-5 text-sm text-gray-900">
                     <div className="flex items-center gap-2">
                       <CustomImage alt="game icon" src={'/icons/game.svg'} />
-                      <span>{row.games} games</span>
+                      <span>
+                        {row.games} {row.games > 1 ? 'games' : 'game'}
+                      </span>
                     </div>
                   </Table.Cell>
                   <Table.Cell className="px-8 py-5 text-sm font-semibold">

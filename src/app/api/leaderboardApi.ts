@@ -61,7 +61,7 @@ const LeaderboardAPI = {
       code: string;
       message: string;
       data: {
-        content: LeaderboardResponse[];
+        content: UnknownObject[];
         pageNo: number;
         pageSize: number;
         totalElements: number;

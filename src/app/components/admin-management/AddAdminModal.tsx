@@ -1,19 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {
   X,
-  // Camera, ChevronDown
+  // Camera,
+  ChevronDown,
 } from 'lucide-react';
 // import { Avatar } from '@radix-ui/themes';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCreateAdmin, useAdmins } from '@/app/api/adminApi';
+import { toast } from 'sonner';
 
 interface AddAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: UnknownObject) => Promise<void>;
-  loading?: boolean;
 }
 
 interface AdminFormData {
@@ -26,14 +27,18 @@ interface AdminFormData {
   profileImage?: string;
 }
 
-const AddAdminModal: React.FC<AddAdminModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  loading = false,
-}) => {
+const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose }) => {
+  const { mutateAsync, isPending } = useCreateAdmin();
+
+  const { data: managerAdmins } = useAdmins({
+    search: '',
+    page: 0,
+    size: 10,
+    adminType: 'MANAGER',
+  });
+
   const [formData, setFormData] = useState<AdminFormData>({
-    adminType: 'ADMIN',
+    adminType: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -42,12 +47,15 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     profileImage: '',
   });
 
-  // const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [errors, setErrors] = useState<Partial<AdminFormData>>({});
 
   const validateForm = (): boolean => {
     const newErrors: Partial<AdminFormData> = {};
 
+    if (!formData.adminType.trim()) {
+      newErrors.adminType = 'Admin type is required';
+    }
     if (!formData.firstName.trim()) {
       newErrors.firstName = 'First name is required';
     }
@@ -74,7 +82,11 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // const adminTypes: ('SUPER_ADMIN' | 'ADMIN')[] = ['SUPER_ADMIN', 'ADMIN'];
+  const adminTypes = [
+    'SUPER_ADMIN',
+    managerAdmins?.totalElements < 2 ? 'MANAGER' : null,
+    'SUPPORT_ADMIN',
+  ].filter(Boolean);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -122,6 +134,22 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
     }
   };
 
+  const handleCreateAdmin = useCallback(async (data) => {
+    try {
+      await mutateAsync(data);
+      onClose();
+      toast.success('Admin created successfully');
+    } catch (error) {
+      if (error?.response?.data?.data?.errorList) {
+        error?.response?.data?.data?.errorList?.forEach((element) => {
+          toast.error(element);
+        });
+        return;
+      }
+      toast.error(error?.response?.data?.message || 'Failed to create admin');
+    }
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
@@ -141,7 +169,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
         phoneNumber: phoneNumber.replace(/[^0-9+]/g, ''),
       };
 
-      return onSubmit(apiPayload);
+      return handleCreateAdmin(apiPayload);
     }
   };
 
@@ -229,7 +257,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                       </button>
                     </motion.div> */}
 
-                    {/* <motion.div variants={itemVariants}>
+                    <motion.div variants={itemVariants}>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
                         Select Admin type
                       </label>
@@ -263,7 +291,7 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                           </div>
                         )}
                       </div>
-                    </motion.div> */}
+                    </motion.div>
 
                     <motion.div variants={itemVariants}>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -366,10 +394,10 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({
                     <motion.div variants={itemVariants} className="pt-4">
                       <button
                         type="submit"
-                        disabled={loading}
+                        disabled={isPending}
                         className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {loading ? (
+                        {isPending ? (
                           <div className="flex items-center justify-center gap-2">
                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                             Adding...

@@ -8,6 +8,7 @@ import LogoutDialog from '../components/logout/logout';
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { NavDropdown } from '../components/ui/NavDropdown';
+import { useAppSelector } from '@/app/hooks/useAuth';
 
 function SidebarNav({
   isOpen,
@@ -19,6 +20,8 @@ function SidebarNav({
   const router = useRouter();
   const pathname = usePathname();
   const [openLogout, setOpenLogout] = useState(false);
+
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
 
   const handleTabRoute = (path: string) => {
     if (pathname !== path) {
@@ -58,6 +61,21 @@ function SidebarNav({
         </div>
         <Flex direction="column" px="2" className="relative flex-1">
           {navs.map((nav, index) => {
+            if (
+              [
+                'Sales',
+                'Products',
+                'Game Zone',
+                'Wallet',
+                'QM Coins',
+                'Admin Management',
+                'Support',
+              ].includes(nav?.name) &&
+              !['SUPER_ADMIN', 'MANAGER'].includes(user?.role)
+            ) {
+              return null;
+            }
+
             if (nav.isDropdown && nav.items) {
               return (
                 <NavDropdown
@@ -119,6 +137,21 @@ function SidebarNav({
           className="border-primary-800 relative mt-4 w-full border-t pt-4"
         >
           {bottomNav.map((nav, index) => {
+            if (
+              [
+                'Sales',
+                'Products',
+                'Game Zone',
+                'Wallet',
+                'QM Coins',
+                'Admin Management',
+                'Support',
+              ].includes(nav?.name) &&
+              !['SUPER_ADMIN', 'MANAGER'].includes(user?.role)
+            ) {
+              return null;
+            }
+
             const isActive = pathname === nav.path;
             const isLogout = nav.name === 'Logout';
             const buttonContent = (
