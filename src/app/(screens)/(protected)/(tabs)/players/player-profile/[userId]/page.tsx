@@ -38,9 +38,9 @@ export default function Page() {
   const handleCloseFlagModal = () => setIsFlagModalOpen(false);
 
   useEffect(() => {
-    if (playerData?.userDetails) {
-      setKycVerified(playerData.userDetails.kycVerified || false);
-      setIsBlacklisted(playerData.userDetails.blacklisted || false);
+    if (playerData) {
+      // setKycVerified(playerData.userDetails.kycVerified || false);
+      setIsBlacklisted(playerData?.status === 'FLAGGED' || false);
     }
   }, [playerData]);
 
@@ -123,10 +123,10 @@ export default function Page() {
       <PlayerProfile
         playerData={{
           ...playerData,
+          blacklisted: isBlacklisted,
           userDetails: {
             ...playerData.userDetails,
             kycVerified,
-            blacklisted: isBlacklisted,
           },
         }}
         userId={userId}

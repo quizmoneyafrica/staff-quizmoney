@@ -275,7 +275,11 @@ const PlayerApi = {
   flagPlayer(
     data: FlagPlayerRequest,
   ): Promise<AxiosResponse<FlagPlayerResponse>> {
-    return request.post(`/flagPlayer`, data, {});
+    return request.patch(
+      `/customers/flag/${data?.userId}`,
+      { flag: data?.flag },
+      {},
+    );
   },
 };
 
