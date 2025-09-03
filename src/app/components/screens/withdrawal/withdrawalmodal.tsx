@@ -11,6 +11,7 @@ import {
 } from '@/app/api/withdrawal';
 import { toast } from 'sonner';
 import { toastPosition } from '@/app/utils/utils';
+import { useAppSelector } from '@/app/hooks/useAuth';
 
 interface WithdrawalRequest {
   id: string;
@@ -43,6 +44,7 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
 }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [comment, setComment] = useState('');
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
 
   const { data: detailedWithdrawalData, isLoading: loadingDetails } =
     useGetWithdrawalRequest(withdrawalData?.id || '');
@@ -384,46 +386,47 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                       </motion.div>
                     </motion.div>
 
-                    {currentWithdrawalData.status === 'PENDING' && (
-                      <motion.div
-                        className="flex flex-col gap-4"
-                        variants={containerVariants}
-                      >
-                        <motion.div variants={itemVariants}>
-                          <label className="mb-2 block text-sm font-medium text-gray-600">
-                            Comments/Notes
-                          </label>
-                          <textarea
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            placeholder="Add comments or notes about this withdrawal request..."
-                            className="focus:ring-primary-500 min-h-[100px] w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2"
-                          />
-                        </motion.div>
-
+                    {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) &&
+                      currentWithdrawalData.status === 'PENDING' && (
                         <motion.div
-                          variants={itemVariants}
-                          className="flex justify-end gap-3 pt-2"
+                          className="flex flex-col gap-4"
+                          variants={containerVariants}
                         >
-                          <button
-                            type="button"
-                            onClick={handleRejectWithdrawal}
-                            disabled={isRejecting || isPending}
-                            className="rounded-md bg-red-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                          <motion.div variants={itemVariants}>
+                            <label className="mb-2 block text-sm font-medium text-gray-600">
+                              Comments/Notes
+                            </label>
+                            <textarea
+                              value={comment}
+                              onChange={(e) => setComment(e.target.value)}
+                              placeholder="Add comments or notes about this withdrawal request..."
+                              className="focus:ring-primary-500 min-h-[100px] w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2"
+                            />
+                          </motion.div>
+
+                          <motion.div
+                            variants={itemVariants}
+                            className="flex justify-end gap-3 pt-2"
                           >
-                            {isRejecting ? 'Rejecting...' : 'Reject'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleApproveWithdrawal}
-                            disabled={isPending || isRejecting}
-                            className="rounded-md bg-green-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-                          >
-                            {isPending ? 'Approving...' : 'Approve'}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={handleRejectWithdrawal}
+                              disabled={isRejecting || isPending}
+                              className="rounded-md bg-red-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                            >
+                              {isRejecting ? 'Rejecting...' : 'Reject'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleApproveWithdrawal}
+                              disabled={isPending || isRejecting}
+                              className="rounded-md bg-green-500 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+                            >
+                              {isPending ? 'Approving...' : 'Approve'}
+                            </button>
+                          </motion.div>
                         </motion.div>
-                      </motion.div>
-                    )}
+                      )}
                   </motion.div>
                 )}
 

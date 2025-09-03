@@ -164,6 +164,15 @@ function Page() {
       return false;
     }
 
+    if (!game.coinPrize || toNumber(game.coinPrize) < 50) {
+      toast.error('Please enter a valid coin prize (minimum 50QM)');
+      const coinPrizeField = document.querySelector(
+        'input[name="coinPrize"]',
+      ) as HTMLInputElement;
+      coinPrizeField?.focus();
+      return false;
+    }
+
     if (!datetimeInput) {
       toast.error('Please select a game date and time');
       const dateTimeField = document.querySelector(
@@ -349,6 +358,17 @@ function Page() {
               name="gamePrize"
               type="number"
               value={toString(game.gamePrize)}
+              onChange={handleGameDetailsChange}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              required
+            />
+            <CustomTextField
+              label="Coin Prize (QM)"
+              placeholder="5000"
+              name="coinPrize"
+              type="number"
+              value={toString(game.coinPrize)}
               onChange={handleGameDetailsChange}
               inputMode="numeric"
               pattern="[0-9]*"

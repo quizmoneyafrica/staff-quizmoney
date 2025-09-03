@@ -40,6 +40,7 @@ function Page() {
           completed: false,
           entryFee: String(result?.fee ?? 0),
           gamePrize: result.prize,
+          coinPrize: result.coinPrize,
           numOfShare: 0,
           winners: [],
           users: [],
@@ -123,6 +124,15 @@ function Page() {
               placeholder="₦1,000"
               name="gamePrize"
               value={formatNaira(Number(fetchedData?.gamePrize))}
+              readOnly
+            />
+
+            <CustomTextField
+              label="Coin Prize"
+              type="string"
+              placeholder="₦1,000"
+              name="coinPrize"
+              value={formatNaira(Number(fetchedData?.coinPrize))}
               readOnly
             />
 

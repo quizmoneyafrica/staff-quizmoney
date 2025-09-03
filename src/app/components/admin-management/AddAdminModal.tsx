@@ -140,7 +140,6 @@ const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose }) => {
       onClose();
       toast.success('Admin created successfully');
     } catch (error) {
-      console.log('error: ', error);
       if (error?.response?.data?.data?.errorList) {
         error?.response?.data?.data?.errorList?.forEach((element) => {
           toast.error(element);

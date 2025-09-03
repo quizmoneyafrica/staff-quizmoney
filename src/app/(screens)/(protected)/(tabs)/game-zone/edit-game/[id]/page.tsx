@@ -149,6 +149,7 @@ function Page() {
           completed: false,
           entryFee: String(result.fee),
           gamePrize: result.prize,
+          coinPrize: result.coinPrize,
           numOfShare: 0, //
           winners: [],
           users: [],
@@ -313,6 +314,7 @@ function Page() {
       name: fetchedData.name,
       entryFee: Number(fetchedData.entryFee),
       gamePrize: fetchedData.gamePrize,
+      coinPrize: fetchedData.coinPrize,
       questions: fetchedData.questions,
     };
 
@@ -383,6 +385,7 @@ function Page() {
         startTime: datetimeInput,
         description: fetchedData.gameDescription || '',
         prize: fetchedData.gamePrize,
+        coinPrize: fetchedData.coinPrize,
         name: fetchedData.name,
         questionLimit: fetchedData.questions.length,
         questions: transformedQuestions,
@@ -435,6 +438,18 @@ function Page() {
               onChange={handleChange}
               inputMode="numeric"
               pattern="[0-9]*"
+            />
+
+            <CustomTextField
+              label="Coin Prize (₦)"
+              placeholder="5000"
+              name="coinPrize"
+              type="number"
+              value={toStringValue(fetchedData?.coinPrize)}
+              onChange={handleChange}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              required
             />
 
             <CustomTextField

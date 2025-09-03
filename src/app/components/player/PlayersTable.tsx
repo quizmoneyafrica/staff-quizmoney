@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Search, ListFilter, ChevronDown } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import classNames from 'classnames';
@@ -26,6 +26,7 @@ import PlayersApi from '@/app/api/playersApi';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
 import { VerifiedIcon } from '@/app/icons/icons';
+import { useAppSelector } from '@/app/hooks/useAuth';
 
 type SortField =
   | 'objectId'
@@ -117,6 +118,8 @@ const PlayersTable = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [localSearchValue, setLocalSearchValue] = useState(searchQuery);
   const [cursorPosition, setCursorPosition] = useState<number>(0);
+
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
 
   const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -406,16 +409,18 @@ const PlayersTable = () => {
             onCustomDateChange={handleCustomDateChange}
           />
 
-          <button
-            onClick={handleExportCSV}
-            disabled={isLoading || isExporting}
-            className={classNames(
-              'cursor-pointer whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none',
-              (isLoading || isExporting) && 'cursor-not-allowed opacity-50',
-            )}
-          >
-            {isExporting ? 'Exporting...' : 'Export CSV'}
-          </button>
+          {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+            <button
+              onClick={handleExportCSV}
+              disabled={isLoading || isExporting}
+              className={classNames(
+                'cursor-pointer whitespace-nowrap rounded-md border border-[#D9D9D9] px-4 py-2 outline-none',
+                (isLoading || isExporting) && 'cursor-not-allowed opacity-50',
+              )}
+            >
+              {isExporting ? 'Exporting...' : 'Export CSV'}
+            </button>
+          )}
         </div>
       </div>
 

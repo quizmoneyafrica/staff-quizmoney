@@ -36,6 +36,7 @@ interface ApiGame {
   startTime: string;
   description: string;
   prize: number;
+  coinPrize: number;
   name: string;
 }
 
@@ -62,6 +63,7 @@ function GameZone() {
       completed: false,
       entryFee: apiGame.fee.toString(),
       gamePrize: apiGame.prize,
+      coinPrize: apiGame.coinPrize,
       numOfShare: 0,
       winners: [],
       users: [],
