@@ -46,9 +46,13 @@ export const gameSchema = Joi.object({
     'number.base': 'Entry fee must be a number.',
     'number.min': 'Entry fee cannot be negative.',
   }),
-  gamePrize: Joi.number().min(0).required().messages({
+  gamePrize: Joi.number().min(500).required().messages({
     'number.base': 'Game prize must be a number.',
-    'number.min': 'Game prize cannot be negative.',
+    'number.min': 'Game prize must be at least 500.',
+  }),
+  coinPrize: Joi.number().min(50).required().messages({
+    'number.base': 'Coin prize must be a number.',
+    'number.min': 'Coin prize must be at least 50.',
   }),
   questions: Joi.array().items(questionSchema).min(1).required().messages({
     'array.min': 'At least one question is required.',

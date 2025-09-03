@@ -19,8 +19,6 @@ export const useUpdateGame = () => {
         throw new Error(response.data.message || 'Failed to update game');
       }
     } catch (error) {
-      console.error('Update game error:', error);
-
       if (error instanceof AxiosError) {
         const message =
           error.response?.data?.message ||

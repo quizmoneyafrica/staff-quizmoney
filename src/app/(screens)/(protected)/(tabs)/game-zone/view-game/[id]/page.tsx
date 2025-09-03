@@ -40,6 +40,7 @@ function Page() {
           completed: false,
           entryFee: String(result?.fee ?? 0),
           gamePrize: result.prize,
+          coinPrize: result.coinPrize,
           numOfShare: 0,
           winners: [],
           users: [],
