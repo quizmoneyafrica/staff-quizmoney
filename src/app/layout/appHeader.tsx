@@ -62,31 +62,30 @@ function AppHeader() {
   const dispatch = useDispatch();
   const pathname = usePathname();
   const excludedPaths = ['/practice-game'];
-  const userPayload = useAppSelector((s) => s.auth.userEncryptedData);
-  const currentGame = useAppSelector((s) => s.game.currentGame);
+
   const router = useRouter();
   const [openLogout, setOpenLogout] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
+  const currentGame = useAppSelector((s) => s.game.currentGame);
   const unreadCount = useSelector((state: RootState) => {
     const list = state.notifications.notifications;
     return Array.isArray(list) ? list.filter((n) => !n.read).length : 0;
   });
 
-  // const { user } = encrypted;
-  // ? decryptData(encrypted) : null;
-
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const res = await NotificationApi.fetchNotifications();
-      dispatch(setNotifications(res.data.result.notifications));
-    } catch (err) {
-      const error = err as NotificationError;
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+  //   const fetchNotifications = useCallback(async () => {
+  //     try {
+  //       const res = await NotificationApi.fetchNotifications();
+  //       dispatch(setNotifications(res.data.result.notifications));
+  //     } catch (err) {
+  //       console.error('err: ', err);
+  //     }
+  //   }, [dispatch]);
+  //
+  //   useEffect(() => {
+  //     fetchNotifications();
+  //   }, [fetchNotifications]);
 
   //   useEffect(() => {
   //     let subscription: ParseSubscription | null = null;
@@ -95,7 +94,7 @@ function AppHeader() {
   //       const userPointer = {
   //         __type: 'Pointer',
   //         className: '_User',
-  //         objectId: userPayload?.user?.objectId,
+  //         objectId: user?.user?.objectId,
   //       };
   //
   //       const query = new Parse.Query('Notification');
@@ -115,14 +114,14 @@ function AppHeader() {
   //       });
   //     };
   //
-  //     if (userPayload?.user?.objectId) {
+  //     if (user?.user?.objectId) {
   //       NotificationLiveQuery();
   //     }
   //
   //     return () => {
   //       if (subscription) subscription.unsubscribe();
   //     };
-  //   }, [fetchNotifications, userPayload?.user?.objectId]);
+  //   }, [fetchNotifications, user?.user?.objectId]);
 
   const handleTabRoute = (path: string) => {
     if (pathname !== path) {
@@ -141,6 +140,21 @@ function AppHeader() {
   const renderMobileNavItems = () => (
     <>
       {navs.map((nav, index) => {
+        if (
+          [
+            'Sales',
+            'Products',
+            'Game Zone',
+            'Wallet',
+            'QM Coins',
+            'Admin Management',
+            'Support',
+          ].includes(nav?.name) &&
+          !['SUPER_ADMIN', 'MANAGER'].includes(user?.role)
+        ) {
+          return null;
+        }
+
         if (nav.isDropdown && nav.items) {
           return (
             <NavDropdown
@@ -185,6 +199,21 @@ function AppHeader() {
   const renderMobileBottomNavItems = () => (
     <>
       {bottomNav.map((nav, index) => {
+        if (
+          [
+            'Sales',
+            'Products',
+            'Game Zone',
+            'Wallet',
+            'QM Coins',
+            'Admin Management',
+            'Support',
+          ].includes(nav?.name) &&
+          !['SUPER_ADMIN', 'MANAGER'].includes(user?.role)
+        ) {
+          return null;
+        }
+
         const isActive = pathname === nav.path;
         const isLogout = nav.name === 'Logout';
         const buttonContent = (
@@ -269,13 +298,13 @@ function AppHeader() {
           <div className="border-primary-50 flex-none cursor-pointer rounded-full border bg-white p-1 lg:border-none lg:px-2 lg:py-1">
             <Flex align="center" gap="2">
               <Avatar
-                src={userPayload?.user?.avatar}
-                fallback={userPayload?.user?.firstName?.charAt(0).toUpperCase()}
+                src={user?.user?.avatar}
+                fallback={user?.user?.firstName?.charAt(0).toUpperCase()}
                 radius="full"
                 className="bg-primary-50"
               />
               <p className="hidden font-medium capitalize text-[#1B212D] lg:flex">
-                {userPayload?.user?.firstName} {userPayload?.user?.lastName}
+                {user?.user?.firstName} {user?.user?.lastName}
               </p>
               <ArrowDownFillIcon className="hidden text-neutral-500 lg:flex" />
             </Flex>
@@ -410,15 +439,13 @@ function AppHeader() {
                     className="w-full"
                   >
                     <Avatar
-                      src={userPayload?.user?.avatar}
-                      fallback={userPayload?.user?.firstName
-                        ?.charAt(0)
-                        .toUpperCase()}
+                      src={user?.user?.avatar}
+                      fallback={user?.user?.firstName?.charAt(0).toUpperCase()}
                       radius="full"
                       className="bg-primary-50 h-8 w-8"
                     />
                     <p className="flex-1 text-center text-sm font-medium capitalize text-[#1B212D]">
-                      {userPayload?.user?.firstName}
+                      {user?.user?.firstName}
                     </p>
                     <ArrowDownFillIcon className="h-4 w-4 text-neutral-500" />
                   </Flex>
@@ -512,7 +539,7 @@ function AppHeader() {
                   {!pathname.includes('player-profile') && (
                     <span className="lg:flex">
                       {pageTitle === 'Home'
-                        ? `Welcome, ${userPayload?.user?.firstName} 👋`
+                        ? `Welcome, ${user?.user?.firstName} 👋`
                         : pageTitle}
                     </span>
                   )}

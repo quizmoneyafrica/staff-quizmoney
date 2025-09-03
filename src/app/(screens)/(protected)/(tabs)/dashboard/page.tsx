@@ -20,9 +20,11 @@ import { formatNaira } from '@/app/utils/utils';
 import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { convertToLocaleString } from '@/app/utils';
+import { useAppSelector } from '@/app/hooks/useAuth';
 
 function Page() {
   const [showTotalAmount, setShowTotalAmount] = useState(false);
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
 
   const { data: dashboardSummary, isLoading } = useQuery({
     queryKey: ['dashboardSummary'],
@@ -58,7 +60,8 @@ function Page() {
             </p>
           </DashboardCards>
         )}
-        {isLoading ? (
+
+        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && isLoading ? (
           <DashboardCardsLoading />
         ) : (
           <DashboardCards

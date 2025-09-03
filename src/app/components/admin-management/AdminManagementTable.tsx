@@ -191,7 +191,6 @@ interface SearchHeaderProps {
 const SearchHeader = memo<SearchHeaderProps>(
   ({ searchQuery, onSearchChange, onAddNewAdmin, addLoading }) => {
     const user = useAppSelector((s) => s.auth.userEncryptedData);
-    console.log('user: ', user);
 
     const handleSearchChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
