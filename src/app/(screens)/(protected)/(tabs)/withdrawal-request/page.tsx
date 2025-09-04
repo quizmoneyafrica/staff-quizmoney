@@ -567,7 +567,9 @@ function Page() {
                           <div className="bg-primary-50 relative flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
                             <Avatar
                               src=""
-                              fallback={item.firstName.charAt(0).toUpperCase()}
+                              fallback={item?.firstName
+                                ?.charAt(0)
+                                ?.toUpperCase()}
                               radius="full"
                               className="bg-primary-50"
                             />
