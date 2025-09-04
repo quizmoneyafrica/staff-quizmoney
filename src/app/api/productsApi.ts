@@ -158,12 +158,13 @@ const createApiClient = () => {
         };
       }>
     > {
-      const { productId, ...updateData } = payload;
+      const { productId } = payload;
 
       const data: Record<string, string | number> = {};
       if (payload.name !== undefined) data.name = payload.name;
       if (payload.price !== undefined) data.price = payload.price;
       if (payload.quantity !== undefined) data.quantity = payload.quantity;
+      if (payload.category !== undefined) data.category = payload.category;
 
       return await request.patch(`/products/${productId}`, data, {});
     },

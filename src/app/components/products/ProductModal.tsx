@@ -156,7 +156,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-full max-w-lg -translate-x-1/2 -translate-y-1/2 transform overflow-y-auto rounded-[20px] bg-white px-8 py-8 shadow-xl focus:outline-none"
               >
                 <Dialog.Title className="mb-6 text-xl font-bold text-gray-900">
-                  Add Products
+                  Add Product
                 </Dialog.Title>
                 <motion.h2
                   initial={{ opacity: 0, y: 10 }}
