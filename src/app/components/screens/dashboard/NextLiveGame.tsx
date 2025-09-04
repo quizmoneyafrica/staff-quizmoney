@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { formatNaira, formatQuizDate, toastPosition } from '@/app/utils/utils';
 import { Flex, Heading, Link, Text } from '@radix-ui/themes';
 import DashboardApi from '@/app/api/dashboardApi';
+import { QmCoinIcon } from '@/app/icons/icons';
+import { convertToLocaleString } from '@/app/utils';
 
 const NextLiveGame: React.FunctionComponent = () => {
   const {
@@ -50,9 +52,23 @@ const NextLiveGame: React.FunctionComponent = () => {
             <Heading as="h3" size="5" className="text-primary-900 font-bold">
               Game Prize
             </Heading>
-            <Heading as="h1" className="text-primary-900 !text-5xl !font-black">
+            <Heading className="text-primary-900 mb-0 !text-5xl !font-black">
               {formatNaira(Number(nextGame?.prize || 0), true)}
+
+              <Heading
+                as="h3"
+                className="text-primary-900 flex flex-col items-center !text-3xl !font-black"
+              >
+                <span className="text-primary-900 flex items-center">+</span>
+                <div className="flex items-center">
+                  <QmCoinIcon className="h-6 w-6" />
+                  &nbsp;
+                  {convertToLocaleString(Number(nextGame?.coinPrize || 0))} QM
+                  coins
+                </div>
+              </Heading>
             </Heading>
+
             <Flex direction="column" gap="2" align="center" justify="center">
               {nextGame &&
                 (nextGame.status === 'ACTIVE' ||
