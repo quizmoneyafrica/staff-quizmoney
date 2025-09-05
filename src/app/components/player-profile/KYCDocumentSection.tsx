@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useGetPlayerKyc } from '@/app/hooks/usePlayerProfile';
+import { formatDateTime } from '@/app/utils';
 
 interface DocumentCardProps {
   title: string;
@@ -67,20 +70,43 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
 };
 
 const KYCDocumentSection: React.FC = () => {
-  const documents = [
+  const params = useParams();
+  const userId = params.userId as string;
+  const { data } = useGetPlayerKyc(userId);
+
+  const title = {
+    PHONE: 'Phone Number',
+    BVN: 'Bank Verification Number (BVN)',
+  };
+
+  const initialState = [
     {
-      title: 'Valid ID Card',
-      uploadDate: '27/6/2025',
+      title: 'Phone Number',
+      uploadDate: null,
       isVerified: false,
       verificationText: 'Not yet Verified',
     },
     {
       title: 'Bank Verification Number (BVN)',
-      uploadDate: '27/6/2025',
-      isVerified: true,
-      verificationText: 'Verified',
+      uploadDate: null,
+      isVerified: false,
+      verificationText: 'Not yet Verified',
     },
   ];
+
+  const documents = useMemo(() => {
+    if (data?.length) {
+      return data?.map((doc) => ({
+        title: title[doc?.step] ?? doc?.step,
+        uploadDate: formatDateTime(doc?.startedAt).fullDate,
+        isVerified: doc?.status === 'COMPLETED',
+        verificationText:
+          doc?.status === 'COMPLETED' ? 'Verified' : 'Not yet Verified',
+      }));
+    }
+
+    return initialState;
+  }, [data]);
 
   return (
     <div className="w-full transition-all duration-300 ease-in-out">

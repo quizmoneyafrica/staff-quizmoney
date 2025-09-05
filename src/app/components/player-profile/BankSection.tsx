@@ -1,6 +1,8 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
+// import { Trash2 } from 'lucide-react';
 import { BankIcon } from '@/app/icons/icons';
+import { useParams } from 'next/navigation';
+import { useGetPlayerPayoutAccounts } from '@/app/hooks/usePlayerProfile';
 
 interface BankAccountProps {
   accountHolder: string;
@@ -67,7 +69,12 @@ const BankAccountCard: React.FC<BankAccountProps> = ({
   );
 };
 
-const BankSection = ({ bankDetails }) => {
+const BankSection = () => {
+  const params = useParams();
+  const userId = params.userId as string;
+
+  const { data } = useGetPlayerPayoutAccounts(userId);
+
   const handleDelete = () => {};
 
   return (
@@ -81,22 +88,18 @@ const BankSection = ({ bankDetails }) => {
         </h1>
 
         <div className="xs:mt-5 xs:pb-5 mt-4 space-y-3 pb-4 transition-all duration-300 ease-in-out sm:mt-6 sm:pb-6 md:mt-6 md:pb-6 lg:mt-8 lg:pb-8 xl:mt-8 xl:pb-8">
-          {bankDetails?.length === 0 && (
+          {/* {bankDetails?.length === 0 && (
             <div className="m-4 rounded-lg bg-gray-50 p-8 text-center">
               <p className="text-gray-600">No bank account found.</p>
             </div>
-          )}
+          )} */}
 
-          {bankDetails?.length > 0 &&
-            bankDetails?.map((account, index) => (
-              <BankAccountCard
-                key={index}
-                accountHolder={account?.accountName}
-                accountNumber={account?.accountNumber}
-                bankName={account?.bankName}
-                onDelete={handleDelete}
-              />
-            ))}
+          <BankAccountCard
+            accountHolder={data?.accountName}
+            accountNumber={data?.accountNumber}
+            bankName={data?.bankName}
+            onDelete={handleDelete}
+          />
         </div>
       </div>
     </div>

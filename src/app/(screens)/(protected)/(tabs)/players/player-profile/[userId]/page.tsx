@@ -140,7 +140,7 @@ export default function Page() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <SocialSection userId={userId} socialData={playerData.socials} />
-          <BankSection bankDetails={playerData?.bankAccounts} />
+          <BankSection />
         </div>
         <div className="space-y-6">
           <KYCDocumentSection />
