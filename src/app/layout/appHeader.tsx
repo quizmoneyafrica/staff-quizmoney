@@ -151,6 +151,7 @@ function AppHeader() {
             'Game Zone',
             'Wallet',
             'QM Coins',
+            'Referral Management',
             'Admin Management',
             'Support',
           ].includes(nav?.name) &&
@@ -210,6 +211,7 @@ function AppHeader() {
             'Game Zone',
             'Wallet',
             'QM Coins',
+            'Referral Management',
             'Admin Management',
             'Support',
           ].includes(nav?.name) &&
