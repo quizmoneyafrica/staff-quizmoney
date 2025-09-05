@@ -5,6 +5,7 @@ import PlayerApi, {
   PlayerProfileData,
   PlayerTransactionsResponse,
 } from '../api/PlayerProfileApi';
+import { request } from '@/app/api/config';
 
 const DEFAULT_PARAMS = {
   gameHistoryPage: 1,
@@ -46,6 +47,58 @@ export const usePlayerProfile = (
         throw error;
       }
     },
+  });
+};
+
+export const useGetPlayerPayoutAccounts = (userId: string) => {
+  return useQuery({
+    queryKey: ['playerPayoutAccounts', userId],
+    queryFn: async ({ signal }) => {
+      try {
+        const response = await request.get(`/payout-accounts`, {
+          signal,
+          params: {
+            'customer-id': userId,
+          },
+        });
+        if (response.data.data) {
+          return response.data.data;
+        } else {
+          console.error('Debug - No result in API response');
+          throw new Error('No data returned from API');
+        }
+      } catch (error) {
+        console.error('Debug - API call failed:', error);
+        throw error;
+      }
+    },
+    enabled: Boolean(userId),
+  });
+};
+
+export const useGetPlayerKyc = (userId: string) => {
+  return useQuery({
+    queryKey: ['getPlayerKyc', userId],
+    queryFn: async ({ signal }) => {
+      try {
+        const response = await request.get(`/customer-kyc`, {
+          signal,
+          params: {
+            'customer-id': userId,
+          },
+        });
+        if (response.data.data) {
+          return response.data.data;
+        } else {
+          console.error('Debug - No result in API response');
+          throw new Error('No data returned from API');
+        }
+      } catch (error) {
+        console.error('Debug - API call failed:', error);
+        throw error;
+      }
+    },
+    enabled: Boolean(userId),
   });
 };
 
