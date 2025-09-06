@@ -268,6 +268,8 @@ export interface UpdateNumberGuessingGamePayload {
   minimumStake: number;
   maximumStake: number;
   range: number;
+  upperBound: number;
+  lowerBound: number;
   stakeMultiplier: number;
   numberOfAttempts: number;
   costPerTrial: number;
