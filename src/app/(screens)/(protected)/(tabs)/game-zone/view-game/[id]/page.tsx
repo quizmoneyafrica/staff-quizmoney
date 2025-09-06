@@ -41,7 +41,8 @@ function Page() {
           entryFee: String(result?.fee ?? 0),
           gamePrize: result.prize,
           coinPrize: result.coinPrize,
-          numOfShare: 0,
+          prizeBetween: result?.prizeBetween ?? 0,
+          coinPrizeBetween: result?.coinPrizeBetween ?? 0,
           winners: [],
           users: [],
           userTimes: [],
@@ -145,10 +146,18 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Prize Between"
-              name="numOfShare"
+              label="Share Prize Between (Winners)"
+              name="prizeBetween"
               type="text"
-              value={`${fetchedData?.numOfShare}`}
+              value={`${fetchedData?.prizeBetween}`}
+              readOnly
+            />
+
+            <CustomTextField
+              label="Share Coin Prize Between (Winners)"
+              name="coinPrizeBetween"
+              type="text"
+              value={`${fetchedData?.coinPrizeBetween}`}
               readOnly
             />
           </div>

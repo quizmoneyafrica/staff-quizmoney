@@ -13,7 +13,8 @@ export interface Game {
   entryFee: string;
   gamePrize: number;
   coinPrize: number;
-  numOfShare: number;
+  prizeBetween: number;
+  coinPrizeBetween: number;
   winners: string[];
   users: string[];
   userTimes: any[];
@@ -37,11 +38,13 @@ export interface QuestionState {
   options: string[];
   correctAnswer: string;
 }
+
 interface GameState {
   currentGame: Game | null;
   adminGames: Game[];
   createGame: Game;
 }
+
 export const initialGame: Game = {
   objectId: '',
   name: '',
@@ -50,7 +53,8 @@ export const initialGame: Game = {
   entryFee: '200',
   gamePrize: 1000000,
   coinPrize: 1000000,
-  numOfShare: 20,
+  prizeBetween: 20,
+  coinPrizeBetween: 20,
   winners: [],
   users: [],
   userTimes: [],

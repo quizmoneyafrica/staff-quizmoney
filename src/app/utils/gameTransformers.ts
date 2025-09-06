@@ -40,6 +40,8 @@ export const transformGameDataForAPI = (
     questionLimit: questions.length,
     description: gameDetails.gameDescription || '',
     duration: duration,
+    prizeBetween: gameDetails.prizeBetween || 0,
+    coinPrizeBetween: gameDetails.coinPrizeBetween || 0,
   };
 };
 
