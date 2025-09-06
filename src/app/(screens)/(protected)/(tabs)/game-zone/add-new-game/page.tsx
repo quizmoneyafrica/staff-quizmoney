@@ -87,14 +87,14 @@ function Page() {
       'gameDescription',
       'entryFee',
       'gamePrize',
-      'numOfShare',
+      'prizeBetween',
     ];
 
     if (allowedFields.includes(name as keyof Game)) {
       dispatch(
         setCreateGameField({
           field: name as keyof Game,
-          value: ['entryFee', 'gamePrize', 'numOfShare'].includes(name)
+          value: ['entryFee', 'gamePrize', 'prizeBetween'].includes(name)
             ? Number(value)
             : value,
         }),
@@ -193,12 +193,21 @@ function Page() {
       return false;
     }
 
-    if (!game.numOfShare || toNumber(game.numOfShare) < 1) {
+    if (!game.prizeBetween || toNumber(game.prizeBetween) < 1) {
       toast.error('Please enter the number of winners to share prize');
-      const numOfShareField = document.querySelector(
-        'input[name="numOfShare"]',
+      const prizeBetweenField = document.querySelector(
+        'input[name="prizeBetween"]',
       ) as HTMLInputElement;
-      numOfShareField?.focus();
+      prizeBetweenField?.focus();
+      return false;
+    }
+
+    if (!game.coinPrizeBetween || toNumber(game.coinPrizeBetween) < 1) {
+      toast.error('Please enter the number of winners to share coin prize');
+      const coinPrizeBetweenField = document.querySelector(
+        'input[name="coinPrizeBetween"]',
+      ) as HTMLInputElement;
+      coinPrizeBetweenField?.focus();
       return false;
     }
 
@@ -386,9 +395,20 @@ function Page() {
 
             <CustomTextField
               label="Share Prize Between (Winners)"
-              name="numOfShare"
+              name="prizeBetween"
               type="number"
-              value={toString(game.numOfShare)}
+              value={toString(game.prizeBetween)}
+              onChange={handleGameDetailsChange}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              required
+            />
+
+            <CustomTextField
+              label="Share Coin Between (Winners)"
+              name="coinPrizeBetween"
+              type="number"
+              value={toString(game.coinPrizeBetween)}
               onChange={handleGameDetailsChange}
               inputMode="numeric"
               pattern="[0-9]*"

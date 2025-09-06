@@ -13,6 +13,8 @@ export interface CreateGamePayload {
   questionLimit: number;
   description?: string;
   duration?: number;
+  prizeBetween?: number;
+  coinPrizeBetween?: number;
 }
 
 export interface CreateGameResponse {
@@ -27,6 +29,8 @@ export interface CreateGameResponse {
     questionLimit: number;
     description?: string;
     duration?: number;
+    prizeBetween?: number;
+    coinPrizeBetween?: number;
   };
 }
 
@@ -53,6 +57,8 @@ export interface GameQuestionResponse {
   description: string;
   prize: number;
   coinPrize: number;
+  prizeBetween?: number;
+  coinPrizeBetween?: number;
   name: string;
   questionCount: number;
   questions: GameQuestion[];
@@ -83,6 +89,8 @@ export interface UpdateGamePayloadV2 {
   coinPrize: number;
   name: string;
   questionLimit: number;
+  prizeBetween: number;
+  coinPrizeBetween: number;
   questions: GameQuestion[];
 }
 
@@ -293,6 +301,8 @@ export interface GameDetailsResponse {
   prize: number;
   coinPrize: number;
   questionCount?: number;
+  prizeBetween: number;
+  coinPrizeBetween: number;
   questions?: GameQuestion[];
   [key: string]: unknown;
 }

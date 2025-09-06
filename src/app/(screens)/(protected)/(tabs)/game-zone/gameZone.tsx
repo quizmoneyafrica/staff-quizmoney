@@ -38,6 +38,8 @@ interface ApiGame {
   prize: number;
   coinPrize: number;
   name: string;
+  prizeBetween?: number;
+  coinPrizeBetween?: number;
 }
 
 function GameZone() {
@@ -64,7 +66,8 @@ function GameZone() {
       entryFee: apiGame.fee.toString(),
       gamePrize: apiGame.prize,
       coinPrize: apiGame.coinPrize,
-      numOfShare: 0,
+      prizeBetween: apiGame?.prizeBetween || 0,
+      coinPrizeBetween: apiGame?.coinPrizeBetween || 0,
       winners: [],
       users: [],
       userTimes: [],
