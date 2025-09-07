@@ -452,12 +452,15 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
 const getStatusClass = (status: string) => {
   switch (status.toUpperCase()) {
     case 'APPROVED':
-      return 'bg-green-100 text-green-700';
+    case 'PROCESSED':
+      return 'bg-green-100 text-green-800';
     case 'REJECTED':
-      return 'bg-red-100 text-red-700';
+    case 'FAILED':
+      return 'bg-red-100 text-red-800';
     case 'PENDING':
+    case 'PROCESSING':
     default:
-      return 'bg-yellow-100 text-yellow-700';
+      return 'bg-yellow-100 text-yellow-800';
   }
 };
 
