@@ -102,8 +102,25 @@ const TransactionTable: React.FC = () => {
 
   const transactions = data?.data?.content || [];
   const pagination = data?.data;
+
   const totalCount = pagination?.totalElements || 0;
   const totalPages = pagination?.totalPages || 1;
+
+  const paginationInfo = useMemo(() => {
+    if (data) {
+      return {
+        currentPage: data?.data?.pageNo + 1,
+        totalPages: data?.data?.totalPages,
+        totalCount: data?.data?.totalElements,
+      };
+    }
+
+    return {
+      currentPage: currentPage,
+      totalPages: 1,
+      totalCount: transactions?.length,
+    };
+  }, [data, currentPage, transactions.length]);
 
   const handleFilterSelect = (
     status: 'All' | 'SUCCESSFUL' | 'PENDING' | 'FAILED',
@@ -361,8 +378,8 @@ const TransactionTable: React.FC = () => {
             entries
           </div>
           <Pagination
-            currentPage={pagination.pageNo || currentPage}
-            totalPages={totalPages}
+            currentPage={paginationInfo.currentPage}
+            totalPages={paginationInfo.totalPages}
             onPageChange={handlePageChange}
           />
         </div>
