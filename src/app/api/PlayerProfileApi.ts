@@ -246,7 +246,6 @@ const PlayerApi = {
       params: {},
     });
   },
-
   getPlayerGameDetails(data: {
     userId: string;
     gameId: string;

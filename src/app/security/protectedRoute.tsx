@@ -43,6 +43,7 @@ export default function ProtectedRoute({
       ROUTES.GAME_ZONE,
       ROUTES.WALLET,
       ROUTES.QM_COINS,
+      ROUTES.REFERRAL_MANAGEMENT,
       ROUTES.ADMIN_MANAGEMENT,
       ROUTES.SUPPORT,
     ].includes(pathname) &&

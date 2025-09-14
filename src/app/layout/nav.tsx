@@ -121,13 +121,14 @@ export const navs: NavItem[] = [
 ];
 
 export const bottomNav = [
-  {
-    icon: <SupportIcon />,
-    path: '/support',
-    name: 'Support',
-  },
+  // {
+  //   icon: <SupportIcon />,
+  //   path: '/support',
+  //   name: 'Support',
+  // },
   {
     icon: <LogoutIcon />,
+    path: '/',
     name: 'Logout',
   },
 ];

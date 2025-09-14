@@ -35,6 +35,7 @@ export interface GameResponse {
   endTime: string;
   description: string;
   prize: number;
+  coinPrize: number;
   name: string;
   questionCount: number;
 }

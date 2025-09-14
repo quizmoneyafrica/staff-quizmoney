@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import secureLocalStorage from 'react-secure-storage';
 
 type Props = {
   loading: boolean;
@@ -62,6 +63,11 @@ const LoginForm = ({ loading, setLoading }: Props) => {
 
       // Dispatch to Redux
       loginUser(userData);
+
+      secureLocalStorage.setItem('operator', {
+        accessToken: userData.accessToken,
+        refreshToken: userData.refreshToken,
+      });
 
       router.replace('/dashboard');
 

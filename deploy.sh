@@ -28,3 +28,9 @@ git add .gitignore
 git commit -m "chore: '$TEXT_TO_ADD' to .gitignore"
 
 git push origin dev
+
+git checkout quizmoney-v2
+git merge dev
+git push origin quizmoney-v2
+
+git checkout dev

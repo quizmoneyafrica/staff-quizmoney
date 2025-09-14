@@ -19,7 +19,7 @@ import { useUpdateGame } from '@/app/hooks/useUpdateGame';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { PlusCircle } from 'lucide-react';
 import { useDispatch } from 'react-redux';
-import { gameSchema, questionSchema } from '@/lib/validation';
+import { gameSchema } from '@/lib/validation';
 
 interface QuestionWithId extends QuestionState {
   id: string;
@@ -41,6 +41,7 @@ function Page() {
     ...initialGame,
     questions: [],
   });
+
   const [datetimeInput, setDatetimeInput] = useState('');
   const [fetchingData, setFetchingData] = useState(true);
   const [validationErrors, setValidationErrors] = useState<
@@ -149,7 +150,8 @@ function Page() {
           entryFee: String(result.fee),
           gamePrize: result.prize,
           coinPrize: result.coinPrize,
-          numOfShare: 0, //
+          prizeBetween: result?.prizeBetween ?? 0,
+          coinPrizeBetween: result?.coinPrizeBetween ?? 0,
           winners: [],
           users: [],
           userTimes: [],
@@ -213,11 +215,22 @@ function Page() {
       return;
     }
 
-    if (['name', 'entryFee', 'gamePrize', 'numOfShare'].includes(name)) {
+    if (
+      [
+        'name',
+        'entryFee',
+        'gamePrize',
+        'prizeBetween',
+        'coinPrizeBetween',
+      ].includes(name)
+    ) {
       setFetchedData((prev) => ({
         ...prev,
         [name]:
-          name === 'gamePrize' || name === 'entryFee' || name === 'numOfShare'
+          name === 'gamePrize' ||
+          name === 'entryFee' ||
+          name === 'prizeBetween' ||
+          name === 'coinPrizeBetween'
             ? Number(value) || 0
             : value,
       }));
@@ -380,14 +393,16 @@ function Page() {
 
       const payload = {
         fee: Number(fetchedData.entryFee),
-        duration: 30, //
+        duration: 30,
         startTime: datetimeInput,
-        description: fetchedData.gameDescription || '',
+        description: fetchedData.gameDescription ?? '',
         prize: fetchedData.gamePrize,
         coinPrize: fetchedData.coinPrize,
         name: fetchedData.name,
         questionLimit: fetchedData.questions.length,
         questions: transformedQuestions,
+        prizeBetween: fetchedData.prizeBetween ?? 0,
+        coinPrizeBetween: fetchedData.coinPrizeBetween ?? 0,
       };
 
       await updateGame(params.id as string, payload);
@@ -440,7 +455,7 @@ function Page() {
             />
 
             <CustomTextField
-              label="Coin Prize (₦)"
+              label="Coin Prize (QM)"
               placeholder="5000"
               name="coinPrize"
               type="number"
@@ -460,10 +475,19 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Prize Between"
-              name="numOfShare"
+              label="Share Prize Between (Winners)"
+              name="prizeBetween"
               type="number"
-              value={toStringValue(fetchedData?.numOfShare)}
+              value={toStringValue(fetchedData?.prizeBetween)}
+              onChange={handleChange}
+              inputMode="numeric"
+              pattern="[0-9]*"
+            />
+            <CustomTextField
+              label="Share Coin Prize Between (Winners)"
+              name="coinPrizeBetween"
+              type="number"
+              value={toStringValue(fetchedData?.coinPrizeBetween)}
               onChange={handleChange}
               inputMode="numeric"
               pattern="[0-9]*"

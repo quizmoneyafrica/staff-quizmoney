@@ -151,6 +151,7 @@ function AppHeader() {
             'Game Zone',
             'Wallet',
             'QM Coins',
+            'Referral Management',
             'Admin Management',
             'Support',
           ].includes(nav?.name) &&
@@ -210,6 +211,7 @@ function AppHeader() {
             'Game Zone',
             'Wallet',
             'QM Coins',
+            'Referral Management',
             'Admin Management',
             'Support',
           ].includes(nav?.name) &&
@@ -331,7 +333,7 @@ function AppHeader() {
 
         <DropdownMenu.Portal>
           <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
-            <DropdownMenu.Item
+            {/* <DropdownMenu.Item
               className="DropdownMenuItem"
               onClick={() => router.push('/settings/profile')}
             >
@@ -349,7 +351,7 @@ function AppHeader() {
               <span className="RightSlot">
                 <SupportIcon />
               </span>
-            </DropdownMenu.Item>
+            </DropdownMenu.Item> */}
 
             <Link href="https://quizmoney.ng/how-it-works" target="_blank">
               <DropdownMenu.Item className="DropdownMenuItem">

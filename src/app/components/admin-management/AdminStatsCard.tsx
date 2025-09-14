@@ -59,22 +59,25 @@ const LoadingStatCard: React.FC<{ cardBg?: string }> = ({
 };
 
 const AdminStatsCards = () => {
-  const { data: admin, isLoading: isFetching } = useAdmins({
-    page: 0,
-    adminType: 'ADMIN',
-  });
-
-  const { data: superAdmin, isLoading: isPending } = useAdmins({
+  const { data: superAdmin, isLoading: isSuperAdminLoading } = useAdmins({
     page: 0,
     adminType: 'SUPER_ADMIN',
   });
+  const { data: manager, isLoading: isManagerLoading } = useAdmins({
+    page: 0,
+    adminType: 'MANAGER',
+  });
+  const { data: supportAdmin, isLoading: isSupportLoading } = useAdmins({
+    page: 0,
+    adminType: 'SUPPORT_ADMIN',
+  });
 
-  const isLoading = isFetching || isPending;
+  const isLoading = isSuperAdminLoading || isManagerLoading || isSupportLoading;
 
   const stats: Stat[] = [
     {
-      title: 'Total No Admin',
-      value: `${admin?.totalElements ?? 0}`,
+      title: 'Total Super Admin',
+      value: `${superAdmin?.totalElements ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}
@@ -86,8 +89,21 @@ const AdminStatsCards = () => {
       cardBg: 'bg-[#DFF9FF]',
     },
     {
-      title: 'Total Super Admin',
-      value: `${0}`,
+      title: 'Total Manager',
+      value: `${manager?.totalElements ?? 0}`,
+      icon: (
+        <CustomImage
+          src={'/icons/useruser.svg'}
+          className="h-6 w-6"
+          alt="super admin profile"
+        />
+      ),
+      iconBg: 'bg-[#BCDDF4]',
+      cardBg: 'bg-[#E4F1FA]',
+    },
+    {
+      title: 'Total Support Admin',
+      value: `${supportAdmin?.totalElements ?? 0}`,
       icon: (
         <CustomImage
           src={'/icons/useruser.svg'}

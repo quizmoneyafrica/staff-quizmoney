@@ -12,6 +12,7 @@ import {
 import { store } from '@/app/store/store';
 import { decryptData } from '../utils/crypto';
 import { request } from '@/app/api/config';
+import secureLocalStorage from 'react-secure-storage';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL;
@@ -42,20 +43,15 @@ export interface AvatarProjection {
 }
 
 const appHeaders = {
-  // 'X-Parse-Application-Id': XParseApplicationId,
-  // 'X-Parse-REST-API-Key': XParseRESTAPIKey,
   'Content-Type': 'application/json',
 };
 
 const getSessionTokenHeaders = () => {
-  const encrypted = store.getState().auth.userEncryptedData;
-  const user = encrypted;
-  // ? decryptData(encrypted) : null;
-  const sessionToken = user?.accessToken;
+  const operator = secureLocalStorage.getItem('operator') as UnknownObject;
+
+  const sessionToken = operator?.accessToken;
 
   return {
-    // 'X-Parse-Application-Id': process.env.NEXT_PUBLIC_XParseApplicationId!,
-    // 'X-Parse-REST-API-Key': process.env.NEXT_PUBLIC_XParseRESTAPIKey!,
     Authorization: `Bearer ${sessionToken}`,
     'Content-Type': 'application/json',
   };

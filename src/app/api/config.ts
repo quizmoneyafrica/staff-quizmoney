@@ -7,49 +7,78 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/app/utils';
 import { getSessionTokenHeaders } from '@/app/api/userApi';
-import { useAppDispatch } from '@/app/hooks/useAuth';
-import { logout } from '@/app/store/authSlice';
-import { store } from '@/app/store/store';
+import secureLocalStorage from 'react-secure-storage';
 
-const session = store.getState().auth.userEncryptedData;
+const operator = secureLocalStorage.getItem('operator') as UnknownObject;
 
 export const request = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
 });
 
-const requestConfiguration = (config) => {
-  return {
-    ...config,
-    headers: getSessionTokenHeaders(),
-  };
+const requestConfiguration = (config) => ({
+  ...config,
+  headers: getSessionTokenHeaders(),
+});
+
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+};
+
+const addRefreshSubscriber = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
 };
 
 const errorHandler = async (error) => {
   if (error?.response?.status === 401) {
-    if (
-      error?.response?.data?.message === 'Token expired, please login again'
-    ) {
-      if (session?.refreshToken) {
+    if (operator?.refreshToken) {
+      if (!isRefreshing) {
+        isRefreshing = true;
         try {
-          const response = request.post('/auth/refresh', {
-            tokenValue: session?.refreshToken,
+          const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_BASE_URL}/auth/refresh`,
+            {
+              tokenValue: operator?.refreshToken,
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: null,
+              },
+            },
+          );
+
+          const { accessToken, refreshToken } = response.data.data;
+          secureLocalStorage.setItem('operator', {
+            accessToken,
+            refreshToken,
           });
-          //TODO: handle refresh token
-          console.log('response: refresh token ', response);
-          return;
-        } catch (error) {
-          console.log('error: ', error);
+          onRefreshed(accessToken);
+          isRefreshing = false;
+        } catch (refreshError) {
+          isRefreshing = false;
+          window.location.href = ROUTES.LOG_IN;
+          return Promise.reject(refreshError);
         }
       }
+
+      return new Promise((resolve, reject) => {
+        addRefreshSubscriber((token: string) => {
+          // Clone the original request and update the Authorization header
+          const originalRequest = error.config;
+          originalRequest.headers = {
+            ...originalRequest.headers,
+            Authorization: `Bearer ${token}`,
+          };
+          resolve(request(originalRequest));
+        });
+      });
     }
 
-    // dispatch(logout());
     window.location.href = ROUTES.LOG_IN;
-  }
-
-  if (error?.response?.data?.code === 209) {
-    // dispatch(logout());
-    // router.push(ROUTES.LOG_IN);
   }
 
   return Promise.reject(error);
@@ -61,7 +90,6 @@ request.interceptors.response.use((response) => response, errorHandler);
 
 export const useRequestInstance = () => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const requestIntercept = request.interceptors.request.use(
