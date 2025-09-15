@@ -4,25 +4,7 @@ import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatNaira } from '@/app/utils/utils';
 import { FormatDateOptions } from 'date-fns';
-
-interface Transaction {
-  id: string;
-  transactionId?: string;
-  transactionType?: string;
-  type: string;
-  amount: number;
-  status: string;
-  createdAt: {
-    __type: string;
-    iso: string;
-  };
-  description: string;
-
-  dateTime?: string;
-  action?: string;
-  date?: string;
-  [key: string]: unknown;
-}
+import { Transaction } from '@/app/types/transaction';
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
@@ -44,6 +26,18 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
   };
 
   const formatDate = (transaction: Transaction) => {
+    if (transaction.transactionDate) {
+      const date = new Date(transaction.transactionDate);
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+
     if (transaction.createdAt?.iso) {
       const date = new Date(transaction.createdAt.iso);
       return date.toLocaleDateString('en-US', {

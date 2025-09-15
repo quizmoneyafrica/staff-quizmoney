@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import GameApi, { GameSession } from '@/app/api/game';
 
-import GameHistoryDetails from '@/app/components/perfect-score/PerfectScoreGameHistoryDetails';
+// import GameHistoryDetails from '@/app/components/perfect-score/PerfectScoreGameHistoryDetails';
 
 export default function PerfectScoreGameHistoryPage() {
   const router = useRouter();
@@ -58,11 +58,11 @@ export default function PerfectScoreGameHistoryPage() {
         </div>
       </header>
 
-      {isLoading ? (
+      {/* {isLoading ? (
         <div className="py-10 text-center">Loading...</div>
       ) : (
         <GameHistoryDetails session={session || null} isLoading={isLoading} />
-      )}
+      )} */}
     </div>
   );
 }

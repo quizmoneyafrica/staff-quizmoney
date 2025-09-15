@@ -8,15 +8,17 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react';
-import { usePlayerTransactions } from '@/app/hooks/usePlayerProfile';
+import { useWalletTransactions } from '@/app/hooks/usePlayerProfile';
 import CustomImage from '../CustomImage';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
 import { useRef, useEffect, useCallback } from 'react';
 import TimeRangeDropdown from '../common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
 import { serializeDateRange, isValidDateRange } from '@/app/utils/dateUtils';
-
+import { Transaction, TransactionResponse } from '@/app/types/transaction';
 import WalletDashboard from './WalletDashboardCards';
+
+import { DepositGreenIcon, DebitRedIcon } from '@/app/icons/icons';
 
 const getTransactionId = (transaction: Transaction) => {
   return transaction.transactionId || transaction.id || 'N/A';
@@ -27,32 +29,19 @@ const getTransactionType = (transaction: Transaction) => {
 };
 
 const formatDate = (transaction: Transaction) => {
-  if (transaction.createdAt?.iso) {
-    const date = new Date(transaction.createdAt.iso);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+  let date: Date | null = null;
+
+  if (transaction.transactionDate) {
+    date = new Date(transaction.transactionDate);
+  } else if (transaction.createdAt?.iso) {
+    date = new Date(transaction.createdAt.iso);
+  } else if (transaction.dateTime) {
+    date = new Date(transaction.dateTime);
+  } else if (transaction.date) {
+    date = new Date(transaction.date);
   }
 
-  if (transaction.dateTime) {
-    const date = new Date(transaction.dateTime);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  }
-
-  if (transaction.date) {
-    const date = new Date(transaction.date);
+  if (date) {
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: '2-digit',
@@ -66,25 +55,6 @@ const formatDate = (transaction: Transaction) => {
   return 'N/A';
 };
 
-interface Transaction {
-  id: string;
-  transactionId?: string;
-  type: string;
-  amount: number;
-  status: string;
-  createdAt: {
-    __type: string;
-    iso: string;
-  };
-  description: string;
-
-  transactionType?: string;
-  dateTime?: string;
-  action?: string;
-  date?: string;
-  [key: string]: unknown;
-}
-
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -93,16 +63,7 @@ interface PaginationProps {
 
 interface PlayerTransactionHistoryProps {
   userId: string;
-  transactionData?: {
-    data: Transaction[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalCount: number;
-      hasNext: boolean;
-      hasPrev: boolean;
-    };
-  };
+  transactionData?: TransactionResponse;
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -236,31 +197,78 @@ export default function PlayerTransactionHistory({
   }, [selectedTimeRange, customDateRange]);
 
   const {
-    data: transactionResponse,
+    data: walletTransactionsResponse,
     isLoading,
     error,
     refetch,
-  } = usePlayerTransactions(userId, {
-    page: currentPage,
-    limit: transactionLimit,
-    status: getApiFilterStatus(selectedFilter),
-    search: searchTerm.trim() || undefined,
-    dateRange: dateRange,
-  });
+  } = useWalletTransactions(
+    userId,
+    {
+      page: currentPage - 1,
+      size: transactionLimit,
+      status: getApiFilterStatus(selectedFilter) as any,
+      search: searchTerm.trim() || undefined,
+      'start-date': dateRange?.start,
+      'end-date': dateRange?.end,
+    },
+    {
+      enabled: !!userId,
+    },
+  );
 
-  const transactions = transactionData || transactionResponse?.transactions;
+  const transactions = useMemo<TransactionResponse | null>(() => {
+    if (!walletTransactionsResponse || !walletTransactionsResponse.content) {
+      return {
+        data: [],
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalCount: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
+
+    return {
+      data: (walletTransactionsResponse.content || []).map((tx) => ({
+        ...tx,
+        id: tx.id,
+        transactionId: tx.id,
+        transactionDate: tx.transactionDate,
+        transactionType: tx.transactionType,
+        transactionStatus: tx.transactionStatus,
+        type: tx.transactionType || 'UNKNOWN',
+        status: tx.transactionStatus || 'PENDING',
+        description: tx.narration || '',
+        amount: tx.amount * (tx.direction === 'DEBIT' ? -1 : 1),
+      })),
+      pagination: {
+        currentPage: (walletTransactionsResponse.pageNo || 0) + 1,
+        totalPages: walletTransactionsResponse.totalPages || 1,
+        totalCount: walletTransactionsResponse.totalElements || 0,
+        hasNext: !walletTransactionsResponse.last,
+        hasPrev: (walletTransactionsResponse.pageNo || 0) > 0,
+      },
+    };
+  }, [walletTransactionsResponse]);
+
   const currentItems = transactions?.data || [];
   const totalPages = transactions?.pagination?.totalPages || 1;
   const currentPageFromAPI = transactions?.pagination?.currentPage || 1;
 
-  const filteredItems = currentItems.filter((txn) => {
+  const filteredItems = currentItems.filter((txn: Transaction) => {
     if (!searchTerm.trim()) return true;
 
     const search = searchTerm.trim().toLowerCase();
-    const txnId = getTransactionId(txn).toLowerCase();
-    const txnType = getTransactionType(txn).toLowerCase();
-    const txnStatus = (txn.status ?? '').toLowerCase();
-    const txnDescription = (txn.description ?? '').toLowerCase();
+    const txnId = (txn.id || '').toLowerCase();
+    const txnType = (txn.transactionType || txn.type || '').toLowerCase();
+    const txnStatus = (txn.transactionStatus || txn.status || '').toLowerCase();
+    const txnDescription = (
+      txn.narration ||
+      txn.description ||
+      ''
+    ).toLowerCase();
     const txnDate = formatDate(txn).toLowerCase();
 
     return (
@@ -297,7 +305,13 @@ export default function PlayerTransactionHistory({
   };
 
   const handleViewDetails = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
+    const formattedTransaction: Transaction = {
+      ...transaction,
+      type: transaction.transactionType || transaction.type || '',
+      status: transaction.transactionStatus || transaction.status || '',
+      description: transaction.narration || transaction.description || '',
+    };
+    setSelectedTransaction(formattedTransaction);
     setShowDetailsPopup(true);
   };
 
@@ -398,37 +412,58 @@ export default function PlayerTransactionHistory({
     setCurrentPage(1);
   };
 
-  const formatAmount = (amount?: number, type?: string) => {
-    if (!amount) return '₦0';
+  const formatAmount = (amount?: number, direction?: string) => {
+    if (amount === undefined) return '₦0';
     const formattedAmount = new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(Math.abs(amount));
 
-    return type === 'debit' || type === 'withdrawal'
-      ? `- ${formattedAmount}`
-      : formattedAmount;
+    return direction === 'DEBIT' ? `- ${formattedAmount}` : formattedAmount;
   };
 
-  const getTransactionIcon = (type?: string, status?: string) => {
-    if (status === 'failed' || status === 'cancelled') {
-      return '/icons/fail.svg';
+  const getTransactionIcon = (direction?: string, status?: string) => {
+    if (status === 'FAILED' || status === 'CANCELLED') {
+      return (
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
+          <svg
+            className="h-7 w-7 text-red-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </div>
+      );
     }
-    if (type === 'credit' || type === 'deposit' || status === 'completed') {
-      return '/icons/suc.svg';
+
+    if (direction === 'CREDIT' || status === 'COMPLETED') {
+      return (
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E7FEED]">
+          <DepositGreenIcon className="h-7 w-7" />
+        </div>
+      );
     }
-    return '/icons/fail.svg';
+
+    return (
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
+        <DebitRedIcon className="h-7 w-7" />
+      </div>
+    );
   };
 
-  const getAmountColor = (type?: string, status?: string) => {
-    if (status === 'failed' || status === 'cancelled') {
+  const getAmountColor = (direction?: string, status?: string) => {
+    if (status === 'FAILED' || status === 'CANCELLED') {
       return 'text-red-600';
     }
-    if (type === 'credit' || type === 'deposit') {
-      return 'text-green-600';
-    }
-    return 'text-red-600';
+    return direction === 'CREDIT' ? 'text-green-600' : 'text-red-600';
   };
 
   const timeRangeOptions = ['All Time', 'This week', 'Last 30 days', 'Custom'];
@@ -558,10 +593,10 @@ export default function PlayerTransactionHistory({
             </div>
           ) : (
             <>
-              <div className="w-full overflow-x-auto rounded-lg">
-                <div className="min-w-[900px]">
-                  <table className="w-full">
-                    <thead className="bg-inherit">
+              <div className="w-full overflow-x-auto rounded-lg border border-gray-200">
+                <div className="w-full">
+                  <table className="w-full table-auto text-sm">
+                    <thead className="bg-gray-50">
                       <tr>
                         <th
                           className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
@@ -571,7 +606,7 @@ export default function PlayerTransactionHistory({
                           Transaction ID
                         </th>
                         <th
-                          className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                           data-aos="fade-up"
                           data-aos-delay="300"
                         >
@@ -585,21 +620,21 @@ export default function PlayerTransactionHistory({
                           Amount
                         </th>
                         <th
-                          className="w-[200px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          className="w-[180px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                           data-aos="fade-up"
                           data-aos-delay="500"
                         >
                           Date & Time
                         </th>
-                        <th
+                        {/* <th
                           className="w-[100px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                           data-aos="fade-up"
                           data-aos-delay="550"
                         >
                           Status
-                        </th>
+                        </th> */}
                         <th
-                          className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                          className="w-[120px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                           data-aos="fade-up"
                           data-aos-delay="600"
                         >
@@ -607,62 +642,57 @@ export default function PlayerTransactionHistory({
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 bg-white">
+                    <tbody className="w-full divide-y divide-gray-200 bg-white text-sm">
                       {filteredItems.map((transaction, index) => (
                         <tr
                           key={transaction.id || index}
                           data-aos="fade-up"
                           data-aos-delay={700 + index * 100}
+                          className="w-full border-b border-gray-200"
                         >
                           <td className="whitespace-nowrap px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <CustomImage
-                                src={getTransactionIcon(
-                                  transaction.type,
+                              <div className="flex items-center gap-2">
+                                {getTransactionIcon(
+                                  transaction.direction,
                                   transaction.status,
                                 )}
-                                alt="transaction status"
-                                className="size-5"
-                              />
-                              {getTransactionId(transaction)}
+                                <span className="text-gray-900">
+                                  {getTransactionId(transaction)}
+                                </span>
+                              </div>
                             </div>
                           </td>
                           <td className="whitespace-nowrap px-6 py-4">
                             {getTransactionType(transaction)}
                           </td>
-                          <td
-                            className={`whitespace-nowrap px-6 py-4 font-medium ${getAmountColor(
-                              transaction.type,
-                              transaction.status,
-                            )}`}
-                          >
-                            {formatAmount(transaction.amount, transaction.type)}
+                          <td className="whitespace-nowrap px-6 py-4">
+                            <div className="flex items-center">
+                              <div
+                                className={`flex items-center gap-1 font-medium ${getAmountColor(
+                                  transaction.direction,
+                                  transaction.status,
+                                )}`}
+                              >
+                                {formatAmount(
+                                  transaction.amount,
+                                  transaction.direction,
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td className="whitespace-nowrap px-6 py-4">
                             {formatDate(transaction)}
                           </td>
                           <td className="whitespace-nowrap px-6 py-4">
-                            <span
-                              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold capitalize ${
-                                transaction.status === 'completed'
-                                  ? 'bg-green-100 text-green-800'
-                                  : transaction.status === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : transaction.status === 'failed'
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}
-                            >
-                              {transaction.status || 'Unknown'}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4">
-                            <button
-                              className="bg-primary-900 hover:bg-primary-500 cursor-pointer rounded-3xl px-4 py-2 text-sm text-white"
-                              onClick={() => handleViewDetails(transaction)}
-                            >
-                              View Details
-                            </button>
+                            <div className="flex justify-end md:block">
+                              <button
+                                className="bg-primary-900 hover:bg-primary-500 mt-2 w-full cursor-pointer rounded-3xl px-4 py-2 text-sm text-white md:mt-0 md:w-auto"
+                                onClick={() => handleViewDetails(transaction)}
+                              >
+                                View Details
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}

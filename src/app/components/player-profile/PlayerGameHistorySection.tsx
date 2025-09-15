@@ -10,23 +10,34 @@ import GameHistoryModal from './GameHistoryModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { formatNaira } from '@/app/utils/utils';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 
 type GameHistoryItem = {
-  gameId?: string;
-  gameName?: string;
-  date?: string | { iso: string } | Date;
-  score?: number;
-  status?: string;
-  reward?: number;
-  earnings?: number;
-  position?: number;
-  id?: string;
-  [key: string]: string | number | boolean | Date | { iso: string } | undefined;
+  gameId: string;
+  status: string;
+  fee: number;
+  duration: number;
+  startTime: string;
+  endTime: string;
+  description: string;
+  prize: number;
+  coinPrize: number;
+  name: string;
+  numberOfQuestions: number;
+  currentQuestionOrder: number;
+  prizeBetween: number;
+  coinPrizeBetween: number;
+  customerId: string;
+  gameType: string;
+  reward: number;
+  rewardType: string;
+  gameResultStatus: 'WON' | 'LOSS' | 'DRAW' | 'PENDING';
+  customerGameLobbyStatus: string;
 };
 
 type TransformedGameHistoryItem = {
   id: string;
-  date: string | { iso: string };
+  date: string;
   reward: {
     type: 'money' | 'item';
     value: string;
@@ -37,17 +48,18 @@ type TransformedGameHistoryItem = {
   totalTime: string;
   status: string;
   gameName: string;
-  gameId?: string;
-  score?: number;
-  earnings?: number;
-  position?: number;
+  gameId: string;
+  score: number;
+  earnings: number;
+  position: number;
+  gameResultStatus: string;
 };
 
 interface PlayerGameHistorySectionProps {
   userId: string;
 }
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 export default function PlayerGameHistorySection({
   userId,
@@ -56,30 +68,64 @@ export default function PlayerGameHistorySection({
 
   const router = useRouter();
 
-  const handleViewHistory = (gameId: string, status?: string) => {
-    const statusParam = status ? `?status=${encodeURIComponent(status)}` : '';
+  const handleViewHistory = (
+    gameId: string,
+    customerId: string,
+    status?: string,
+  ) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('customerId', customerId);
+
     router.push(
-      `/players/player-profile/${userId}/game-history/${gameId}${statusParam}`,
+      `/players/player-profile/${userId}/game-history/${gameId}?${params.toString()}`,
     );
   };
   const {
-    data: gameStatsData,
+    data: gameHistoryResponse,
     isLoading,
     error,
     isError,
   } = useQuery({
-    queryKey: ['playerGameStats', userId, currentPage],
+    queryKey: ['playerGameHistory', userId, currentPage],
     queryFn: () =>
-      PlayerApi.getPlayerGameStats({
-        userId,
-        page: currentPage,
-        limit: ITEMS_PER_PAGE,
-      }),
+      PlayerApi.getPlayerGameHistory(userId, currentPage - 1, ITEMS_PER_PAGE),
     enabled: !!userId,
   });
 
-  const gameHistoryData = gameStatsData?.data?.result?.gameHistory?.data || [];
-  const pagination = gameStatsData?.data?.result?.gameHistory?.pagination;
+  const gameHistoryData =
+    gameHistoryResponse?.data?.data?.content?.map((game: any) => ({
+      ...game,
+
+      status: game.gameResultStatus || 'COMPLETED',
+      fee: 0,
+      duration: 0,
+      startTime: new Date().toISOString(),
+      endTime: new Date().toISOString(),
+      description: '',
+      prize: 0,
+      coinPrize: 0,
+      name: 'Game',
+      numberOfQuestions: 0,
+      currentQuestionOrder: 0,
+      prizeBetween: 0,
+      coinPrizeBetween: 0,
+      gameType: 'QUIZ',
+      reward: 0,
+      rewardType: 'NONE',
+      customerGameLobbyStatus: 'COMPLETED',
+    })) || [];
+
+  const pagination = {
+    totalPages: gameHistoryResponse?.data?.data?.totalPages || 0,
+    totalCount: gameHistoryResponse?.data?.data?.totalElements || 0,
+    currentPage: currentPage,
+    hasNext: !gameHistoryResponse?.data?.data?.last,
+    hasPrev: currentPage > 1,
+  };
+
+  console.log('Transformed Game History Data:', gameHistoryData);
+  console.log('Pagination:', pagination);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -94,73 +140,77 @@ export default function PlayerGameHistorySection({
     return pages;
   };
 
-  const formatDateForDisplay = (
-    dateValue: string | { iso: string } | Date | undefined,
-  ): string => {
+  const formatDateForDisplay = (dateValue: string | Date): string => {
     if (!dateValue) return 'N/A';
 
     try {
-      let dateObj: Date;
+      const date =
+        typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
 
-      if (typeof dateValue === 'string') {
-        dateObj = new Date(dateValue);
-      } else if (typeof dateValue === 'object' && 'iso' in dateValue) {
-        dateObj = new Date(dateValue.iso);
-      } else if (dateValue instanceof Date) {
-        dateObj = dateValue;
-      } else {
+      if (isNaN(date.getTime())) {
         return 'N/A';
       }
 
-      if (isNaN(dateObj.getTime())) {
-        return 'N/A';
-      }
-
-      return dateObj.toLocaleDateString();
+      return format(date, 'MMM d, yyyy h:mm a');
     } catch (error) {
       console.error('Error formatting date:', error);
       return 'N/A';
     }
   };
 
-  const transformGameData = (game: any): TransformedGameHistoryItem => {
-    const safeToString = (
-      value: string | number | boolean | Date | { iso: string } | undefined,
-    ): string => {
-      if (value === null || value === undefined) return 'N/A';
-      if (typeof value === 'string') return value;
-      if (typeof value === 'number') return value.toString();
-      if (typeof value === 'boolean') return value.toString();
-      if (typeof value === 'object') {
-        if (value && 'iso' in value && typeof value.iso === 'string') {
-          return new Date(value.iso).toLocaleDateString();
-        }
-        if (value instanceof Date) {
-          return value.toLocaleDateString();
-        }
-        return JSON.stringify(value);
-      }
-      return String(value);
-    };
+  const formatDuration = (seconds: number): string => {
+    if (!seconds) return '00:00';
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
+      .toString()
+      .padStart(2, '0')}`;
+  };
 
-    const rewardAmount = game.rewards || game.earnings || 0;
+  const transformGameData = (
+    game: GameHistoryItem,
+  ): TransformedGameHistoryItem => {
+    const gameName = 'Game ' + (game.gameId || '').substring(0, 6);
+    const startDate = game.startTime ? new Date(game.startTime) : new Date();
+    const endDate = game.endTime ? new Date(game.endTime) : new Date();
+    const durationInSeconds = Math.floor(
+      (endDate.getTime() - startDate.getTime()) / 1000,
+    );
+
+    let status = 'Completed';
+    let earnings = 0;
+
+    if (game.gameResultStatus === 'WON') {
+      status = 'Won';
+      earnings = game.prize || 0;
+    } else if (game.gameResultStatus === 'LOSS') {
+      status = 'Lost';
+      earnings = 0;
+    } else if (game.gameResultStatus === 'DRAW') {
+      status = 'Draw';
+      earnings = 0;
+    } else if (game.gameResultStatus === 'PENDING') {
+      status = 'In Progress';
+      earnings = 0;
+    }
 
     return {
-      id: safeToString(game.gameId || game.id || 'N/A'),
-      date: game.date || 'N/A',
+      id: game.gameId,
+      date: startDate.toISOString(),
       reward: {
         type: 'money',
-        value: formatNaira(rewardAmount, true),
+        value: formatNaira(earnings, true),
       },
-      correctScore: Number(game.score) || 0,
+      correctScore: 0,
       incorrectScore: 0,
-      totalTime: '00:00 minutes',
-      status: safeToString(game.status || 'Unknown'),
-      gameName: safeToString(game.gameName || 'Unknown Game'),
+      totalTime: formatDuration(durationInSeconds),
+      status: status,
+      gameName: gameName,
       gameId: game.gameId,
-      score: game.score,
-      earnings: game.earnings,
-      position: game.position,
+      score: 0,
+      earnings: earnings,
+      position: 0,
+      gameResultStatus: game.gameResultStatus || 'UNKNOWN',
     };
   };
 
@@ -174,9 +224,9 @@ export default function PlayerGameHistorySection({
         <h2 className="mb-6 text-2xl font-semibold text-gray-900">
           Game History
         </h2>
-        <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-          <span className="ml-2 text-gray-600">Loading game history...</span>
+          <span className="mt-2 text-gray-600">Loading game history...</span>
         </div>
       </div>
     );
@@ -194,7 +244,10 @@ export default function PlayerGameHistorySection({
         </h2>
         <div className="rounded-lg bg-red-50 p-4 text-center">
           <p className="text-red-600">
-            Error loading game history: {error?.message}
+            Error loading game history:{' '}
+            {error instanceof Error
+              ? error.message
+              : 'An unknown error occurred'}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -288,11 +341,23 @@ export default function PlayerGameHistorySection({
                       data-aos-delay={700 + index * 100}
                     >
                       <td className="whitespace-nowrap px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {transformedGame.id}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {formatDateForDisplay(transformedGame.date)}
+                        <div className="flex items-center">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                            <CustomImage
+                              src="/assets/images/gamepad.svg"
+                              alt="Game"
+                              width={20}
+                              height={20}
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <h3 className="text-sm font-medium text-gray-900">
+                              {transformedGame.gameName}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {formatDateForDisplay(transformedGame.date)}
+                            </p>
+                          </div>
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
@@ -311,29 +376,33 @@ export default function PlayerGameHistorySection({
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            transformedGame.status === 'Won' ||
-                            transformedGame.status === 'won'
-                              ? 'bg-green-100 text-green-800'
-                              : transformedGame.status === 'Loss' ||
-                                transformedGame.status === 'lost'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {transformedGame.status}
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              transformedGame.gameResultStatus === 'WON'
+                                ? 'bg-green-100 text-green-800'
+                                : transformedGame.gameResultStatus === 'LOSS'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}
+                          >
+                            {transformedGame.status}
+                          </span>
+                          <span className="mt-1 text-sm font-medium text-gray-900">
+                            {transformedGame.reward.value}
+                          </span>
+                        </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
                         <button
+                          className="bg-primary-900 hover:bg-primary-500 mt-2 w-full cursor-pointer rounded-3xl px-4 py-2 text-sm text-white md:mt-0 md:w-auto"
                           onClick={() =>
                             handleViewHistory(
-                              transformedGame.id,
-                              transformedGame.status,
+                              game.gameId,
+                              game.customerId,
+                              game.status,
                             )
                           }
-                          className="text-primary-900 cursor-pointer"
                         >
                           View
                         </button>
@@ -348,62 +417,194 @@ export default function PlayerGameHistorySection({
       </div>
 
       {pagination && pagination.totalPages > 1 && (
-        <>
-          <div className="mt-6 flex items-center justify-center">
-            <nav
-              className="flex items-center space-x-2"
-              aria-label="Pagination"
+        <div className="mt-6 flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
+          <div className="flex flex-1 justify-between sm:hidden">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              <button
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
-                  currentPage === 1
-                    ? 'cursor-not-allowed border-gray-200 text-gray-400'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                &#8249;
-              </button>
-
-              {generatePageNumbers().map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  onClick={() => handlePageChange(pageNumber)}
-                  className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-                    currentPage === pageNumber
-                      ? 'bg-blue-900 text-white'
-                      : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              ))}
-
-              <button
-                onClick={() =>
-                  handlePageChange(
-                    Math.min(pagination.totalPages, currentPage + 1),
-                  )
-                }
-                disabled={currentPage === pagination.totalPages}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
-                  currentPage === pagination.totalPages
-                    ? 'cursor-not-allowed border-gray-200 text-gray-400'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                &#8250;
-              </button>
-            </nav>
+              Previous
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === pagination.totalPages}
+              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
 
-          {/* <div className="mt-4 text-center text-sm text-gray-500">
-            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
-            {Math.min(currentPage * ITEMS_PER_PAGE, pagination.totalCount || 0)}{' '}
-            of {pagination.totalCount || 0} entries
-          </div> */}
-        </>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing{' '}
+                <span className="font-medium">
+                  {pagination.totalCount === 0
+                    ? 0
+                    : (currentPage - 1) * ITEMS_PER_PAGE + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-medium">
+                  {Math.min(
+                    currentPage * ITEMS_PER_PAGE,
+                    pagination.totalCount,
+                  )}
+                </span>{' '}
+                of <span className="font-medium">{pagination.totalCount}</span>{' '}
+                results
+              </p>
+            </div>
+
+            <div>
+              <nav
+                className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                aria-label="Pagination"
+              >
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+
+                {Array.from(
+                  { length: Math.min(5, pagination.totalPages) },
+                  (_, i) => {
+                    if (pagination.totalPages <= 5) {
+                      const pageNum = i + 1;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                            currentPage === pageNum
+                              ? 'z-10 bg-blue-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    }
+
+                    if (i === 0) {
+                      return (
+                        <button
+                          key={1}
+                          onClick={() => handlePageChange(1)}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                            currentPage === 1
+                              ? 'z-10 bg-blue-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                          }`}
+                        >
+                          1
+                        </button>
+                      );
+                    }
+
+                    if (i === 4) {
+                      return (
+                        <button
+                          key={pagination.totalPages}
+                          onClick={() =>
+                            handlePageChange(pagination.totalPages)
+                          }
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                            currentPage === pagination.totalPages
+                              ? 'z-10 bg-blue-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                          }`}
+                        >
+                          {pagination.totalPages}
+                        </button>
+                      );
+                    }
+
+                    if (i === 1 && currentPage > 3) {
+                      return (
+                        <span
+                          key="start-ellipsis"
+                          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    if (i === 3 && currentPage < pagination.totalPages - 2) {
+                      return (
+                        <span
+                          key="end-ellipsis"
+                          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+
+                    let pageNum;
+                    if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= pagination.totalPages - 2) {
+                      pageNum = pagination.totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                          currentPage === pageNum
+                            ? 'z-10 bg-blue-600 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                            : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  },
+                )}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === pagination.totalPages}
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                >
+                  <span className="sr-only">Next</span>
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
