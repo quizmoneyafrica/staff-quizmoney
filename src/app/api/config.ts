@@ -33,7 +33,9 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 };
 
 const errorHandler = async (error) => {
-  if (error?.response?.status === 401) {
+  const location = window.location.href;
+
+  if (error?.response?.status === 401 || error?.response?.status === 403) {
     if (operator?.refreshToken) {
       if (!isRefreshing) {
         isRefreshing = true;
@@ -60,7 +62,9 @@ const errorHandler = async (error) => {
           isRefreshing = false;
         } catch (refreshError) {
           isRefreshing = false;
-          window.location.href = ROUTES.LOG_IN;
+          window.location.href = `${ROUTES.LOG_IN}?from=${encodeURIComponent(
+            location,
+          )}`;
           return Promise.reject(refreshError);
         }
       }
