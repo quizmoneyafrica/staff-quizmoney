@@ -28,12 +28,31 @@ export interface ResendSignupOTPForm {
   email: string;
 }
 
-//verifyForgotPasswordOtp interface
+// Forgot Password Request
+export interface ForgotPasswordRequest {
+  email: string;
+  purpose: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+}
+
+// Verify OTP Request
+export interface VerifyOtpRequest {
+  otp: string;
+  purpose: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET';
+}
+
+// Reset Password Request
+export interface ResetPasswordRequest {
+  code: string;
+  password: string;
+  confirmPassword: string;
+}
+
+// old for backward compatibility
 export interface VerifyForgotPasswordOtpForm {
   email: string;
   otp: string;
 }
-//verifyForgotPasswordOtp interface
+
 export interface ResetPasswordForm {
   email?: string;
   password: string;
