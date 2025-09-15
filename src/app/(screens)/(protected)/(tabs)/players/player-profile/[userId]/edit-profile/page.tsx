@@ -541,7 +541,7 @@ export default function EditProfile() {
           </div>
         </div>
 
-        <p className="font-heading text-2xl font-bold">Bank</p>
+        {/* <p className="font-heading text-2xl font-bold">Bank</p>
 
         <div className="my-4">
           <div className="flex w-full flex-col items-center gap-4 md:flex-row">
@@ -608,7 +608,7 @@ export default function EditProfile() {
               )}
             />
           </div>
-        </div>
+        </div> */}
 
         <div className="flex gap-3">
           <CustomButton
