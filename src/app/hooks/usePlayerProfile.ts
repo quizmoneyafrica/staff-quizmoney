@@ -1,4 +1,8 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import {
+  useQuery,
+  UseQueryResult,
+  UseQueryOptions,
+} from '@tanstack/react-query';
 import PlayerApi, {
   ViewPlayerProfileRequest,
   GetPlayerTransactionsRequest,
@@ -157,6 +161,91 @@ export const usePlayerTransactions = (
       }
     },
     enabled: Boolean(userId),
+  });
+};
+
+export interface WalletTransaction {
+  id: string;
+  transactionDate: string;
+  transactionStatus: string;
+  transactionType: string;
+  narration: string;
+  firstName: string;
+  lastName: string;
+  amount: number;
+  direction: 'DEBIT' | 'CREDIT';
+  currency: string;
+}
+
+export interface WalletTransactionsResponse {
+  content: WalletTransaction[];
+  pageNo: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+export interface WalletTransactionsApiResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    content: WalletTransaction[];
+    pageNo: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    last: boolean;
+  };
+}
+
+export const useWalletTransactions = (
+  customerId: string,
+  params: {
+    page?: number;
+    size?: number;
+    status?: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
+    type?: 'FUNDING' | 'WITHDRAWAL' | 'REVERSAL';
+    search?: string;
+    'start-date'?: string;
+    'end-date'?: string;
+  } = {},
+  options?: Omit<
+    UseQueryOptions<WalletTransactionsResponse, Error>,
+    'queryKey' | 'queryFn'
+  >,
+) => {
+  return useQuery<WalletTransactionsResponse, Error>({
+    queryKey: ['walletTransactions', customerId, params],
+    queryFn: async () => {
+      const response = await PlayerApi.getWalletTransactions(
+        customerId,
+        params,
+      );
+
+      if (response.data?.data?.content) {
+        const { data } = response.data;
+        return {
+          content: data.content,
+          pageNo: data.pageNo,
+          pageSize: data.pageSize,
+          totalElements: data.totalElements,
+          totalPages: data.totalPages,
+          last: data.last,
+        } as WalletTransactionsResponse;
+      }
+
+      return {
+        content: [],
+        pageNo: 0,
+        pageSize: 10,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      } as WalletTransactionsResponse;
+    },
+    ...options,
   });
 };
 

@@ -28,13 +28,20 @@ const SocialSection = ({ userId, socialData }: SocialSectionProps) => {
         transactionPage: 1,
         transactionLimit: 10,
       });
-      return response.data.result;
+      return response.data?.data;
     },
     enabled: !!userId && !socialData,
   });
 
-  const socials = socialData || playerProfileData?.socials;
-  const userDetails = playerProfileData?.userDetails;
+  const socials = socialData || {
+    facebook: playerProfileData?.facebookHandle,
+    instagram: playerProfileData?.instagramHandle,
+    twitter: playerProfileData?.twitterHandle,
+    tiktok: playerProfileData?.tiktokHandle,
+    whatsapp: playerProfileData?.whatsappContact,
+  };
+
+  const userDetails = playerProfileData;
 
   if (isProfileLoading) {
     return (

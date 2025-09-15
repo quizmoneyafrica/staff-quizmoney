@@ -67,12 +67,26 @@ interface GetPlayerTransactionsRequest {
 }
 
 interface GameHistoryItem {
-  gameId?: string;
-  gameName?: string;
-  date?: string;
-  score?: number;
-  status?: string;
-  earnings?: number;
+  gameId: string;
+  status: string;
+  fee: number;
+  duration: number;
+  startTime: string;
+  endTime: string;
+  description: string;
+  prize: number;
+  coinPrize: number;
+  name: string;
+  numberOfQuestions: number;
+  currentQuestionOrder: number;
+  prizeBetween: number;
+  coinPrizeBetween: number;
+  customerId: string;
+  gameType: string;
+  reward: number;
+  rewardType: string;
+  gameResultStatus: string;
+  customerGameLobbyStatus: string;
   extraData?: Record<string, unknown>;
 }
 
@@ -238,6 +252,43 @@ interface UpdatePlayerVerificationResponse {
   };
 }
 
+interface UpdateCustomerProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  dob?: string;
+  country?: string;
+  gender?: string;
+  avatarUrl?: string;
+  promotions?: boolean;
+  facebook?: string;
+  twitter?: string;
+  instagram?: string;
+  whatsapp?: string;
+  tiktok?: string;
+}
+
+interface UpdateCustomerProfileResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    dob: string;
+    country: string;
+    gender: string;
+    avatarUrl: string;
+    promotions: boolean;
+    facebookHandle: string;
+    twitterHandle: string;
+    instagramHandle: string;
+    whatsappContact: string;
+    tiktokHandle: string;
+  };
+}
+
 const PlayerApi = {
   viewPlayerProfile(
     data: ViewPlayerProfileRequest,
@@ -259,6 +310,30 @@ const PlayerApi = {
     return request.post(`/getPlayerGameStats`, data, {});
   },
 
+  getPlayerGameHistory(
+    customerId: string,
+    page: number = 0,
+    size: number = 10,
+  ): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: {
+        content: GameHistoryItem[];
+        pageNo: number;
+        pageSize: number;
+        totalElements: number;
+        totalPages: number;
+        last: boolean;
+      };
+    }>
+  > {
+    return request.get(
+      `/games/history?customerId=${customerId}&page=${page}&size=${size}`,
+    );
+  },
+
   getPlayerTransactions(
     data: GetPlayerTransactionsRequest,
   ): Promise<AxiosResponse<PlayerTransactionsResponse>> {
@@ -269,6 +344,68 @@ const PlayerApi = {
     data: UpdatePlayerVerificationRequest,
   ): Promise<AxiosResponse<UpdatePlayerVerificationResponse>> {
     return request.post(`/updatePlayer`, data, {});
+  },
+
+  async updateCustomerProfile(
+    customerId: string,
+    data: UpdateCustomerProfileRequest,
+  ): Promise<AxiosResponse<UpdateCustomerProfileResponse>> {
+    return request.patch(`/api/v1/customers/${customerId}`, data, {});
+  },
+
+  getWalletTransactions(
+    customerId: string,
+    params: {
+      page?: number;
+      size?: number;
+      status?: 'PENDING' | 'SUCCESSFUL' | 'FAILED';
+      type?: 'FUNDING' | 'WITHDRAWAL' | 'REVERSAL';
+      search?: string;
+      'start-date'?: string;
+      'end-date'?: string;
+    } = {},
+  ): Promise<
+    AxiosResponse<{
+      success: boolean;
+      code: string;
+      message: string;
+      data: {
+        content: Array<{
+          id: string;
+          transactionDate: string;
+          transactionStatus: string;
+          transactionType: string;
+          narration: string;
+          firstName: string;
+          lastName: string;
+          amount: number;
+          direction: 'DEBIT' | 'CREDIT';
+          currency: string;
+        }>;
+        pageNo: number;
+        pageSize: number;
+        totalElements: number;
+        totalPages: number;
+        last: boolean;
+      };
+    }>
+  > {
+    return request.get(`/wallet-transactions`, {
+      params: {
+        customerId,
+        ...params,
+      },
+    });
+  },
+
+  getPlayerBalances(customerId: string): Promise<
+    AxiosResponse<{
+      eraserBalance: number;
+      walletBalance: number;
+      coinBalance: number;
+    }>
+  > {
+    return request.get(`/customers/${customerId}/balances`);
   },
 
   flagPlayer(
@@ -295,6 +432,8 @@ export type {
   UpdatePlayerPayload,
   UpdatePlayerVerificationRequest,
   UpdatePlayerVerificationResponse,
+  UpdateCustomerProfileRequest,
+  UpdateCustomerProfileResponse,
   FlagPlayerRequest,
   FlagPlayerResponse,
 };

@@ -2135,3 +2135,63 @@ export const BuildingIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
     />
   </svg>
 );
+
+export const DepositGreenIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
+  props,
+) => (
+  <svg
+    width={42}
+    height={42}
+    viewBox="0 0 42 42"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M14.2416 17.3014L13.523 27.5774L23.7991 28.296"
+      stroke="#009028"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M28.9189 14.1936L13.6768 27.4434"
+      stroke="#009028"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const DebitRedIcon: React.FC<React.SVGProps<SVGSVGElement>> = (
+  props,
+) => (
+  <svg
+    width={42}
+    height={42}
+    viewBox="0 0 42 42"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <path
+      d="M27.7584 24.6986L28.477 14.4226L18.2009 13.704"
+      stroke="#C30012"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M13.0811 27.8064L28.3232 14.5566"
+      stroke="#C30012"
+      strokeWidth={1.5}
+      strokeMiterlimit={10}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

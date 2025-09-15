@@ -21,10 +21,15 @@ import { useParams } from 'next/navigation';
 import { usePlayerProfile } from '@/app/hooks/usePlayerProfile';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import PlayerApi, {
+  UpdateCustomerProfileRequest,
+} from '@/app/api/PlayerProfileApi';
 
 export default function EditProfile() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const userId = params.userId as string;
 
@@ -32,7 +37,7 @@ export default function EditProfile() {
 
   const { data } = useGetBanks();
   const { mutateAsync: verifyAccount } = useVerifyAccount();
-  const { mutateAsync: udpatePlayer, isPending } = useUpdatePlayer();
+  const { mutateAsync: updatePlayer, isPending } = useUpdatePlayer();
 
   const banks = useMemo(() => {
     if (data?.result?.data) {
@@ -89,6 +94,7 @@ export default function EditProfile() {
     twitter: '',
     instagram: '',
     tiktok: '',
+    whatsapp: '',
     bankDetails: {
       accountNumber: '',
       bankName: '',
@@ -110,25 +116,58 @@ export default function EditProfile() {
   });
 
   useEffect(() => {
+    console.log('Raw Player Data:', playerData);
     if (playerData) {
-      setValue('firstName', playerData?.userDetails?.firstName);
-      setValue('lastName', playerData?.userDetails?.lastName);
-      setValue('email', playerData?.userDetails?.email);
-      setValue('country', 'Nigeria');
-      setValue('gender', playerData?.userDetails?.gender);
-      setValue(
-        'dob',
-        new Date(playerData?.userDetails?.dateOfBirth?.iso || ''),
-      );
-      setValue('kycVerified', playerData?.userDetails?.kycVerified);
-      setValue('facebook', playerData?.socials?.facebook);
-      setValue('twitter', playerData?.socials?.twitter);
-      setValue('instagram', playerData?.socials?.instagram);
-      setValue('tiktok', playerData?.socials?.tiktok ?? '');
+      console.log('Player Data Keys:', Object.keys(playerData));
+
+      const data = playerData.data || playerData;
+      console.log('Data to use:', data);
+
+      const firstName = data.firstName || data.userDetails?.firstName || '';
+      const lastName = data.lastName || data.userDetails?.lastName || '';
+      const email = data.email || data.userDetails?.email || '';
+      const country = data.country || data.userDetails?.country || 'Nigeria';
+      const gender = data.gender || data.userDetails?.gender || '';
+      const dob = data.dob || data.userDetails?.dateOfBirth?.iso || '';
+
+      setValue('firstName', firstName);
+      setValue('lastName', lastName);
+      setValue('email', email);
+      setValue('country', country);
+      setValue('gender', gender);
+      setValue('dob', dob ? new Date(dob) : new Date());
+
+      const socials = {
+        facebook: data.facebookHandle || data.facebook || '',
+        twitter: data.twitterHandle || data.twitter || '',
+        instagram: data.instagramHandle || data.instagram || '',
+        tiktok: data.tiktokHandle || data.tiktok || '',
+        whatsapp: data.whatsappContact || data.whatsapp || '',
+      };
+
+      setValue('facebook', socials.facebook);
+      setValue('twitter', socials.twitter);
+      setValue('instagram', socials.instagram);
+      setValue('tiktok', socials.tiktok);
+      setValue('whatsapp', socials.whatsapp);
+
+      const kycVerified =
+        data.kycVerified || data.userDetails?.kycVerified || false;
+      setValue('kycVerified', kycVerified);
+
+      console.log('Setting form values:', {
+        firstName,
+        lastName,
+        email,
+        dob,
+        gender,
+        country,
+        socials,
+        kycVerified,
+      });
 
       if (playerData?.bankAccounts?.[0]) {
         if (!playerData.bankAccounts[0].bankCode) {
-          // get bank code from banks list
           const bank = banks.find(
             (b) => b.label === playerData.bankAccounts[0].bankName,
           );
@@ -142,7 +181,6 @@ export default function EditProfile() {
             );
           }
         } else {
-          // use existing bank code
           setValue(
             'bankDetails.bankName',
             JSON.stringify({
@@ -166,38 +204,63 @@ export default function EditProfile() {
   const bank_name = watch('bankDetails.bankName');
 
   const onSubmit = async (data: FormValues) => {
-    const payload = {
-      userId,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      dob: data.dob.toISOString(),
-      kycVerified: data.kycVerified,
-      facebook: data.facebook,
-      twitter: data.twitter,
-      instagram: data.instagram,
-      tiktok: data.tiktok,
-      ...(data.bankDetails.accountName && {
-        bankDetails: {
-          accountNumber: data.bankDetails.accountNumber,
-          bankName: JSON.parse(data.bankDetails.bankName).name,
-          accountName: data.bankDetails.accountName,
-          bankCode: JSON.parse(data.bankDetails.bankName).code,
-        },
-      }),
-    };
+    console.log('Form submitted with data:', data);
 
     try {
-      const response = await udpatePlayer(payload);
+      const formatDate = (date: Date) => {
+        return date.toISOString().split('T')[0];
+      };
 
-      if (response?.result?.status === 'error') {
-        toast.error(response?.result?.message);
-      } else {
-        toast.success(response?.result?.message);
+      const payload: UpdateCustomerProfileRequest = {
+        firstName: data.firstName.trim(),
+        lastName: data.lastName.trim(),
+        dob: formatDate(data.dob),
+        country: data.country || 'Nigeria',
+        gender: data.gender || 'MALE',
+        avatarUrl: playerData?.data?.avatarUrl || '',
+        promotions: false,
+        facebook: data.facebook?.trim() || '',
+        twitter: data.twitter?.trim() || '',
+        instagram: data.instagram?.trim() || '',
+        whatsapp: data.whatsapp?.trim() || '',
+        tiktok: data.tiktok?.trim() || '',
+      };
+
+      console.log('Sending PATCH request with payload:', payload);
+
+      const response = await PlayerApi.updateCustomerProfile(userId, payload);
+
+      console.log('API Response:', response);
+
+      if (response?.data?.success) {
+        toast.success('Profile updated successfully');
+        // Refresh the data after successful update
+        await queryClient.invalidateQueries({
+          queryKey: ['playerProfile', userId],
+        });
         router.back();
+      } else {
+        const errorMessage =
+          response?.data?.message || 'Failed to update profile';
+        console.error('Update failed:', errorMessage);
+        toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error(error?.result?.message);
+      console.error('Error updating profile:', error);
+      let errorMessage = 'An error occurred while updating profile';
+
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+        errorMessage = error.response.data?.message || errorMessage;
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+        errorMessage = 'No response from server. Please check your connection.';
+      } else {
+        console.error('Error message:', error.message);
+        errorMessage = error.message || errorMessage;
+      }
+
+      toast.error(errorMessage);
     }
   };
 
@@ -254,9 +317,41 @@ export default function EditProfile() {
     );
   }
 
+  const testSubmit = () => {
+    console.log('Test button clicked');
+    const testData = {
+      firstName: 'Test',
+      lastName: 'User',
+      dob: new Date(),
+      country: 'Nigeria',
+      gender: 'MALE',
+      facebook: 'test',
+      twitter: 'test',
+      instagram: 'test',
+      tiktok: 'test',
+      whatsapp: 'test',
+      bankDetails: {
+        accountNumber: '',
+        bankName: '',
+        accountName: '',
+      },
+      kycVerified: false,
+      email: 'test@example.com',
+    };
+    onSubmit(testData);
+  };
+
   return (
     <div className="flex w-full flex-col gap-6 py-6">
-      <BackButton />
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700"
+        >
+          <BackButton /> Back to Profile
+        </button>
+      </div>
 
       <form
         className="rounded-lg bg-white p-6"
@@ -545,16 +640,18 @@ export default function EditProfile() {
             onClick={() => {
               router.back();
             }}
+            disabled={isPending}
           >
             Cancel
           </CustomButton>
           <CustomButton
-            type="submit"
+            type="button"
             width="full"
-            loader={isPending}
+            onClick={testSubmit}
             disabled={isPending}
+            loader={isPending}
           >
-            Submit
+            Update Profile
           </CustomButton>
         </div>
       </form>
