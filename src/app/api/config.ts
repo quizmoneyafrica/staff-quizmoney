@@ -33,7 +33,7 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 };
 
 const errorHandler = async (error) => {
-  const location = window.location.href;
+  const location = window.location.pathname;
 
   if (error?.response?.status === 401 || error?.response?.status === 403) {
     if (operator?.refreshToken) {
