@@ -33,7 +33,7 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 };
 
 const errorHandler = async (error) => {
-  if (error?.response?.status === 401) {
+  if (error?.response?.status === 401 || error?.response?.status === 403) {
     if (operator?.refreshToken) {
       if (!isRefreshing) {
         isRefreshing = true;
