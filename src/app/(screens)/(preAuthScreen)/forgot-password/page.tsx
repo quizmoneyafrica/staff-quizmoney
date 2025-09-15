@@ -20,11 +20,11 @@ function Page() {
   const { isAuthenticated, rehydrated } = useAppSelector((s) => s.auth);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (rehydrated && isAuthenticated) {
-      router.replace('/home');
-    }
-  }, [isAuthenticated, rehydrated, router]);
+  // useEffect(() => {
+  //   if (rehydrated && isAuthenticated) {
+  //     router.replace('/dashboard');
+  //   }
+  // }, [isAuthenticated, rehydrated, router]);
 
   if (!rehydrated) return <AppLoader />;
 

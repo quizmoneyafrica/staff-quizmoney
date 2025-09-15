@@ -14,10 +14,11 @@ import {
 } from '@/app/utils/utils';
 import { Flex } from '@radix-ui/themes';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import secureLocalStorage from 'react-secure-storage';
+import { ROUTES } from '@/app/utils';
 
 type Props = {
   loading: boolean;
@@ -30,7 +31,11 @@ const LoginForm = ({ loading, setLoading }: Props) => {
   const [showPassword, setShowPassword] = useState(false);
   const { token, notificationPermissionStatus } = useFcmToken();
   const { loginUser } = useAuth();
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const REDIRECT_PATH = searchParams.get('from') || ROUTES.DASHBOARD;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +74,7 @@ const LoginForm = ({ loading, setLoading }: Props) => {
         refreshToken: userData.refreshToken,
       });
 
-      router.replace('/dashboard');
+      router.push(REDIRECT_PATH);
 
       toast.success(
         `Welcome Back ${capitalizeFirstLetter(userData?.user?.firstName)}`,

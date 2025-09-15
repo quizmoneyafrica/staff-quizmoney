@@ -15,13 +15,33 @@ import { VerifiedIcon } from '@/app/icons/icons';
 import { GameSession, PerfectScoreAttempt } from '@/app/api/game';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 
+interface CustomerProfile {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dateOfBirth?: string;
+  gender?: string;
+  country?: string;
+  countryFlag?: string;
+  balance?: string;
+  coinBalance?: number;
+  emailVerified?: boolean;
+  kycVerified?: boolean;
+  blacklisted?: boolean;
+  eraser?: number;
+  createdAt?: string;
+}
+
 interface GameHistoryDetailsProps {
   session: GameSession | null;
+  customerProfile: CustomerProfile | null;
   isLoading: boolean;
 }
 
 const PerfectScoreGameHistoryDetails: React.FC<GameHistoryDetailsProps> = ({
   session,
+  customerProfile,
   isLoading,
 }) => {
   if (isLoading) {
@@ -50,9 +70,53 @@ const PerfectScoreGameHistoryDetails: React.FC<GameHistoryDetailsProps> = ({
   );
   const perfectScoreAttempts = (session.moves as PerfectScoreAttempt[]) || [];
 
+  // Format customer name
+  const customerName = customerProfile
+    ? `${customerProfile.firstName || ''} ${
+        customerProfile.lastName || ''
+      }`.trim()
+    : 'N/A';
+
+  // Format customer balance
+  const customerBalance = customerProfile?.balance
+    ? formatNaira(parseFloat(customerProfile.balance))
+    : 'N/A';
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-1">
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            Customer Information
+          </h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <InfoItem
+              icon={<User className="h-5 w-5 text-gray-500" />}
+              label="Customer Name"
+              value={customerName}
+            />
+            <InfoItem
+              icon={<User className="h-5 w-5 text-gray-500" />}
+              label="Email"
+              value={customerProfile?.email || 'N/A'}
+            />
+            <InfoItem
+              icon={<Wallet className="h-5 w-5 text-gray-500" />}
+              label="Wallet Balance"
+              value={customerBalance}
+            />
+            {customerProfile?.kycVerified && (
+              <div className="flex items-center space-x-2">
+                <VerifiedIcon className="h-5 w-5 text-green-500" />
+                <span className="text-sm font-medium text-green-700">
+                  KYC Verified
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="lg:col-span-2">
         <div className="rounded-lg bg-white p-6 shadow-md">
           <h3 className="mb-4 text-lg font-bold text-gray-900">Game Details</h3>
           <div className="space-y-4">

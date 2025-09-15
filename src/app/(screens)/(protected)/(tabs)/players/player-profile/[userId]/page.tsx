@@ -113,54 +113,60 @@ export default function Page() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-6 py-6">
-      <div className="flex items-center justify-between">
-        <BackButton />
-        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
-          <VerifyUserToggle
-            isEnabled={kycVerified}
-            onToggle={handleToggleVerification}
-            isUpdating={isUpdating}
-          />
-        )}
-      </div>
-
-      <PlayerProfile
-        playerData={{
-          ...playerData,
-          blacklisted: isBlacklisted,
-          userDetails: {
-            ...playerData.userDetails,
-            kycVerified,
-          },
-        }}
-        userId={userId}
-      />
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="space-y-6">
-          <SocialSection userId={userId} socialData={playerData.socials} />
-          <BankSection />
-        </div>
-        <div className="space-y-6">
-          <KYCDocumentSection />
-          <RankSection userId={userId} gameStats={playerData.gameStats} />
-
+    <div className="flex w-full flex-col">
+      <div className="p-6 pb-0">
+        <div className="flex items-center justify-between">
+          <BackButton />
           {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
-            <ActionButtons
-              onFlagClick={handleOpenFlagModal}
-              isBlacklisted={isBlacklisted}
-              userId={userId}
+            <VerifyUserToggle
+              isEnabled={kycVerified}
+              onToggle={handleToggleVerification}
+              isUpdating={isUpdating}
             />
           )}
         </div>
       </div>
 
-      <PlayerTransactionHistory
-        transactionData={playerData.transactions}
-        userId={userId}
-      />
-      <GameHistoryPage />
+      <div className="p-6 pt-4">
+        <div className="space-y-6">
+          <PlayerProfile
+            playerData={{
+              ...playerData,
+              blacklisted: isBlacklisted,
+              userDetails: {
+                ...playerData.userDetails,
+                kycVerified,
+              },
+            }}
+            userId={userId}
+          />
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="space-y-6">
+              <SocialSection userId={userId} socialData={playerData.socials} />
+              <BankSection />
+            </div>
+            <div className="space-y-6">
+              <KYCDocumentSection />
+              <RankSection userId={userId} gameStats={playerData.gameStats} />
+
+              {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+                <ActionButtons
+                  onFlagClick={handleOpenFlagModal}
+                  isBlacklisted={isBlacklisted}
+                  userId={userId}
+                />
+              )}
+            </div>
+          </div>
+
+          <PlayerTransactionHistory
+            transactionData={playerData.transactions}
+            userId={userId}
+          />
+          <GameHistoryPage />
+        </div>
+      </div>
 
       {isFlagModalOpen && (
         <FlagUserModal
