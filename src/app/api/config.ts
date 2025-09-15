@@ -9,8 +9,6 @@ import { ROUTES } from '@/app/utils';
 import { getSessionTokenHeaders } from '@/app/api/userApi';
 import secureLocalStorage from 'react-secure-storage';
 
-const operator = secureLocalStorage.getItem('operator') as UnknownObject;
-
 export const request = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BASE_URL,
 });
@@ -33,7 +31,9 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 };
 
 const errorHandler = async (error) => {
-  const location = window.location.href;
+  const operator = secureLocalStorage.getItem('operator') as UnknownObject;
+
+  const location = window.location.pathname;
 
   if (error?.response?.status === 401 || error?.response?.status === 403) {
     if (operator?.refreshToken) {

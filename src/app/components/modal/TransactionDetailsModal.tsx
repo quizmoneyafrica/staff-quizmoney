@@ -114,7 +114,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                   <span className="font-medium text-gray-600">
                     Transaction ID
                   </span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="break-all text-right text-[16px] font-medium text-gray-900">
                     {getTransactionId(transactionData)}
                   </span>
                 </div>
@@ -148,11 +148,15 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                   </span>
                   <span
                     className={`rounded-full px-4 py-2 text-[16px] font-semibold ${
-                      transactionData.status === 'completed'
+                      transactionData.status?.toLowerCase() === 'completed' ||
+                      transactionData.status?.toLowerCase() === 'successful'
                         ? 'bg-green-100 text-green-700'
-                        : transactionData.status === 'pending'
+                        : transactionData.status?.toLowerCase() === 'pending'
                         ? 'bg-yellow-100 text-yellow-700'
-                        : transactionData.status === 'failed'
+                        : transactionData.status?.toLowerCase() === 'failed' ||
+                          transactionData.status?.toLowerCase() ===
+                            'declined' ||
+                          transactionData.status?.toLowerCase() === 'cancelled'
                         ? 'bg-red-100 text-red-700'
                         : 'bg-gray-100 text-gray-700'
                     }`}
