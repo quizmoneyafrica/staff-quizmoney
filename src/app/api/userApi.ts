@@ -1,13 +1,16 @@
 import { AxiosResponse } from 'axios';
 import {
   ApiResponse,
+  ForgotPasswordRequest,
   InAppChangePasswordForm,
   LoginForm,
   ResetPasswordForm,
+  ResetPasswordRequest,
   SignUpForm,
   UpdateUserForm,
   VerifyEmailForm,
   VerifyForgotPasswordOtpForm,
+  VerifyOtpRequest,
 } from './interface';
 import { store } from '@/app/store/store';
 import { decryptData } from '../utils/crypto';
@@ -79,27 +82,50 @@ const UserAPI = {
   resendSignupOtp(email: string): Promise<AxiosResponse<ApiResponse>> {
     return request.post(`/resendSignupOtp`, { email });
   },
-  forgotPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(`/auth/password/forgot`, {
-      email,
+  async forgotPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
+    const payload: ForgotPasswordRequest = {
+      email: email.toLowerCase().trim(),
       purpose: 'EMAIL_VERIFICATION',
+    };
+    return request.post(`${BASE_URL}/auth/password/forgot`, payload, {
+      headers: appHeaders,
     });
   },
-  resendPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(`/auth/resend`, { email });
+
+  //
+  async resendPassword(email: string): Promise<AxiosResponse<ApiResponse>> {
+    const payload: ForgotPasswordRequest = {
+      email: email.toLowerCase().trim(),
+      purpose: 'EMAIL_VERIFICATION',
+    };
+    return request.post(`${BASE_URL}/auth/password/forgot`, payload, {
+      headers: appHeaders,
+    });
   },
-  verifyForgotPasswordOtp(
+
+  async verifyForgotPasswordOtp(
     form: VerifyForgotPasswordOtpForm,
   ): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(`/verifyForgotPasswordOtp`, {
+    const payload: VerifyOtpRequest = {
       otp: form.otp,
       purpose: 'EMAIL_VERIFICATION',
+    };
+    return request.post(`${BASE_URL}/auth/otp/verify`, payload, {
+      headers: appHeaders,
     });
   },
-  resetPasswordAuth(
-    form: ResetPasswordForm,
+
+  async resetPasswordAuth(
+    form: ResetPasswordForm & { code: string; confirmPassword: string },
   ): Promise<AxiosResponse<ApiResponse>> {
-    return request.post(`/auth/password/reset`, form);
+    const payload: ResetPasswordRequest = {
+      code: form.code,
+      password: form.password,
+      confirmPassword: form.confirmPassword || form.password,
+    };
+    return request.post(`${BASE_URL}/auth/password/reset`, payload, {
+      headers: appHeaders,
+    });
   },
   inAppChangePassword(
     form: InAppChangePasswordForm,
