@@ -116,12 +116,8 @@ export default function EditProfile() {
   });
 
   useEffect(() => {
-    console.log('Raw Player Data:', playerData);
     if (playerData) {
-      console.log('Player Data Keys:', Object.keys(playerData));
-
       const data = playerData.data || playerData;
-      console.log('Data to use:', data);
 
       const firstName = data.firstName || data.userDetails?.firstName || '';
       const lastName = data.lastName || data.userDetails?.lastName || '';
@@ -154,17 +150,6 @@ export default function EditProfile() {
       const kycVerified =
         data.kycVerified || data.userDetails?.kycVerified || false;
       setValue('kycVerified', kycVerified);
-
-      console.log('Setting form values:', {
-        firstName,
-        lastName,
-        email,
-        dob,
-        gender,
-        country,
-        socials,
-        kycVerified,
-      });
 
       if (playerData?.bankAccounts?.[0]) {
         if (!playerData.bankAccounts[0].bankCode) {
@@ -204,8 +189,6 @@ export default function EditProfile() {
   const bank_name = watch('bankDetails.bankName');
 
   const onSubmit = async (data: FormValues) => {
-    console.log('Form submitted with data:', data);
-
     try {
       const formatDate = (date: Date) => {
         return date.toISOString().split('T')[0];
@@ -226,11 +209,7 @@ export default function EditProfile() {
         tiktok: data.tiktok?.trim() || '',
       };
 
-      console.log('Sending PATCH request with payload:', payload);
-
       const response = await PlayerApi.updateCustomerProfile(userId, payload);
-
-      console.log('API Response:', response);
 
       if (response?.data?.success) {
         toast.success('Profile updated successfully');
@@ -318,7 +297,6 @@ export default function EditProfile() {
   }
 
   const testSubmit = () => {
-    console.log('Test button clicked');
     const testData = {
       firstName: 'Test',
       lastName: 'User',

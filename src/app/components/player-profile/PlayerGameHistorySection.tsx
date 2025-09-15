@@ -124,9 +124,6 @@ export default function PlayerGameHistorySection({
     hasPrev: currentPage > 1,
   };
 
-  console.log('Transformed Game History Data:', gameHistoryData);
-  console.log('Pagination:', pagination);
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
