@@ -117,13 +117,13 @@ export default function Page() {
       <div className="p-6 pb-0">
         <div className="flex items-center justify-between">
           <BackButton />
-          {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+          {/* {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
             <VerifyUserToggle
               isEnabled={kycVerified}
               onToggle={handleToggleVerification}
               isUpdating={isUpdating}
             />
-          )}
+          )} */}
         </div>
       </div>
 
