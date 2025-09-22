@@ -2,7 +2,7 @@ import React from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { CoinIcon, ProductIcon, WalletHistoryIcon } from '@/app/icons/icons';
 import { useParams } from 'next/navigation';
-import { usePlayerProfile } from '@/app/hooks/usePlayerProfile';
+import { usePlayerBalances } from '@/app/hooks/usePlayerBalances';
 import { formatNaira } from '@/app/utils/utils';
 import { useUpdatePlayerErasers, useUpdatePlayerCoins } from '@/app/api/wallet';
 import { toast } from 'sonner';
@@ -53,7 +53,7 @@ const CounterCard: React.FC<CounterCardProps> = ({
           <h3 className="text-sm font-medium text-gray-700">{title}</h3>
         </div>
         <div className="flex items-center gap-4">
-          {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+          {/* {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
             <button
               onClick={onDecrement}
               className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 transition-colors hover:bg-gray-50"
@@ -61,11 +61,11 @@ const CounterCard: React.FC<CounterCardProps> = ({
             >
               <Minus className="h-4 w-4 text-gray-600" />
             </button>
-          )}
+          )} */}
           <span className="min-w-[3rem] text-center text-2xl font-semibold text-[#17478B] ">
             {count}
           </span>
-          {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
+          {/* {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && (
             <button
               onClick={onIncrement}
               className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-gray-300 transition-colors hover:bg-gray-50"
@@ -73,7 +73,7 @@ const CounterCard: React.FC<CounterCardProps> = ({
             >
               <Plus className="h-4 w-4 text-gray-600" />
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </div>
@@ -83,107 +83,72 @@ const CounterCard: React.FC<CounterCardProps> = ({
 const WalletDashboard: React.FC = () => {
   const params = useParams();
   const userId = params.userId as string;
-
-  const { data: playerData } = usePlayerProfile(userId);
-
+  const { data: balances } = usePlayerBalances(userId);
   const { mutateAsync: updateEraser } = useUpdatePlayerErasers();
   const { mutateAsync: updateCoins } = useUpdatePlayerCoins();
+  const user = useAppSelector((s) => s.auth.userEncryptedData);
 
-  const handleEraserIncrement = async () => {
+  const handleUpdateErasers = async (newCount: number) => {
     try {
       const response = await updateEraser({
         userId,
-        erasersCount: 1,
-        action: 'increment',
+        erasersCount: Math.abs(newCount - (balances?.eraserBalance || 0)),
+        action:
+          newCount > (balances?.eraserBalance || 0) ? 'increment' : 'decrement',
       });
 
       if (response?.result?.status === 'error') {
         toast.error(response?.result?.message);
       } else {
-        toast.success(response?.result?.message);
+        toast.success('Erasers updated successfully');
       }
     } catch (error) {
-      toast.error(error?.result?.message);
+      toast.error('Failed to update erasers');
     }
   };
 
-  const handleEraserDecrement = async () => {
-    try {
-      const response = await updateEraser({
-        userId,
-        erasersCount: 1,
-        action: 'decrement',
-      });
-
-      if (response?.result?.status === 'error') {
-        toast.error(response?.result?.message);
-      } else {
-        toast.success(response?.result?.message);
-      }
-    } catch (error) {
-      toast.error(error?.result?.message);
-    }
-  };
-
-  const handleCoinIncrement = async () => {
+  const handleUpdateCoins = async (newCount: number) => {
     try {
       const response = await updateCoins({
         userId,
-        coinsCount: 100,
-        action: 'increment',
+        coin: Math.abs(newCount - (balances?.coinBalance || 0)),
+        action:
+          newCount > (balances?.coinBalance || 0) ? 'increment' : 'decrement',
       });
 
       if (response?.result?.status === 'error') {
         toast.error(response?.result?.message);
       } else {
-        toast.success(response?.result?.message);
+        toast.success('Coins updated successfully');
       }
     } catch (error) {
-      toast.error(error?.result?.message);
-    }
-  };
-
-  const handleCoinDecrement = async () => {
-    try {
-      const response = await updateCoins({
-        userId,
-        coinsCount: 100,
-        action: 'decrement',
-      });
-
-      if (response?.result?.status === 'error') {
-        toast.error(response?.result?.message);
-      } else {
-        toast.success(response?.result?.message);
-      }
-    } catch (error) {
-      toast.error(error?.result?.message);
+      toast.error('Failed to update coins');
     }
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl p-6">
-      <div className="grid  grid-cols-1 gap-6 md:grid-cols-3">
-        <WalletCard
-          balance={formatNaira(playerData?.userDetails?.balance ?? 0)}
-        />
-
-        <CounterCard
-          title="Erasers"
-          count={playerData?.userDetails?.eraser ?? 0}
-          icon={<ProductIcon className="h-5 w-5 text-[#17478B]" />}
-          onIncrement={handleEraserIncrement}
-          onDecrement={handleEraserDecrement}
-        />
-
-        <CounterCard
-          title="QM Coin"
-          count={playerData?.userDetails?.coinBalance ?? 0}
-          icon={<CoinIcon className="h-5 w-5 text-yellow-500" />}
-          onIncrement={handleCoinIncrement}
-          onDecrement={handleCoinDecrement}
-        />
-      </div>
+    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3">
+      <WalletCard balance={formatNaira(balances?.walletBalance || 0)} />
+      <CounterCard
+        title="Erasers"
+        count={balances?.eraserBalance || 0}
+        icon={<ProductIcon className="h-5 w-5 text-[#17478B]" />}
+        onIncrement={() =>
+          handleUpdateErasers((balances?.eraserBalance || 0) + 1)
+        }
+        onDecrement={() =>
+          handleUpdateErasers(Math.max(0, (balances?.eraserBalance || 0) - 1))
+        }
+      />
+      <CounterCard
+        title="Coins"
+        count={balances?.coinBalance || 0}
+        icon={<CoinIcon className="h-5 w-5 text-[#17478B]" />}
+        onIncrement={() => handleUpdateCoins((balances?.coinBalance || 0) + 1)}
+        onDecrement={() =>
+          handleUpdateCoins(Math.max(0, (balances?.coinBalance || 0) - 1))
+        }
+      />
     </div>
   );
 };

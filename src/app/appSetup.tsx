@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { Theme } from '@radix-ui/themes';
 import { Provider } from 'react-redux';
 import { persistor, store } from './store/store';
@@ -9,9 +9,10 @@ import { setRehydrated } from './store/authSlice';
 import { Toaster } from './components/toaster/sonner';
 import EnablePushOnIosButton from './pwa/iosNotificationRequest';
 import PermissionGuide from './pwa/permissionGuide';
-import { disableConsoleInProduction, isIosPwaInstalled } from './utils/utils'; 
+import { disableConsoleInProduction, isIosPwaInstalled } from './utils/utils';
 import useFcmToken from './hooks/useFcmToken';
-import QueryProvider from '@/app/components/query-provider'; 
+import QueryProvider from '@/app/components/query-provider';
+import AppLoader from '@/app/components/loader/loader';
 
 function RootHydrationWatcher() {
   const dispatch = useAppDispatch();
@@ -41,17 +42,21 @@ function AppSetup({ children }: Props) {
 
   return (
     <Theme appearance="light" className="!font-text">
-      <QueryProvider>
-        <Provider store={store}>
-          <PersistGate loading={null} persistor={persistor}>
-            {isVisible && !token && !isIosPwaInstalled() && <PermissionGuide />}
-            <RootHydrationWatcher />
-            <Toaster appearance="light" />
-            <EnablePushOnIosButton />
-            {children}
-          </PersistGate>
-        </Provider>
-      </QueryProvider>
+      <Suspense fallback={<AppLoader />}>
+        <QueryProvider>
+          <Provider store={store}>
+            <PersistGate loading={null} persistor={persistor}>
+              {isVisible && !token && !isIosPwaInstalled() && (
+                <PermissionGuide />
+              )}
+              <RootHydrationWatcher />
+              <Toaster appearance="light" />
+              <EnablePushOnIosButton />
+              {children}
+            </PersistGate>
+          </Provider>
+        </QueryProvider>
+      </Suspense>
     </Theme>
   );
 }

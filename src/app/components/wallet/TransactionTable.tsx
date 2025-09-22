@@ -12,6 +12,11 @@ import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { useDebounce } from '@/app/hooks/useDebounce';
 // import { VerifiedIcon } from '@/app/icons/icons';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/app/components/ui/tooltip';
 
 const TransactionTable: React.FC = () => {
   const [selectedTransactionId, setSelectedTransactionId] = useState<
@@ -282,6 +287,9 @@ const TransactionTable: React.FC = () => {
                   Transaction Type
                 </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">
+                  Narration
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
                   Transaction Amount
                 </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">
@@ -331,6 +339,19 @@ const TransactionTable: React.FC = () => {
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4 capitalize">
                         {tx.transactionType}
+                      </Table.Cell>
+                      <Table.Cell className="px-4 py-4">
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <p
+                              className="max-w-[150px] truncate"
+                              title={tx.narration}
+                            >
+                              {tx.narration}
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent>{tx.narration}</TooltipContent>
+                        </Tooltip>
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4 font-semibold">
                         {formatNaira(tx.amount)}
