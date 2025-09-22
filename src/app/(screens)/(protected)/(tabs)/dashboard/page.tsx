@@ -29,7 +29,6 @@ function Page() {
   const { data: dashboardSummary, isLoading } = useQuery({
     queryKey: ['dashboardSummary'],
     queryFn: DashboardApi.fetchDashboardSummary,
-    enabled: ['SUPER_ADMIN', 'MANAGER'].includes(user?.role),
   });
 
   return (
@@ -62,9 +61,11 @@ function Page() {
           </DashboardCards>
         )}
 
-        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && isLoading ? (
+        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && isLoading && (
           <DashboardCardsLoading />
-        ) : (
+        )}
+
+        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && !isLoading && (
           <DashboardCards
             bgImage={<WalletIconBig />}
             title="Available Wallet Balance"
