@@ -29,6 +29,7 @@ function Page() {
   const { data: dashboardSummary, isLoading } = useQuery({
     queryKey: ['dashboardSummary'],
     queryFn: DashboardApi.fetchDashboardSummary,
+    enabled: ['SUPER_ADMIN', 'MANAGER'].includes(user?.role),
   });
 
   return (
