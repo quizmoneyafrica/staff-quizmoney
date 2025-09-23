@@ -31,6 +31,7 @@ const addRefreshSubscriber = (callback: (token: string) => void) => {
 };
 
 const errorHandler = async (error) => {
+  console.log('error: ', error);
   const operator = secureLocalStorage.getItem('operator') as UnknownObject;
 
   const location = window.location.pathname;
