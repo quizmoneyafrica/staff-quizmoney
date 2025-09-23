@@ -105,45 +105,17 @@ function MemoryGamePage() {
   const { data: statsData, isLoading: isLoadingStats } = useQuery({
     queryKey: ['memoryGameStats'],
     queryFn: () =>
-      GameApi.getGameSessions({
+      GameApi.getGameStats({
         gameType: 'MEMORY_GAME',
-        page: 0,
-        size: 10,
       }),
     select: (response) => {
-      const sessions = response.data.data?.content || [];
-      const totalEntries = sessions.length;
-      const wonSessions = sessions.filter(
-        (session) => session.result === 'WON',
-      );
-      const totalWon = wonSessions.reduce(
-        (sum, session) => sum + (session.totalWinnings || 0),
-        0,
-      );
-      const estimatedRevenue = sessions.reduce(
-        (sum, session) => sum + (session.stake || 0),
-        0,
-      );
-      const estimatedExtraMoves = sessions.reduce(
-        (sum, session) =>
-          sum +
-          (session.extraMoves || 0) *
-            (gameConfig?.config?.costPerExtraMove || 1000),
-        0,
-      );
-      const totalDuration = sessions.reduce(
-        (sum, session) => sum + (session.duration || 0),
-        0,
-      );
-      const averageDuration =
-        totalEntries > 0 ? totalDuration / totalEntries : 0;
-
       return {
-        totalEntries,
-        totalRevenue: estimatedRevenue,
-        extraMovesBought: estimatedExtraMoves,
-        totalAmountWon: totalWon,
-        averageDuration,
+        totalEntries: response?.data?.data?.totalEntry,
+        totalRevenue: response?.data?.data?.totalRevenue,
+        extraTrialsBought: response?.data?.data?.trialPurchased,
+        extraMovesBought: 0,
+        totalAmountWon: response?.data?.data?.totalAmountWon,
+        averageDuration: 0,
       };
     },
   });

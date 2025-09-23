@@ -94,37 +94,15 @@ function NumberGuessingPage() {
   const { data: statsData, isLoading: isLoadingStats } = useQuery({
     queryKey: ['numberGuessingStats'],
     queryFn: () =>
-      GameApi.getGameSessions({
+      GameApi.getGameStats({
         gameType: 'NUMBER_GUESSER',
-        page: 0,
-        size: 10,
       }),
     select: (response) => {
-      const sessions = response.data.data?.content || [];
-
-      const totalEntries = sessions.length;
-      const wonSessions = sessions.filter(
-        (session) => session.result === 'WON',
-      );
-      const totalWon = wonSessions.reduce(
-        (sum, session) => sum + (session.totalWinnings || 0),
-        0,
-      );
-
-      const estimatedRevenue = sessions.reduce(
-        (sum, session) => sum + (session.stake || 0),
-        0,
-      );
-      const estimatedExtraTrials = sessions.reduce(
-        (sum, session) => sum + (session.extraTrials || 0) * 100,
-        0,
-      );
-
       return {
-        totalEntries,
-        totalRevenue: estimatedRevenue,
-        extraTrialsBought: estimatedExtraTrials,
-        totalAmountWon: totalWon,
+        totalEntries: response?.data?.data?.totalEntry,
+        totalRevenue: response?.data?.data?.totalRevenue,
+        extraTrialsBought: response?.data?.data?.trialPurchased,
+        totalAmountWon: response?.data?.data?.totalAmountWon,
       };
     },
   });

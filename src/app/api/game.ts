@@ -454,6 +454,17 @@ const GameApi = {
 
     return request.get(`/qm-games/game-sessions?${queryParams.toString()}`);
   },
+  getGameStats(
+    params: GetGameSessionsParams,
+  ): Promise<AxiosResponse<ApiSuccessResponse<UnknownObject>>> {
+    const { gameType } = params;
+
+    const queryParams = new URLSearchParams({
+      'game-type': gameType,
+    });
+
+    return request.get(`/qm-games/stats?${queryParams.toString()}`);
+  },
 
   getGameSessionById(
     id: string,
