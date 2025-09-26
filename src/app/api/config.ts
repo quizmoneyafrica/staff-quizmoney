@@ -37,7 +37,7 @@ const errorHandler = async (error) => {
 
   if (
     error?.response?.status === 401 ||
-    error?.response?.message === 'Invalid JWT token'
+    error?.response?.data?.message === 'Invalid JWT token'
   ) {
     if (operator?.refreshToken) {
       if (!isRefreshing) {
