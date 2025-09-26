@@ -21,6 +21,7 @@ import type { AdminResponse } from '@/app/api/adminApi';
 import { useDebounce } from '@/app/hooks/useDebounce';
 import { formatDateTime } from '@/app/utils/utils';
 import { useAppSelector } from '@/app/hooks/useAuth';
+import { convertToLocaleString } from '@/app/utils';
 
 interface AdminUpdateData {
   adminType: 'ADMIN';
@@ -487,7 +488,8 @@ const AdminManagementTable: React.FC = () => {
 
       <div className="mt-6 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
         <div className="text-sm text-gray-500">
-          Showing {admins.length} of {totalElements} entries
+          Showing {admins.length} of {convertToLocaleString(totalElements)}{' '}
+          entries
         </div>
         <Pagination
           currentPage={currentPage}

@@ -1,15 +1,15 @@
 'use client';
+
 import React, { useState } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
 import { Search } from 'lucide-react';
 import { QmCoinIcon, VerifiedIcon } from '@/app/icons/icons';
 import { useRouter } from 'next/navigation';
-
 import Pagination from '../leaderboard/Pagination';
-
 import { useQuery } from '@tanstack/react-query';
 import QmCoinsApi from '@/app/api/QmCoinsApi';
 import type { QmCoinUsersResponse } from '@/app/api/QmCoinsApi';
+import { convertToLocaleString } from '@/app/utils';
 
 export const UsersWithCoinsTable = () => {
   const [search, setSearch] = useState('');
@@ -198,7 +198,7 @@ export const UsersWithCoinsTable = () => {
             ? `Showing ${(currentPage - 1) * itemsPerPage + 1} to ${Math.min(
                 currentPage * itemsPerPage,
                 totalCount,
-              )} of ${totalCount} entries`
+              )} of ${convertToLocaleString(totalCount)} entries`
             : 'No entries found'}
         </div>
         <Pagination

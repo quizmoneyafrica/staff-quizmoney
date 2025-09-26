@@ -2,18 +2,11 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-import {
-  useQuery,
-  keepPreviousData,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { Avatar, Table } from '@radix-ui/themes';
 import { Search, ListFilter, Loader2, Gamepad2 } from 'lucide-react';
-
 import Pagination from '../leaderboard/Pagination';
 import GameApi, { GameResult } from '@/app/api/game';
-
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { useDebounce } from '@/app/hooks/useDebounce';
@@ -25,7 +18,6 @@ const RecentGamesTable: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [resultFilter, setResultFilter] = useState<'All' | GameResult>('All');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const [selected, setSelected] = useState('All Time');
   const [customDateRange, setCustomDateRange] = useState(null);
@@ -74,6 +66,7 @@ const RecentGamesTable: React.FC = () => {
     hiddenNo: number;
     extraTrials: number;
     result: string;
+    customerId: string;
     amountWon: number;
     startTime?: string;
     endTime?: string;
@@ -122,6 +115,12 @@ const RecentGamesTable: React.FC = () => {
         return 'Loss';
       default:
         return result;
+    }
+  };
+
+  const handleViewProfile = (customerId: string) => {
+    if (customerId) {
+      router.push(`/players/player-profile/${customerId}`);
     }
   };
 
@@ -245,7 +244,10 @@ const RecentGamesTable: React.FC = () => {
                       </Table.Cell>
 
                       <Table.Cell className="px-4 py-4">
-                        <div className="flex items-center gap-2">
+                        <div
+                          className="flex cursor-pointer items-center gap-2"
+                          onClick={() => handleViewProfile(game?.customerId)}
+                        >
                           <div className="relative">
                             <Avatar
                               src={''}
@@ -253,9 +255,9 @@ const RecentGamesTable: React.FC = () => {
                               size="3"
                               radius="full"
                             />
-                            <div className="absolute -bottom-1 -right-1">
+                            {/* <div className="absolute -bottom-1 -right-1">
                               <VerifiedIcon />
-                            </div>
+                            </div> */}
                           </div>
                           <div>
                             <p className="font-medium capitalize">
@@ -319,7 +321,9 @@ const RecentGamesTable: React.FC = () => {
       {pagination && totalCount > 0 && (
         <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
           <div className="text-sm text-gray-500">
-            Showing data 1 to 7 of {totalCount} entries
+            Showing data {(currentPage - 1) * itemsPerPage + 1} to{' '}
+            {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
+            {totalCount.toLocaleString()} entries
           </div>
           <Pagination
             currentPage={currentPage}

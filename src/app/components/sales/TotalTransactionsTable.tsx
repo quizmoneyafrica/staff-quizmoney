@@ -11,9 +11,10 @@ import { useDebounce } from '@/app/hooks/useDebounce';
 import CustomImage from '@/app/components/CustomImage';
 import Pagination from '../leaderboard/Pagination';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
-import { formatDateTime, formatNaira } from '@/app/utils/utils';
+import { formatNaira } from '@/app/utils/utils';
 import SalesApi from '@/app/api/salesApi';
 import { VerifiedIcon } from '@/app/icons/icons';
+import { convertToLocaleString } from '@/app/utils';
 
 type CustomDateRange = { startDate: Date; endDate: Date } | null;
 
@@ -53,7 +54,7 @@ const TotalTransactionsTable = () => {
   const router = useRouter();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
+  const [itemsPerPage] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState<
     'All' | 'COMPLETED' | 'PENDING' | 'CANCELLED'
   >('All');
@@ -389,12 +390,14 @@ const TotalTransactionsTable = () => {
         {pagination && pagination.totalElements > 0 && (
           <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
             <div className="text-sm text-gray-500">
-              Showing {(pagination.pageNo - 1) * pagination.pageSize + 1} to{' '}
+              Showing{' '}
+              {Math.max(1, (pagination.pageNo - 1) * pagination.pageSize + 1)}
+              &nbsp;to{' '}
               {Math.min(
-                pagination.pageNo * pagination.pageSize,
+                (pagination.pageNo + 1) * pagination.pageSize,
                 pagination.totalElements,
               )}{' '}
-              of {pagination.totalItems} entries
+              of {convertToLocaleString(pagination.totalElements)} entries
               {debouncedSearchTerm && (
                 <span className="ml-1 font-medium">
                   for &quot;{debouncedSearchTerm}&quot;

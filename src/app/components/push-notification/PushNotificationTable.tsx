@@ -26,6 +26,7 @@ import {
   PushNotificationFromAPI,
 } from '@/app/api/pushNotification';
 import { formatDateTime } from '@/app/utils/utils';
+import { convertToLocaleString } from '@/app/utils';
 
 interface StaticPushNotificationData {
   id: string;
@@ -773,8 +774,8 @@ const PushNotificationTable: React.FC<PushNotificationTableProps> = ({
         <div className="text-sm text-gray-500">
           Showing data{' '}
           {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} to{' '}
-          {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
-          entries
+          {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
+          {convertToLocaleString(totalCount)} entries
         </div>
         <Pagination
           currentPage={currentPage}
