@@ -27,6 +27,7 @@ import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
 import { VerifiedIcon } from '@/app/icons/icons';
 import { useAppSelector } from '@/app/hooks/useAuth';
+import { convertToLocaleString } from '@/app/utils';
 
 type SortField =
   | 'objectId'
@@ -590,7 +591,8 @@ const PlayersTable = () => {
           <div className="text-sm text-gray-500">
             {totalItems > 0 ? (
               <>
-                Showing data {startItem} to {endItem} of {totalItems} entries
+                Showing data {startItem} to {endItem} of{' '}
+                {convertToLocaleString(totalItems)} entries
               </>
             ) : (
               'No entries found'

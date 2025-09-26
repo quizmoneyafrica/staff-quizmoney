@@ -651,10 +651,12 @@ function Page() {
                     paginationInfo.currentPage * itemsPerPage,
                     paginationInfo.totalCount,
                   )}{' '}
-                  of {paginationInfo.totalCount} entries
+                  of {convertToLocaleString(paginationInfo.totalCount)} entries
                 </>
               ) : (
-                `Page ${currentPage} of ${paginationInfo.totalPages}`
+                `Page ${currentPage} of ${convertToLocaleString(
+                  paginationInfo.totalPages,
+                )}`
               )}
               {selectedFilter !== 'All' && ` (filtered by ${selectedFilter})`}
               {debouncedSearchTerm && ` (search: "${debouncedSearchTerm}")`}

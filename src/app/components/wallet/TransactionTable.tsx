@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/app/components/ui/tooltip';
+import { convertToLocaleString } from '@/app/utils';
 
 const TransactionTable: React.FC = () => {
   const [selectedTransactionId, setSelectedTransactionId] = useState<
@@ -395,8 +396,8 @@ const TransactionTable: React.FC = () => {
         <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
           <div className="text-sm text-gray-500">
             Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
-            entries
+            {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
+            {convertToLocaleString(totalCount)} entries
           </div>
           <Pagination
             currentPage={paginationInfo.currentPage}
