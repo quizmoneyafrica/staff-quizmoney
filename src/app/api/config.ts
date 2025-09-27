@@ -35,7 +35,10 @@ const errorHandler = async (error) => {
 
   const location = window.location.pathname;
 
-  if (error?.response?.status === 401 || error?.response?.status === 403) {
+  if (
+    error?.response?.status === 401 ||
+    error?.response?.data?.message === 'Invalid JWT token'
+  ) {
     if (operator?.refreshToken) {
       if (!isRefreshing) {
         isRefreshing = true;

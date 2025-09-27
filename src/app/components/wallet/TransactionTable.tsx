@@ -12,6 +12,12 @@ import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { formatDateTime, formatNaira } from '@/app/utils/utils';
 import { useDebounce } from '@/app/hooks/useDebounce';
 // import { VerifiedIcon } from '@/app/icons/icons';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/app/components/ui/tooltip';
+import { convertToLocaleString } from '@/app/utils';
 
 const TransactionTable: React.FC = () => {
   const [selectedTransactionId, setSelectedTransactionId] = useState<
@@ -282,6 +288,9 @@ const TransactionTable: React.FC = () => {
                   Transaction Type
                 </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">
+                  Narration
+                </Table.Cell>
+                <Table.Cell className="px-4 py-2 text-left">
                   Transaction Amount
                 </Table.Cell>
                 <Table.Cell className="px-4 py-2 text-left">
@@ -332,6 +341,19 @@ const TransactionTable: React.FC = () => {
                       <Table.Cell className="px-4 py-4 capitalize">
                         {tx.transactionType}
                       </Table.Cell>
+                      <Table.Cell className="px-4 py-4">
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <p
+                              className="max-w-[150px] truncate"
+                              title={tx.narration}
+                            >
+                              {tx.narration}
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent>{tx.narration}</TooltipContent>
+                        </Tooltip>
+                      </Table.Cell>
                       <Table.Cell className="px-4 py-4 font-semibold">
                         {formatNaira(tx.amount)}
                       </Table.Cell>
@@ -374,8 +396,8 @@ const TransactionTable: React.FC = () => {
         <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
           <div className="text-sm text-gray-500">
             Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-            {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount}{' '}
-            entries
+            {Math.min(currentPage * itemsPerPage, totalCount)} of{' '}
+            {convertToLocaleString(totalCount)} entries
           </div>
           <Pagination
             currentPage={paginationInfo.currentPage}

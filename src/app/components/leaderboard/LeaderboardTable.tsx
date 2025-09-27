@@ -220,7 +220,9 @@ const LeaderboardTable: React.FC<ILeaderboardTableProps> = ({
           {isLoading
             ? 'Loading entries...'
             : totalCount > 0
-            ? `Showing ${startEntry} to ${endEntry} of ${totalCount} entries`
+            ? `Showing ${startEntry} to ${endEntry} of ${convertToLocaleString(
+                totalCount,
+              )} entries`
             : 'No players found.'}
         </div>
         <Pagination

@@ -61,9 +61,11 @@ function Page() {
           </DashboardCards>
         )}
 
-        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && isLoading ? (
+        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && isLoading && (
           <DashboardCardsLoading />
-        ) : (
+        )}
+
+        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && !isLoading && (
           <DashboardCards
             bgImage={<WalletIconBig />}
             title="Available Wallet Balance"

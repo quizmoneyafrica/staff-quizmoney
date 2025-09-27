@@ -12,11 +12,11 @@ import { Avatar, Table } from '@radix-ui/themes';
 import { Search, Loader2 } from 'lucide-react';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import CategoryDropdown from '@/app/components/ui/CategoryDropdown';
-
 import Pagination from '../leaderboard/Pagination';
 import { formatDateTime } from '@/app/utils/utils';
 import { useDebounce } from '@/app/hooks/useDebounce';
 import { TotalMissesIcon } from '@/app/icons/icons';
+import { convertToLocaleString } from '@/app/utils';
 
 import { Button } from '../ui/button';
 
@@ -341,7 +341,7 @@ const TopMissedQuestionTable: React.FC<TopMissedQuestionTableProps> = ({
         <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
           <div className="text-sm text-gray-500">
             Showing data 1 to {Math.min(itemsPerPage, totalCount)} of{' '}
-            {totalCount} entries
+            {convertToLocaleString(totalCount)} entries
           </div>
           <Pagination
             currentPage={currentPage}

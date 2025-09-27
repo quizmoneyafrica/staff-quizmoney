@@ -42,7 +42,7 @@ interface NumberGuessingGameSession {
   gameTime: string;
   attemptLimit: number;
 
-  attempts?: GameAttempt[];
+  trialData?: GameAttempt[];
   duration?: number;
   endTime?: string;
 }
@@ -67,17 +67,17 @@ interface ApiGameSessionData {
   gameTime?: string;
   startTime?: string;
   attemptLimit?: number;
-  attempts?: GameAttempt[];
+  trialData?: GameAttempt[];
   duration?: number;
   endTime?: string;
 }
 
 interface GameAttempt {
-  attemptNumber: number;
-  guess: number;
+  attempt: number;
+  guessedNumber: number;
   result: string;
   timeTaken: string;
-  isCorrect: boolean;
+  correct: boolean;
 }
 
 const NumberGuessingGameHistory: React.FC<NumberGuessingGameHistoryProps> = ({
@@ -119,7 +119,7 @@ const NumberGuessingGameHistory: React.FC<NumberGuessingGameHistoryProps> = ({
           sessionData.startTime ||
           new Date().toISOString(),
         attemptLimit: sessionData.attemptLimit || 3,
-        attempts: sessionData.attempts || [],
+        trialData: sessionData.trialData || [],
         duration: sessionData.duration,
         endTime: sessionData.endTime,
       };
@@ -262,7 +262,7 @@ const NumberGuessingGameHistory: React.FC<NumberGuessingGameHistoryProps> = ({
                 <span className="font-bold text-blue-700">
                   {gameSession.name}
                 </span>
-                <VerifiedIcon size={14} className="ml-0.5 text-blue-600" />
+                {/* <VerifiedIcon size={14} className="ml-0.5 text-blue-600" /> */}
               </div>
               <span className="text-sm text-gray-500">{gameSession.email}</span>
             </div>
@@ -350,7 +350,8 @@ const NumberGuessingGameHistory: React.FC<NumberGuessingGameHistoryProps> = ({
             <div className="text-center">
               <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                 <span className="text-xl font-bold text-green-600">
-                  {gameSession.attempts?.length || 0}/{gameSession.attemptLimit}
+                  {gameSession.trialData?.length || 0}/
+                  {gameSession.attemptLimit}
                 </span>
               </div>
               <span className="text-sm font-medium text-gray-700">Trials</span>
@@ -393,33 +394,31 @@ const NumberGuessingGameHistory: React.FC<NumberGuessingGameHistoryProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {gameSession.attempts && gameSession.attempts.length > 0 ? (
-                  gameSession.attempts.map((attempt, index) => (
+                {gameSession.trialData && gameSession.trialData.length > 0 ? (
+                  gameSession.trialData.map((attempt, index) => (
                     <tr
                       key={index}
                       className="border-b border-gray-100 hover:bg-gray-50"
                     >
                       <td className="px-4 py-4">
                         <span className="font-bold text-gray-900">
-                          #{attempt.attemptNumber || index + 1}
+                          #{attempt.attempt || index + 1}
                         </span>
                       </td>
                       <td className="px-4 py-4">
                         <span className="font-semibold text-gray-900">
-                          {attempt.guess}
+                          {attempt.guessedNumber}
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        {attempt.result && (
-                          <span
-                            className={`rounded-full px-3 py-1 text-sm font-medium ${getResultStyle(
-                              attempt.result,
-                              attempt.isCorrect,
-                            )}`}
-                          >
-                            {attempt.result}
-                          </span>
-                        )}
+                        <span
+                          className={`rounded-full px-3 py-1 text-sm font-medium ${getResultStyle(
+                            attempt.result,
+                            attempt.correct,
+                          )}`}
+                        >
+                          {attempt.correct ? 'Correct' : 'Wrong'}
+                        </span>
                       </td>
                       <td className="px-4 py-4">
                         <span className="text-gray-600">

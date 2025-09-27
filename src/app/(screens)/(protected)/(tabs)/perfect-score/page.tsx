@@ -93,44 +93,19 @@ function PerfectScorePage() {
   });
 
   const { data: statsData, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['perfectScoreStats', selected, customDateRange],
+    queryKey: ['perfectScoreStats'],
     queryFn: () =>
-      GameApi.getGameSessions({
+      GameApi.getGameStats({
         gameType: 'PERFECT_SCORE',
-        page: 0,
-        size: 10,
       }),
     select: (response) => {
-      const sessions = response.data.data.content;
-      const totalEntries = sessions.length;
-      const wonSessions = sessions.filter(
-        (session) => session.result === 'WON',
-      );
-      const totalWon = wonSessions.reduce(
-        (sum, session) => sum + (session.totalWinnings || 0),
-        0,
-      );
-      const totalRevenue = sessions.reduce(
-        (sum, session) => sum + (session.stake || 0),
-        0,
-      );
-      const totalSpins = sessions.reduce(
-        (sum, session) => sum + (session.finalQuestions || 0),
-        0,
-      );
-      const totalDuration = sessions.reduce(
-        (sum, session) => sum + (session.duration || 0),
-        0,
-      );
-      const averageDuration =
-        totalEntries > 0 ? totalDuration / totalEntries : 0;
-
       return {
-        totalEntries,
-        totalRevenue,
-        spinsPurchased: totalSpins,
-        totalAmountWon: totalWon,
-        averageDuration,
+        totalEntries: response?.data?.data?.totalEntry,
+        totalRevenue: response?.data?.data?.totalRevenue,
+        extraTrialsBought: response?.data?.data?.trialPurchased,
+        spinsPurchased: 0,
+        totalAmountWon: response?.data?.data?.totalAmountWon,
+        averageDuration: 0,
       };
     },
   });

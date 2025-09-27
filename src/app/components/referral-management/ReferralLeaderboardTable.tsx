@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Avatar, Table } from '@radix-ui/themes';
 import { Search, Loader2 } from 'lucide-react';
 import Pagination from '../leaderboard/Pagination';
-
 import { useDebounce } from '@/app/hooks/useDebounce';
 import { VerifiedIcon, QmCoinIcon } from '@/app/icons/icons';
+import { convertToLocaleString } from '@/app/utils';
 
 type ReferralStatus = 'ACTIVE' | 'BANNED' | 'PENDING';
 
@@ -321,8 +321,8 @@ export const ReferralLeaderboardTable: React.FC = () => {
           {totalCount > 0 ? (
             <>
               Showing data {startIndex + 1} to{' '}
-              {Math.min(startIndex + itemsPerPage, totalCount)} of {totalCount}{' '}
-              entries
+              {Math.min(startIndex + itemsPerPage, totalCount)} of{' '}
+              {convertToLocaleString(totalCount)} entries
             </>
           ) : (
             'No entries found'

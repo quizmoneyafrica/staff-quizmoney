@@ -5,6 +5,7 @@ import { CreditCard } from 'lucide-react';
 import Pagination from '../../leaderboard/Pagination';
 import WithdrawalModal from './withdrawalmodal';
 import React, { useState } from 'react';
+import { convertToLocaleString } from '@/app/utils';
 
 interface PaginationInfo {
   currentPage: number;
@@ -240,7 +241,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
         <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
           <div className="text-sm text-gray-500">
             Showing page {pagination.currentPage} of {pagination.totalPages}(
-            {pagination.totalItems} total entries)
+            {convertToLocaleString(pagination.totalItems)} total entries)
           </div>
           <Pagination
             currentPage={currentPage}
