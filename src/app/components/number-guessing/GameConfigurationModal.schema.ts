@@ -4,7 +4,6 @@ export interface GameConfigFormData {
   costPerTrial: string;
   lowerBound: string;
   upperBound: string;
-  range: string;
   baseTrial: string;
   maxTrialPurchase: string;
   stakeMultiplier: string;
@@ -15,7 +14,6 @@ export interface GameConfigSubmitData {
   numberRange: {
     lowerBound: number;
     upperBound: number;
-    range: number;
   };
   baseTrial: number;
   maxTrialPurchase: number;
@@ -151,24 +149,6 @@ export const validateGameConfig = (
       };
     }
 
-    if (parseInt(data.range) < 0) {
-      return {
-        isValid: false,
-        errors: {
-          range: 'Range must be a non-negative number',
-        },
-      };
-    }
-
-    if (parseInt(data.range) > upperBound - lowerBound) {
-      return {
-        isValid: false,
-        errors: {
-          range: 'Range cannot be greater than (Upper Bound - Lower Bound)',
-        },
-      };
-    }
-
     return {
       isValid: true,
       errors: {},
@@ -198,7 +178,6 @@ export const prepareGameConfigData = (
     numberRange: {
       lowerBound: parseInt(formData.lowerBound),
       upperBound: parseInt(formData.upperBound),
-      range: parseInt(formData.range),
     },
     baseTrial: parseInt(formData.baseTrial),
     maxTrialPurchase: parseInt(formData.maxTrialPurchase),

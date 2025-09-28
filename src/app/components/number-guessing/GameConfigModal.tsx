@@ -58,7 +58,6 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
     costPerTrial: '',
     lowerBound: '',
     upperBound: '',
-    range: '',
     baseTrial: '',
     maxTrialPurchase: '',
     stakeMultiplier: '',
@@ -77,7 +76,6 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
         costPerTrial: initialData.costPerTrial?.toString() || '',
         lowerBound: initialData.lowerBound?.toString() || '',
         upperBound: initialData.upperBound?.toString() || '',
-        range: initialData.range?.toString() ?? '100',
         baseTrial: initialData.baseTrial?.toString() || '',
         maxTrialPurchase: initialData.maxTrialPurchase?.toString() || '',
         stakeMultiplier: initialData.stakeMultiplier
@@ -99,7 +97,6 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
       costPerTrial: '',
       lowerBound: '',
       upperBound: '',
-      range: '',
       baseTrial: '',
       maxTrialPurchase: '',
       stakeMultiplier: '',
@@ -293,29 +290,6 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Range
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.range}
-                      onChange={(e) =>
-                        handleInputChange('range', e.target.value)
-                      }
-                      placeholder="3"
-                      disabled={isViewMode || loading || isSubmitting}
-                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                        errors.range ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.range && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.range}
-                      </p>
-                    )}
-                  </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
                       Base Trial
