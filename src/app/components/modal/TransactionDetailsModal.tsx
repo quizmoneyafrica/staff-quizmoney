@@ -22,7 +22,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
   };
 
   const getTransactionType = (transaction: Transaction) => {
-    return transaction.transactionType || transaction.type || 'N/A';
+    return transaction.direction || 'N/A';
   };
 
   const formatDate = (transaction: Transaction) => {

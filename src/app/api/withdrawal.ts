@@ -7,16 +7,21 @@ interface DateRange {
   end: string;
 }
 
-interface WithdrawalRequest {
+import { WithdrawalStatus } from '@/app/store/withdrawalSlice';
+
+export interface WithdrawalRequest {
   id: string;
   purpose: string;
   comment: string;
   amount: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: WithdrawalStatus;
   processAt: string;
   createdAt: string;
   firstName: string;
   availableBalance: number;
+  customerId: string;
+  avatarUrl?: string;
+  kycVerified?: boolean;
   approvedBy?: string;
 }
 
