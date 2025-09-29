@@ -70,6 +70,7 @@ const RecentGamesTable: React.FC = () => {
     amountWon: number;
     startTime?: string;
     endTime?: string;
+    createdAt: string;
   }
 
   const handleViewDetailsClick = (game: NumberGuessingGameSession) => {
@@ -220,7 +221,9 @@ const RecentGamesTable: React.FC = () => {
               {games.length > 0 ? (
                 games.map((game: NumberGuessingGameSession) => {
                   const { time, fullDate } = formatDateTime(
-                    game.startTime || new Date().toISOString(),
+                    game.createdAt ||
+                      game.startTime ||
+                      new Date().toISOString(),
                   );
                   return (
                     <Table.Row

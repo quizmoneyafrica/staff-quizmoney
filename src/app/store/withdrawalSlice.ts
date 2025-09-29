@@ -1,24 +1,40 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface BankAccount {
-  accountNumber: string;
-  bankName: string;
-  accountName: string;
-}
+export type WithdrawalStatus =
+  | 'PENDING'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'PROCESSED'
+  | 'FAILED'
+  | 'PROCESSING';
 
 export interface WithdrawalRequest {
   id: string;
+  purpose: string;
+  comment: string;
+  amount: number;
+  status: WithdrawalStatus;
+  processAt: string;
+  createdAt:
+    | {
+        __type: 'Date';
+        iso: string;
+      }
+    | string;
   firstName: string;
   lastName: string;
   email: string;
   balance: number;
-  amount: number;
-  createdAt: {
-    __type: 'Date';
-    iso: string;
+  availableBalance: number;
+  customerId: string;
+  avatarUrl?: string;
+  kycVerified?: boolean;
+  approvedBy?: string;
+  bankAccount: {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
   };
-  status: 'pending' | 'resolved' | 'failed';
-  bankAccount: BankAccount;
   transactionId: string;
 }
 
@@ -47,7 +63,7 @@ const withdrawalSlice = createSlice({
       state,
       action: PayloadAction<{
         id: string;
-        status: 'pending' | 'resolved' | 'failed';
+        status: WithdrawalStatus;
       }>,
     ) => {
       const index = state.requests.findIndex(

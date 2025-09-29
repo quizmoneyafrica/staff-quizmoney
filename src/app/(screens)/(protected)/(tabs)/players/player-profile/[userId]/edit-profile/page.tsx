@@ -434,7 +434,7 @@ export default function EditProfile() {
               )}
             />
           </div>
-          <div className="max-w-max rounded-lg border border-blue-200 bg-blue-50 p-2">
+          {/* <div className="max-w-max rounded-lg border border-blue-200 bg-blue-50 p-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <User className="h-5 w-5 text-gray-700" />
@@ -465,7 +465,7 @@ export default function EditProfile() {
                 )}
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         <p className="font-heading text-2xl font-bold">Socials</p>

@@ -25,11 +25,11 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       <div className="rounded-[20px] bg-white p-6">
         <h2 className="mb-6 text-2xl font-semibold text-gray-900">Action</h2>
 
-        <div className="flex gap-4">
+        <div className="flex w-full gap-4">
           {/* Flag/Unflag User Button */}
           <button
             onClick={onFlagClick}
-            className={`flex h-[47px] w-[164px] cursor-pointer items-center justify-center gap-2 rounded-[5px] transition-colors ${
+            className={`flex h-[47px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-[5px] transition-colors ${
               isBlacklisted
                 ? 'bg-[#FFF6C5] hover:bg-[#FFF0A0]'
                 : 'bg-pink-100 hover:bg-pink-200'
@@ -51,7 +51,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           </button>
 
           <button
-            className="flex h-[47px] w-[164px] cursor-pointer items-center justify-center gap-2 rounded-[5px] bg-gray-100 transition-colors hover:bg-gray-200"
+            className="flex h-[47px] flex-1 cursor-pointer items-center justify-center gap-2 rounded-[5px] bg-gray-100 transition-colors hover:bg-gray-200"
             onClick={onOpen}
           >
             <Trash2 className="h-4 w-4 text-gray-700" />
@@ -60,7 +60,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             </span>
           </button>
 
-          <button
+          {/* <button
             className="flex h-[47px] w-[164px] cursor-pointer items-center justify-center gap-2 rounded-[5px] bg-blue-50 transition-colors hover:bg-blue-100"
             onClick={() => {
               router.push(`/players/player-profile/${userId}/edit-profile`);
@@ -70,7 +70,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             <span className="text-sm font-medium text-blue-600">
               Edit Profile
             </span>
-          </button>
+          </button> */}
         </div>
       </div>
 

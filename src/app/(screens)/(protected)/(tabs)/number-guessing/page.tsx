@@ -117,7 +117,6 @@ function NumberGuessingPage() {
     numberRange: {
       lowerBound: number;
       upperBound: number;
-      range: number;
     };
     baseTrial: number;
     maxTrialPurchase: number;
@@ -135,7 +134,6 @@ function NumberGuessingPage() {
         maximumStake: gameConfig.config?.maximumStake || 0,
         upperBound: data.numberRange.upperBound,
         lowerBound: data.numberRange.lowerBound,
-        range: data.numberRange.range,
         stakeMultiplier: data.stakeMultiplier,
         numberOfAttempts: data.baseTrial,
         costPerTrial: data.costPerTrial,
