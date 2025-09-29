@@ -1,11 +1,24 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Search } from 'lucide-react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
+import { Search, X } from 'lucide-react';
 import { CaretSortIcon } from '@radix-ui/react-icons';
 import { Avatar, Table } from '@radix-ui/themes';
 import classNames from 'classnames';
 import Link from 'next/link';
+import {
+  useQueryState,
+  parseAsString,
+  parseAsStringEnum,
+  parseAsInteger,
+} from 'nuqs';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Pagination from '../leaderboard/Pagination';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -56,7 +69,7 @@ const PlayersTable = () => {
     customDateRange,
   } = useSelector(selectPlayers);
 
-  const handleExportCSV = async () => {
+  const handleExportCSV = useCallback(async () => {
     try {
       dispatch(setExportLoading(true));
 
@@ -101,26 +114,61 @@ const PlayersTable = () => {
         URL.revokeObjectURL(url);
       }
     } catch (error) {
+      console.error('Error exporting CSV:', error);
     } finally {
       dispatch(setExportLoading(false));
     }
-  };
+  }, [
+    dispatch,
+    selectedAccountType,
+    searchQuery,
+    customDateRange,
+    selectedTimeRange,
+  ]);
 
   const players: Player[] = playersData?.data ?? [];
 
   const totalPages = playersData?.pagination?.totalPages || 0;
   const totalItems = playersData?.pagination?.totalItems || 0;
   const currentLimit = playersData?.pagination?.limit || 10;
-
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const [sortField, setSortField] = useQueryState<SortField | null>(
+    'sortField',
+    parseAsStringEnum<SortField>([
+      'objectId',
+      'firstName',
+      'email',
+      'accountType',
+      'createdAt',
+    ]).withDefault(null),
+  );
+
+  const [sortDirection, setSortDirection] = useQueryState<SortDirection>(
+    'sortDirection',
+    parseAsStringEnum<SortDirection>(['asc', 'desc']).withDefault('asc'),
+  );
+
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+
+  const [urlAccountType, setUrlAccountType] = useQueryState(
+    'accountType',
+    parseAsString.withDefault(''),
+  );
+
+  const [urlTimeRange, setUrlTimeRange] = useQueryState(
+    'timeRange',
+    parseAsString.withDefault('All Time'),
+  );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [localSearchValue, setLocalSearchValue] = useState(searchQuery);
+  const [searchParam, setSearchParam] = useQueryState('search');
+  const [localSearchValue, setLocalSearchValue] = useState(searchParam || '');
   const [cursorPosition, setCursorPosition] = useState<number>(0);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const user = useAppSelector((s) => s.auth.userEncryptedData);
+  const user = useAppSelector((s) => s.auth.userEncodedData);
 
   const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -129,14 +177,41 @@ const PlayersTable = () => {
   const timeRangeOptions = ['All Time', 'This week', 'Last 30 days', 'Custom'];
 
   useEffect(() => {
-    dispatch(resetFilters());
-    dispatch(setSelectedTimeRange('All Time'));
-    dispatch(setDateRange(null));
-  }, [dispatch]);
+    const hasUrlParams = searchParams.toString().length > 0;
+
+    if (!hasUrlParams) {
+      dispatch(resetFilters());
+      dispatch(setSelectedTimeRange('All Time'));
+      dispatch(setDateRange(null));
+    } else {
+      if (urlAccountType) {
+        dispatch(setSelectedAccountType(urlAccountType));
+      }
+      if (urlTimeRange) {
+        dispatch(setSelectedTimeRange(urlTimeRange));
+      }
+      if (page) {
+        dispatch(setCurrentPage(page));
+      }
+    }
+  }, [dispatch, searchParams, urlAccountType, urlTimeRange, page]);
 
   useEffect(() => {
-    setLocalSearchValue(searchQuery);
-  }, [searchQuery]);
+    if (searchParam !== localSearchValue) {
+      setLocalSearchValue(searchParam || '');
+      dispatch(setSearchQuery(searchParam || ''));
+    }
+  }, [searchParam]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (localSearchValue !== searchParam) {
+        setSearchParam(localSearchValue || null);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [localSearchValue, searchParam, setSearchParam]);
 
   const maintainFocus = useCallback(() => {
     if (
@@ -153,133 +228,149 @@ const PlayersTable = () => {
       const restoreFocus = () => {
         if (searchInputRef.current) {
           searchInputRef.current.focus();
-
           searchInputRef.current.setSelectionRange(
-            cursorPosition,
-            cursorPosition,
+            currentPosition,
+            currentPosition,
           );
         }
       };
 
       restoreFocus();
-
       focusTimeoutRef.current = setTimeout(restoreFocus, 0);
-
       requestAnimationFrame(restoreFocus);
     }
   }, [cursorPosition]);
 
-  useEffect(() => {
+  const handleInputFocus = useCallback(() => {
     maintainFocus();
-  }, [isLoading, players, maintainFocus]);
+  }, [maintainFocus]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        filterDropdownRef.current &&
-        !filterDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsFilterOpen(false);
-      }
-    };
-
-    if (isFilterOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+  const handleInputSelect = useCallback(() => {
+    if (searchInputRef.current) {
+      setCursorPosition(searchInputRef.current.selectionStart || 0);
     }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isFilterOpen]);
-
-  useEffect(() => {
-    return () => {
-      if (focusTimeoutRef.current) {
-        clearTimeout(focusTimeoutRef.current);
-      }
-    };
   }, []);
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      dispatch(setCurrentPage(page));
-    }
-  };
+  const handleTimeRangeChange = useCallback(
+    async (range: string) => {
+      await setUrlTimeRange(range);
+      await setPage(1);
+      dispatch(setSelectedTimeRange(range));
+      dispatch(setCurrentPage(1));
 
-  const handleFilterSelect = (accountType: string | null) => {
-    dispatch(setSelectedAccountType(accountType));
-    setIsFilterOpen(false);
-  };
+      if (range === 'Custom') {
+        return;
+      }
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const cursorPos = e.target.selectionStart || 0;
+      const dateRange =
+        range !== 'All Time' ? calculateDateRange(range, null) : null;
+      if (dateRange) {
+        dispatch(setDateRange(dateRange));
+        dispatch(setCustomDateRange(dateRange));
+      }
+    },
+    [dispatch, setUrlTimeRange, setPage],
+  );
 
-    setLocalSearchValue(value);
-    setCursorPosition(cursorPos);
+  const handleTimeRangeSelect = useCallback(
+    (range: string) => {
+      handleTimeRangeChange(range);
+    },
+    [handleTimeRangeChange],
+  );
 
-    dispatch(setSearchQuery(value));
-  };
+  const handlePageChange = useCallback(
+    async (newPage: number) => {
+      await setPage(newPage);
+      dispatch(setCurrentPage(newPage));
+    },
+    [dispatch, setPage],
+  );
 
-  const handleInputFocus = () => {
+  const handleClearSearch = useCallback(() => {
+    setSearchParam('');
+    setLocalSearchValue('');
+    dispatch(setSearchQuery(''));
+    dispatch(setCurrentPage(1));
+    setPage(1);
     if (searchInputRef.current) {
-      const position = searchInputRef.current.selectionStart || 0;
-      setCursorPosition(position);
+      searchInputRef.current.focus();
     }
-  };
+  }, [dispatch, setSearchParam, setPage]);
 
-  const handleInputSelect = () => {
-    if (searchInputRef.current) {
-      const position = searchInputRef.current.selectionStart || 0;
-      setCursorPosition(position);
-    }
-  };
+  const handleSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      const cursorPos = e.target.selectionStart || 0;
+      setSearchParam(value);
+      setLocalSearchValue(value);
+      setCursorPosition(cursorPos);
+      dispatch(setSearchQuery(value));
+      dispatch(setCurrentPage(1));
+      setPage(1);
+    },
+    [dispatch, setSearchParam, setPage],
+  );
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
+  const handleSort = useCallback(
+    async (field: SortField) => {
+      if (sortField === field) {
+        const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        await setSortDirection(newDirection);
+      } else {
+        await setSortField(field);
+        await setSortDirection('asc');
+      }
+      dispatch(setCurrentPage(1));
+      await setPage(1);
+    },
+    [
+      sortField,
+      sortDirection,
+      setSortField,
+      setSortDirection,
+      setPage,
+      dispatch,
+    ],
+  );
 
-  const handleTimeRangeSelect = (option: string) => {
-    dispatch(setSelectedTimeRange(option));
+  const handleCustomDateChange = useCallback(
+    (dateRange: { startDate: Date; endDate: Date } | null) => {
+      if (!dateRange) {
+        dispatch(setCustomDateRange(null));
+        return;
+      }
 
-    if (option !== 'Custom') {
-      dispatch(setCustomDateRange(null));
-      const calculatedDateRange = calculateDateRange(option, null);
-      dispatch(setDateRange(calculatedDateRange));
-    }
-  };
+      const standardFormat = {
+        start: dateRange.startDate.toISOString(),
+        end: dateRange.endDate.toISOString(),
+      };
 
-  const handleCustomDateChange = (
-    dateRange: { startDate: Date; endDate: Date } | null,
-  ) => {
-    if (!dateRange) {
-      dispatch(setCustomDateRange(null));
-      dispatch(setDateRange(null));
-      return;
-    }
+      if (isValidDateRange(standardFormat)) {
+        const serializedRange = serializeDateRange(standardFormat);
+        setUrlTimeRange('Custom');
+        dispatch(setCustomDateRange(serializedRange));
+        dispatch(setDateRange(serializedRange));
+      } else {
+        console.error('Invalid date range received:', dateRange);
+        setUrlTimeRange('All Time');
+        dispatch(setCustomDateRange(null));
+        dispatch(setDateRange(null));
+      }
+    },
+    [dispatch, setUrlTimeRange],
+  );
 
-    const standardFormat = {
-      start: dateRange.startDate.toISOString(),
-      end: dateRange.endDate.toISOString(),
-    };
-
-    if (isValidDateRange(standardFormat)) {
-      const serializedRange = serializeDateRange(standardFormat);
-
-      dispatch(setCustomDateRange(serializedRange));
-      dispatch(setDateRange(serializedRange));
-    } else {
-      console.error('Invalid date range received:', dateRange);
-      dispatch(setCustomDateRange(null));
-      dispatch(setDateRange(null));
-    }
-  };
-
+  const handleFilterSelect = useCallback(
+    (type: string | null) => {
+      setUrlAccountType(type || null);
+      setPage(1);
+      dispatch(setSelectedAccountType(type || ''));
+      dispatch(setCurrentPage(1));
+      setIsFilterOpen(false);
+    },
+    [dispatch, setUrlAccountType, setPage],
+  );
   const sortedPlayers = React.useMemo(() => {
     if (!sortField) return players;
 
@@ -325,12 +416,13 @@ const PlayersTable = () => {
   const startItem = Math.max(1, (currentPage - 1) * currentLimit + 1);
   const endItem = Math.min(currentPage * currentLimit, totalItems);
 
-  const customDateRangeForDropdown = customDateRange
-    ? {
-        startDate: new Date(customDateRange.start),
-        endDate: new Date(customDateRange.end),
-      }
-    : null;
+  const customDateRangeForDropdown = useMemo(() => {
+    if (!customDateRange) return null;
+    return {
+      startDate: new Date(customDateRange.start),
+      endDate: new Date(customDateRange.end),
+    };
+  }, [customDateRange]);
 
   return (
     <div className="">
@@ -348,8 +440,18 @@ const PlayersTable = () => {
               onSelect={handleInputSelect}
               onKeyUp={handleInputSelect}
               onClick={handleInputSelect}
-              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-4 outline-none focus:ring-0"
+              className="focus:ring-primary-900 w-full rounded-md border border-[#D9D9D9] py-2 pl-10 pr-10 outline-none focus:ring-0"
             />
+            {localSearchValue && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           {/* <div className="relative" ref={filterDropdownRef}>
             <button

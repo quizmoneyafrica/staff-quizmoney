@@ -1,24 +1,25 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { useGetWithdrawalRequests } from '@/app/api/withdrawal';
+import {
+  useGetWithdrawalRequests,
+  type WithdrawalRequest,
+} from '@/app/api/withdrawal';
 import RecentWithdrawTable from '../withdrawal/table';
 import QmDrawer from '../../drawer/drawer';
 import WithdrawDetailsModal from '../withdrawal/WithdrawDrawer';
 import { convertToLocaleString } from '@/app/utils';
+import { WithdrawalStatus } from '@/app/store/withdrawalSlice';
 
-interface TableWithdrawalRequest {
-  id: string;
-  purpose: string;
-  comment: string;
-  amount: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  processAt: string;
+type TableWithdrawalStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+type TableWithdrawalRequest = Omit<
+  WithdrawalRequest,
+  'status' | 'createdAt'
+> & {
+  status: TableWithdrawalStatus;
   createdAt: string;
-  firstName: string;
-  availableBalance: number;
-  approvedBy?: string;
-}
+};
 
 interface StoreWithdrawalRequest {
   id: string;
@@ -36,6 +37,9 @@ interface StoreWithdrawalRequest {
   email: string;
   balance: number;
   availableBalance: number;
+  customerId: string;
+  avatarUrl?: string;
+  kycVerified?: boolean;
   approvedBy?: string;
   bankAccount: {
     bankName: string;
@@ -59,7 +63,17 @@ const RecentWithdraw: React.FunctionComponent = () => {
   } = useGetWithdrawalRequests(currentPage, pageSize, 'PENDING');
 
   const withdrawalRequests = React.useMemo(() => {
-    return data?.content || [];
+    if (!data?.content) return [];
+
+    return data.content
+      .filter((req): req is TableWithdrawalRequest =>
+        ['PENDING', 'APPROVED', 'REJECTED'].includes(req.status),
+      )
+      .map((req) => ({
+        ...req,
+
+        status: req.status as TableWithdrawalStatus,
+      }));
   }, [data]);
 
   React.useEffect(() => {
@@ -70,28 +84,39 @@ const RecentWithdraw: React.FunctionComponent = () => {
 
   const transformForModal = (
     apiData: TableWithdrawalRequest,
-  ): StoreWithdrawalRequest => ({
-    ...apiData,
-    status:
-      apiData.status === 'PENDING'
-        ? 'pending'
-        : apiData.status === 'APPROVED'
-        ? 'resolved'
-        : apiData.status === 'REJECTED'
-        ? 'failed'
-        : 'pending',
-    createdAt: { __type: 'Date' as const, iso: apiData.createdAt },
+  ): StoreWithdrawalRequest => {
+    let status: 'pending' | 'resolved' | 'failed' = 'pending';
+    if (apiData.status === 'APPROVED') {
+      status = 'resolved';
+    } else if (apiData.status === 'REJECTED') {
+      status = 'failed';
+    }
 
-    lastName: '',
-    email: '',
-    balance: apiData.availableBalance || 0,
-    bankAccount: {
-      bankName: '',
-      accountNumber: '',
-      accountName: '',
-    },
-    transactionId: apiData.id,
-  });
+    return {
+      id: apiData.id,
+      purpose: apiData.purpose,
+      comment: apiData.comment,
+      amount: apiData.amount,
+      status,
+      processAt: apiData.processAt,
+      createdAt: { __type: 'Date' as const, iso: apiData.createdAt },
+      firstName: apiData.firstName,
+      lastName: '',
+      email: '',
+      balance: apiData.availableBalance,
+      availableBalance: apiData.availableBalance,
+      customerId: apiData.customerId,
+      avatarUrl: apiData.avatarUrl,
+      kycVerified: apiData.kycVerified,
+      approvedBy: apiData.approvedBy,
+      bankAccount: {
+        bankName: '',
+        accountNumber: '',
+        accountName: '',
+      },
+      transactionId: apiData.id,
+    };
+  };
 
   const handleOpenViewDetails = (data: TableWithdrawalRequest) => {
     const transformedData = transformForModal(data);

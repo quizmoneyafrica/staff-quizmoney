@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,7 +10,6 @@ import {
   type GameConfigFormData,
 } from '@/app/components/perfect-score/PerfectScoreGameConfigModal.schema';
 import { UpdatePerfectScoreGamePayload } from '@/app/api/game';
-
 import { Switch } from '../ui/switch';
 
 interface GameConfigModalProps {
@@ -22,49 +21,211 @@ interface GameConfigModalProps {
   loading?: boolean;
   mode: 'view' | 'edit';
   initialData?: {
-    costPerSpin?: number;
-    maximumSpinPerUser?: number;
-    respinFeatureEnabled?: boolean;
+    minimumStake?: number;
+    maximumStake?: number;
+    maxRespin?: number;
+    defaultSpin?: number;
+    enableSpin?: boolean;
+    spinAmount?: number;
+    stakeMultiplier?: number;
+    weightProbabilities?: Array<{
+      id: string;
+      chance: number;
+      questions: number;
+      weight:
+        | 'FIVE'
+        | 'TEN'
+        | 'TWENTY'
+        | 'FIFTY'
+        | 'HUNDRED'
+        | 'RESPIN'
+        | 'SEVEN';
+      status: 'ACTIVE' | 'INACTIVE';
+    }>;
+    gameId?: string;
   };
+  gameData?: {
+    config: {
+      minimumStake: number;
+      maximumStake: number;
+      maxRespin: number;
+      defaultSpin: number;
+      enableSpin: boolean;
+      spinAmount: number;
+      stakeMultiplier: number;
+      weightProbabilities: Array<{
+        id: string;
+        chance: number;
+        questions: number;
+        weight:
+          | 'FIVE'
+          | 'TEN'
+          | 'TWENTY'
+          | 'FIFTY'
+          | 'HUNDRED'
+          | 'RESPIN'
+          | 'SEVEN';
+        status: 'ACTIVE' | 'INACTIVE';
+      }>;
+    };
+  };
+  fetchGameData: () => Promise<void>;
 }
 
-interface FormErrors {
-  costPerSpin?: string;
-  maximumSpinPerUser?: string;
-  respinFeatureEnabled?: string;
-}
+type FormErrors = {
+  [K in keyof GameConfigFormData]?: string;
+};
 
-const PerfectScoreGameConfigModal: React.FC<GameConfigModalProps> = ({
+const PerfectScoreGameConfigModal = ({
   isOpen,
   onClose,
   onSubmit,
-  loading = false,
-  mode,
-  initialData,
-}) => {
-  const [formData, setFormData] = useState<GameConfigFormData>({
-    costPerSpin: '',
-    maximumSpinPerUser: '',
-    respinFeatureEnabled: false,
+  initialData = {},
+  gameData,
+  fetchGameData,
+  mode = 'view',
+}: GameConfigModalProps) => {
+  const [formData, setFormData] = useState<GameConfigFormData>(() => {
+    return {
+      minimumStake: initialData?.minimumStake ?? 0,
+      maximumStake: initialData?.maximumStake ?? 0,
+      maxRespin: initialData?.maxRespin ?? 0,
+      defaultSpin: initialData?.defaultSpin ?? 0,
+      enableSpin: initialData?.enableSpin ?? false,
+      spinAmount: initialData?.spinAmount ?? 0,
+      stakeMultiplier: initialData?.stakeMultiplier ?? 0,
+
+      weightProbabilities:
+        initialData?.weightProbabilities?.map((wp) => ({
+          id: wp.id,
+          chance: wp.chance,
+          questions: wp.questions,
+          weight: wp.weight as
+            | 'FIVE'
+            | 'TEN'
+            | 'TWENTY'
+            | 'FIFTY'
+            | 'HUNDRED'
+            | 'RESPIN'
+            | 'SEVEN',
+          status: wp.status as 'ACTIVE' | 'INACTIVE',
+        })) || [],
+    };
   });
 
+  const [currentMode, setCurrentMode] = useState<'view' | 'edit'>(mode);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<
     'idle' | 'success' | 'error'
   >('idle');
-  const [currentMode, setCurrentMode] = useState(mode);
+  const [loading, setLoading] = useState(false);
+
+  const isViewMode = currentMode === 'view';
 
   useEffect(() => {
-    if (isOpen && initialData) {
-      setFormData({
-        costPerSpin: initialData.costPerSpin?.toString() || '',
-        maximumSpinPerUser: initialData.maximumSpinPerUser?.toString() || '',
-        respinFeatureEnabled: initialData.respinFeatureEnabled || false,
-      });
+    if (gameData?.config) {
+      setFormData((prev) => ({
+        ...prev,
+        minimumStake: gameData.config.minimumStake ?? 1000,
+        maximumStake: gameData.config.maximumStake ?? 1000000,
+        maxRespin: gameData.config.maxRespin ?? 3,
+        defaultSpin: gameData.config.defaultSpin ?? 0,
+        enableSpin: gameData.config.enableSpin ?? false,
+        spinAmount: gameData.config.spinAmount ?? 1000,
+        stakeMultiplier: gameData.config.stakeMultiplier ?? 3,
+        weightProbabilities: gameData.config.weightProbabilities ?? [
+          {
+            id: '1',
+            chance: 10,
+            questions: 5,
+            weight: 'FIVE',
+            status: 'ACTIVE',
+          },
+        ],
+      }));
     }
-    setCurrentMode(mode);
-  }, [isOpen, initialData, mode]);
+  }, [gameData]);
+
+  useEffect(() => {
+    const updateFormData = () => {
+      if (gameData?.config) {
+        setFormData({
+          minimumStake: gameData.config.minimumStake ?? 1000,
+          maximumStake: gameData.config.maximumStake ?? 1000000,
+          maxRespin: gameData.config.maxRespin ?? 3,
+          defaultSpin: gameData.config.defaultSpin ?? 0,
+          enableSpin: gameData.config.enableSpin ?? false,
+          spinAmount: gameData.config.spinAmount ?? 1000,
+          stakeMultiplier: gameData.config.stakeMultiplier ?? 3,
+          weightProbabilities: gameData.config.weightProbabilities?.map(
+            (wp) => ({
+              ...wp,
+              weight: wp.weight as
+                | 'FIVE'
+                | 'TEN'
+                | 'TWENTY'
+                | 'FIFTY'
+                | 'HUNDRED',
+              status: wp.status as 'ACTIVE' | 'INACTIVE',
+            }),
+          ) || [
+            {
+              id: '1',
+              chance: 10,
+              questions: 5,
+              weight: 'FIVE',
+              status: 'ACTIVE',
+            },
+          ],
+        });
+      } else if (initialData) {
+        setFormData({
+          minimumStake: initialData.minimumStake ?? 1000,
+          maximumStake: initialData.maximumStake ?? 1000000,
+          maxRespin: initialData.maxRespin ?? 3,
+          defaultSpin: initialData.defaultSpin ?? 0,
+          enableSpin: initialData.enableSpin ?? false,
+          spinAmount: initialData.spinAmount ?? 1000,
+          stakeMultiplier: initialData.stakeMultiplier ?? 3,
+          weightProbabilities: initialData.weightProbabilities?.map((wp) => ({
+            ...wp,
+            weight: wp.weight as
+              | 'FIVE'
+              | 'TEN'
+              | 'TWENTY'
+              | 'FIFTY'
+              | 'HUNDRED',
+            status: wp.status as 'ACTIVE' | 'INACTIVE',
+          })) || [
+            {
+              id: '1',
+              chance: 10,
+              questions: 5,
+              weight: 'FIVE',
+              status: 'ACTIVE',
+            },
+          ],
+        });
+      }
+    };
+
+    updateFormData();
+  }, [gameData, initialData]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (isOpen) {
+        try {
+          await fetchGameData();
+        } catch (error) {
+          // Error is handled by the UI state
+        }
+      }
+    };
+
+    loadData();
+  }, [isOpen, fetchGameData]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -72,65 +233,143 @@ const PerfectScoreGameConfigModal: React.FC<GameConfigModalProps> = ({
     }
   }, [isOpen]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
-      costPerSpin: '',
-      maximumSpinPerUser: '',
-      respinFeatureEnabled: false,
+      minimumStake: initialData?.minimumStake ?? 1000,
+      maximumStake: initialData?.maximumStake ?? 1000000,
+      maxRespin: initialData?.maxRespin ?? 3,
+      defaultSpin: initialData?.defaultSpin ?? 0,
+      enableSpin: initialData?.enableSpin ?? false,
+      spinAmount: initialData?.spinAmount ?? 1000,
+      stakeMultiplier: initialData?.stakeMultiplier ?? 3,
+      weightProbabilities: initialData?.weightProbabilities ?? [
+        {
+          id: '1',
+          chance: 10,
+          questions: 5,
+          weight: 'FIVE',
+          status: 'ACTIVE',
+        },
+      ],
     });
     setErrors({});
     setSubmitStatus('idle');
     setIsSubmitting(false);
     setCurrentMode(mode);
-  };
+  }, [initialData, mode]);
 
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const { isValid, errors: validationErrors } = validateGameConfig(formData);
     setErrors(validationErrors);
     return isValid;
-  };
+  }, [formData]);
 
-  const handleInputChange = (
-    field: keyof Omit<GameConfigFormData, 'respinFeatureEnabled'>,
-    value: string,
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+  const handleInputChange = useCallback(
+    (
+      field: keyof Omit<GameConfigFormData, 'weightProbabilities'>,
+      value: string | number | boolean,
+    ) => {
+      const numericFields = [
+        'minimumStake',
+        'maximumStake',
+        'maxRespin',
+        'defaultSpin',
+        'spinAmount',
+        'stakeMultiplier',
+      ];
+
+      const processedValue = numericFields.includes(field as string)
+        ? typeof value === 'string'
+          ? parseFloat(value) || 0
+          : value
+        : value;
+
+      setFormData((prev) => ({ ...prev, [field]: processedValue }));
+
+      if (errors[field as keyof typeof errors]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    },
+    [errors],
+  );
+
+  const handleSwitchChange = useCallback(
+    (
+      field: keyof Omit<GameConfigFormData, 'weightProbabilities'>,
+      checked: boolean,
+    ) => {
+      setFormData((prev) => ({ ...prev, [field]: checked }));
+      if (errors[field as keyof typeof errors]) {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+      }
+    },
+    [errors],
+  );
+
+  const handleClose = useCallback(() => {
+    if (!loading && !isSubmitting) {
+      resetForm();
+      onClose();
     }
-  };
+  }, [loading, isSubmitting, resetForm, onClose]);
 
-  const handleSwitchChange = (checked: boolean) => {
-    setFormData((prev) => ({ ...prev, respinFeatureEnabled: checked }));
-  };
+  const handleSubmit = useCallback(async () => {
+    const validatedWeightProbabilities = formData.weightProbabilities.map(
+      (wp) => ({
+        ...wp,
+        questions: Math.max(1, Number(wp.questions) || 1),
+        chance: Number(wp.chance),
+      }),
+    );
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+    const validatedFormData = {
+      ...formData,
+      weightProbabilities: validatedWeightProbabilities,
+      minimumStake: Number(formData.minimumStake),
+      maximumStake: Number(formData.maximumStake),
+      maxRespin: Number(formData.maxRespin),
+      defaultSpin: Number(formData.defaultSpin),
+      spinAmount: Number(formData.spinAmount),
+      stakeMultiplier: Number(formData.stakeMultiplier),
+    };
+
+    setFormData(validatedFormData);
+
+    if (!validateGameConfig(validatedFormData).isValid) {
+      setErrors(validateGameConfig(validatedFormData).errors);
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
-
     try {
-      const submitData = prepareGameConfigData(formData);
+      const submitData = {
+        ...validatedFormData,
+        type: 'PerfectScoreConfigRequest',
+        gameId: initialData?.gameId || '',
+        weightProbabilities: validatedFormData.weightProbabilities.map(
+          (wp) => ({
+            ...wp,
+            chance: Number(wp.chance),
+            questions: Number(wp.questions),
+          }),
+        ),
+      };
+
       await onSubmit(submitData);
+
+      await fetchGameData();
+
       setSubmitStatus('success');
       setTimeout(() => {
         handleClose();
       }, 1000);
     } catch (error) {
-      console.error('Error updating game configuration:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleClose = () => {
-    if (!loading && !isSubmitting) {
-      resetForm();
-      onClose();
-    }
-  };
+  }, [formData, validateForm, handleClose, onSubmit, fetchGameData]);
 
   const handleEditToggle = () => {
     setCurrentMode(currentMode === 'view' ? 'edit' : 'view');
@@ -138,11 +377,56 @@ const PerfectScoreGameConfigModal: React.FC<GameConfigModalProps> = ({
     setSubmitStatus('idle');
   };
 
-  const isFormValid =
-    formData.costPerSpin.trim() &&
-    formData.maximumSpinPerUser.trim() &&
-    Object.keys(errors).length === 0;
-  const isViewMode = currentMode === 'view';
+  // const handleAddWeightProbability = useCallback(() => {
+  //   setFormData((prev) => {
+
+  //     const updatedWeightProbabilities = prev.weightProbabilities.map((wp) => ({
+  //       ...wp,
+  //       questions: Math.max(1, wp.questions || 1),
+  //     }));
+
+  //     return {
+  //       ...prev,
+  //       weightProbabilities: [
+  //         ...updatedWeightProbabilities,
+  //         {
+  //           id: `new-${Date.now()}`,
+  //           weight: 'FIVE',
+  //           chance: 10,
+  //           questions: 1, // Default to 1 question
+  //           status: 'ACTIVE' as const,
+  //         },
+  //       ],
+  //     };
+  //   });
+  // }, []);
+
+  React.useEffect(() => {
+    const isMinStakeValid = formData.minimumStake > 0;
+    const isMaxStakeValid = formData.maximumStake > formData.minimumStake;
+    const isSpinAmountValid = formData.spinAmount >= 0;
+    const isStakeMultiplierValid = formData.stakeMultiplier >= 0;
+    const isMaxRespinValid = formData.maxRespin >= 0;
+    const isDefaultSpinValid = formData.defaultSpin >= 0;
+
+    const weightProbabilitiesValidation = formData.weightProbabilities.map(
+      (wp) => ({
+        isQuestionsValid: wp.questions >= 1,
+        isWeightValid: [
+          'FIVE',
+          'TEN',
+          'TWENTY',
+          'FIFTY',
+          'HUNDRED',
+          'RESPIN',
+          'SEVEN',
+        ].includes(wp.weight),
+        isStatusValid: ['ACTIVE', 'INACTIVE'].includes(wp.status),
+      }),
+    );
+  }, [formData, errors]);
+
+  const isFormValid = true;
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={handleClose}>
@@ -171,7 +455,7 @@ const PerfectScoreGameConfigModal: React.FC<GameConfigModalProps> = ({
                 >
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Cost per Spin
+                      Spin Amount
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">
@@ -180,65 +464,183 @@ const PerfectScoreGameConfigModal: React.FC<GameConfigModalProps> = ({
                       <input
                         type="number"
                         min="0"
-                        value={formData.costPerSpin}
+                        value={formData.spinAmount}
                         onChange={(e) =>
-                          handleInputChange('costPerSpin', e.target.value)
+                          handleInputChange('spinAmount', e.target.value)
                         }
-                        placeholder="100"
+                        placeholder="1000"
                         disabled={isViewMode || loading || isSubmitting}
                         className={`w-full rounded-md border py-3 pl-8 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                          errors.costPerSpin
+                          errors.spinAmount
                             ? 'border-red-500'
                             : 'border-gray-300'
                         }`}
                       />
                     </div>
-                    {errors.costPerSpin && (
+                    {errors.spinAmount && (
                       <p className="mt-1 text-sm text-red-600">
-                        {errors.costPerSpin}
+                        {errors.spinAmount}
                       </p>
                     )}
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Maximum Spin per User
+                      Stake Range
+                    </label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">
+                            ₦
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={formData.minimumStake}
+                            onChange={(e) =>
+                              handleInputChange('minimumStake', e.target.value)
+                            }
+                            placeholder="1000"
+                            disabled={isViewMode || loading || isSubmitting}
+                            className={`w-full rounded-md border py-3 pl-8 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
+                              errors.minimumStake
+                                ? 'border-red-500'
+                                : 'border-gray-300'
+                            }`}
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">Minimum</p>
+                        {errors.minimumStake && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.minimumStake}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center pt-3">
+                        <div className="h-px w-4 bg-gray-300"></div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">
+                            ₦
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={formData.maximumStake}
+                            onChange={(e) =>
+                              handleInputChange('maximumStake', e.target.value)
+                            }
+                            placeholder="1,000,000"
+                            disabled={isViewMode || loading || isSubmitting}
+                            className={`w-full rounded-md border py-3 pl-8 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
+                              errors.maximumStake
+                                ? 'border-red-500'
+                                : 'border-gray-300'
+                            }`}
+                          />
+                        </div>
+                        <p className="mt-1 text-xs text-gray-500">Maximum</p>
+                        {errors.maximumStake && (
+                          <p className="mt-1 text-sm text-red-600">
+                            {errors.maximumStake}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Max Respin
                     </label>
                     <input
                       type="number"
-                      min="1"
-                      value={formData.maximumSpinPerUser}
+                      min="0"
+                      value={formData.maxRespin}
                       onChange={(e) =>
-                        handleInputChange('maximumSpinPerUser', e.target.value)
+                        handleInputChange('maxRespin', e.target.value)
                       }
-                      placeholder="10"
+                      placeholder="3"
                       disabled={isViewMode || loading || isSubmitting}
                       className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                        errors.maximumSpinPerUser
+                        errors.maxRespin ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.maxRespin && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.maxRespin}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Default Spin
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.defaultSpin}
+                      onChange={(e) =>
+                        handleInputChange('defaultSpin', e.target.value)
+                      }
+                      placeholder="0"
+                      disabled={isViewMode || loading || isSubmitting}
+                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
+                        errors.defaultSpin
                           ? 'border-red-500'
                           : 'border-gray-300'
                       }`}
                     />
-                    {errors.maximumSpinPerUser && (
+                    {errors.defaultSpin && (
                       <p className="mt-1 text-sm text-red-600">
-                        {errors.maximumSpinPerUser}
+                        {errors.defaultSpin}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Stake Multiplier
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={formData.stakeMultiplier}
+                      onChange={(e) =>
+                        handleInputChange('stakeMultiplier', e.target.value)
+                      }
+                      placeholder="3"
+                      disabled={isViewMode || loading || isSubmitting}
+                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
+                        errors.stakeMultiplier
+                          ? 'border-red-500'
+                          : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.stakeMultiplier && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.stakeMultiplier}
                       </p>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
                     <div>
-                      <h4 className="font-medium text-gray-800">
-                        Re-spin Feature
-                      </h4>
+                      <h4 className="font-medium text-gray-800">Enable Spin</h4>
                       <p className="text-sm text-gray-500">
-                        Allow users to re-spin after a game
+                        Enable or disable the spin feature
                       </p>
                     </div>
                     <Switch
-                      id="respin-feature"
-                      checked={formData.respinFeatureEnabled}
-                      onCheckedChange={handleSwitchChange}
+                      id="enable-spin"
+                      checked={formData.enableSpin}
+                      onCheckedChange={(checked) =>
+                        handleSwitchChange('enableSpin', checked)
+                      }
                       disabled={isViewMode || loading || isSubmitting}
                     />
                   </div>

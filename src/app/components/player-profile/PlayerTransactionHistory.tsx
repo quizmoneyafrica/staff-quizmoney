@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+} from 'react';
 import {
   ListFilter,
   ChevronLeft,
@@ -9,9 +15,9 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useWalletTransactions } from '@/app/hooks/usePlayerProfile';
+import { useDebounce } from '@/app/hooks/useDebounce';
 import CustomImage from '../CustomImage';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
-import { useRef, useEffect, useCallback } from 'react';
 import TimeRangeDropdown from '../common/TimeRangeDropdown';
 import { calculateDateRange } from '@/app/utils/date-range';
 import { serializeDateRange, isValidDateRange } from '@/app/utils/dateUtils';
@@ -25,7 +31,7 @@ const getTransactionId = (transaction: Transaction) => {
 };
 
 const getTransactionType = (transaction: Transaction) => {
-  return transaction.transactionType || transaction.type || 'N/A';
+  return transaction.direction || 'N/A';
 };
 
 const formatDate = (transaction: Transaction) => {
@@ -179,9 +185,17 @@ export default function PlayerTransactionHistory({
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const transactionLimit = 10;
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const getApiFilterStatus = (filter: string) => {
-    return filter === 'All' ? undefined : filter.toLowerCase();
+    if (filter === 'All') return undefined;
+
+    const statusMap: Record<string, string> = {
+      Pending: 'PENDING',
+      Successful: 'SUCCESSFUL',
+      Failed: 'FAILED',
+    };
+    return statusMap[filter] || filter.toUpperCase();
   };
 
   const dateRange = useMemo(() => {
@@ -196,6 +210,10 @@ export default function PlayerTransactionHistory({
     return null;
   }, [selectedTimeRange, customDateRange]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
   const {
     data: walletTransactionsResponse,
     isLoading,
@@ -207,7 +225,7 @@ export default function PlayerTransactionHistory({
       page: currentPage - 1,
       size: transactionLimit,
       status: getApiFilterStatus(selectedFilter) as any,
-      search: searchTerm.trim() || undefined,
+      search: debouncedSearchTerm.trim() || undefined,
       'start-date': dateRange?.start,
       'end-date': dateRange?.end,
     },
@@ -320,46 +338,23 @@ export default function PlayerTransactionHistory({
     setSelectedTransaction(null);
   };
 
-  const debouncedSearch = useCallback(
-    debounce((searchValue: string) => {
-      setCurrentPage(1);
-    }, 300),
-    [],
-  );
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    debouncedSearch(value);
-  };
+    setSearchTerm(e.target.value);
 
-  function debounce<T extends (...args: any[]) => any>(
-    func: T,
-    wait: number,
-  ): (...args: Parameters<T>) => void {
-    let timeout: NodeJS.Timeout;
-    return (...args: Parameters<T>) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func(...args), wait);
-    };
-  }
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
 
   useEffect(() => {
     if (
-      searchTerm &&
       searchInputRef.current &&
-      document.activeElement !== searchInputRef.current
+      document.activeElement === searchInputRef.current
     ) {
-      const shouldRefocus =
-        searchInputRef.current.dataset.wasFocused === 'true';
-      if (shouldRefocus) {
-        searchInputRef.current.focus();
-
-        const length = searchInputRef.current.value.length;
-        searchInputRef.current.setSelectionRange(length, length);
-      }
+      const length = searchTerm.length;
+      searchInputRef.current.setSelectionRange(length, length);
     }
-  }, [filteredItems, searchTerm]);
+  }, [searchTerm]);
 
   const handleSearchFocus = () => {
     if (searchInputRef.current) {
@@ -540,7 +535,7 @@ export default function PlayerTransactionHistory({
             {isFilterOpen && (
               <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-[#D9D9D9] bg-white shadow-lg">
                 <ul className="py-1">
-                  {['All', 'completed', 'pending', 'failed'].map((status) => (
+                  {['All', 'Pending', 'Successful', 'Failed'].map((status) => (
                     <li key={status}>
                       <button
                         className={`w-full px-4 py-2 text-left text-sm capitalize hover:bg-gray-100 ${
@@ -551,7 +546,7 @@ export default function PlayerTransactionHistory({
                         onClick={() => handleFilterSelect(status)}
                         disabled={isLoading}
                       >
-                        {status}
+                        {status === 'All' ? 'All Statuses' : status}
                       </button>
                     </li>
                   ))}
@@ -626,13 +621,13 @@ export default function PlayerTransactionHistory({
                         >
                           Date & Time
                         </th>
-                        {/* <th
+                        <th
                           className="w-[100px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                           data-aos="fade-up"
                           data-aos-delay="550"
                         >
                           Status
-                        </th> */}
+                        </th>
                         <th
                           className="w-[120px] px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
                           data-aos="fade-up"
@@ -683,6 +678,20 @@ export default function PlayerTransactionHistory({
                           </td>
                           <td className="whitespace-nowrap px-6 py-4">
                             {formatDate(transaction)}
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                transaction.status === 'PENDING'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : transaction.status === 'COMPLETED' ||
+                                    transaction.status === 'SUCCESSFUL'
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {transaction.status?.toLowerCase()}
+                            </span>
                           </td>
                           <td className="whitespace-nowrap px-6 py-4">
                             <div className="flex justify-end md:block">

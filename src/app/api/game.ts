@@ -160,9 +160,21 @@ export interface PerfectScoreGame {
   description: string;
   type: GameType;
   config: {
-    costPerSpin: number;
-    maximumSpinPerUser: number;
-    respinFeatureEnabled: boolean;
+    subType: string;
+    minimumStake: number;
+    maximumStake: number;
+    maxRespin: number;
+    defaultSpin: number;
+    enableSpin: boolean;
+    spinAmount: number;
+    stakeMultiplier: number;
+    weightProbabilities: Array<{
+      id: string;
+      chance: number;
+      questions: number;
+      weight: 'FIVE' | 'TEN' | 'TWENTY' | 'FIFTY' | 'HUNDRED';
+      status: 'ACTIVE' | 'INACTIVE';
+    }>;
   };
 }
 
@@ -257,9 +269,27 @@ export interface UpdateMemoryGamePayload {
 export interface UpdatePerfectScoreGamePayload {
   type: string;
   gameId: string;
-  costPerSpin: number;
-  maximumSpinPerUser: number;
-  respinFeatureEnabled: boolean;
+  minimumStake: number;
+  maximumStake: number;
+  maxRespin: number;
+  defaultSpin: number;
+  enableSpin: boolean;
+  spinAmount: number;
+  stakeMultiplier: number;
+  weightProbabilities: Array<{
+    id: string;
+    chance: number;
+    questions: number;
+    weight:
+      | 'FIVE'
+      | 'TEN'
+      | 'TWENTY'
+      | 'FIFTY'
+      | 'HUNDRED'
+      | 'RESPIN'
+      | 'SEVEN';
+    status: 'ACTIVE' | 'INACTIVE';
+  }>;
 }
 
 export interface UpdateNumberGuessingGamePayload {
@@ -267,7 +297,7 @@ export interface UpdateNumberGuessingGamePayload {
   gameId: string;
   minimumStake: number;
   maximumStake: number;
-  range: number;
+  range?: number;
   upperBound: number;
   lowerBound: number;
   stakeMultiplier: number;
@@ -436,7 +466,20 @@ const GameApi = {
   updateNumberGuessingGame(
     payload: UpdateNumberGuessingGamePayload,
   ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
-    return request.patch(`/number-guesser`, payload);
+    const requestPayload = {
+      type: payload.type,
+      gameId: payload.gameId,
+      minimumStake: payload.minimumStake,
+      maximumStake: payload.maximumStake,
+      upperBound: payload.upperBound,
+      lowerBound: payload.lowerBound,
+      stakeMultiplier: payload.stakeMultiplier,
+      numberOfAttempts: payload.numberOfAttempts,
+      costPerTrial: payload.costPerTrial,
+      maxTrials: payload.maxTrials,
+    };
+
+    return request.patch(`/number-guesser`, requestPayload);
   },
 
   getGameSessions(
