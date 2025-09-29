@@ -6,11 +6,17 @@ import WithdrawalCards, {
 import WithdrawalModal from '@/app/components/screens/withdrawal/withdrawalmodal';
 import Pagination from '@/app/components/leaderboard/Pagination';
 import { Search, ListFilter, ChevronDown } from 'lucide-react';
+import { VerifiedIcon } from '@/app/icons/icons';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Avatar, Table } from '@radix-ui/themes';
 import { CaretSortIcon } from '@radix-ui/react-icons';
-import { useGetWithdrawalRequests, useGetWithdrawalStats } from '@/app/api/';
+import {
+  useGetWithdrawalRequests,
+  useGetWithdrawalStats,
+  type WithdrawalRequest,
+} from '@/app/api/withdrawal';
 import {
   WalletCardIcon,
   WalletIconBig,
@@ -21,19 +27,6 @@ import {
 } from '@/app/icons/icons';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import { convertToLocaleString } from '@/app/utils';
-
-interface WithdrawalRequest {
-  id: string;
-  purpose: string;
-  comment: string;
-  amount: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  processAt: string;
-  createdAt: string;
-  firstName: string;
-  availableBalance: number;
-  approvedBy?: string;
-}
 
 interface DateRange {
   start: string;
@@ -46,6 +39,7 @@ interface TimeRangeDropdownDateRange {
 }
 
 function Page() {
+  const router = useRouter();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isKycFilterOpen, setIsKycFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string>('All');
@@ -290,7 +284,10 @@ function Page() {
   }, []);
 
   const handleViewDetails = (withdrawalRequest: WithdrawalRequest) => {
-    setSelectedWithdrawal(withdrawalRequest);
+    setSelectedWithdrawal({
+      ...withdrawalRequest,
+      kycVerified: withdrawalRequest.kycVerified || false,
+    });
     setIsModalOpen(true);
   };
 
@@ -564,9 +561,19 @@ function Page() {
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="bg-primary-50 relative flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                          <div
+                            className="bg-primary-50 relative flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full p-1 transition-opacity hover:opacity-80"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (item.customerId) {
+                                router.push(
+                                  `/players/player-profile/${item.customerId}`,
+                                );
+                              }
+                            }}
+                          >
                             <Avatar
-                              src=""
+                              src={item.avatarUrl || ''}
                               fallback={item?.firstName
                                 ?.charAt(0)
                                 ?.toUpperCase()}
@@ -575,9 +582,14 @@ function Page() {
                             />
                           </div>
                           <div>
-                            <p className="text-primary-800 capitalize">
-                              {item.firstName}
-                            </p>
+                            <div className="flex items-center gap-1">
+                              <p className="text-primary-800 capitalize">
+                                {item.firstName}
+                              </p>
+                              {item.kycVerified && (
+                                <VerifiedIcon className="h-4 w-4 text-blue-500" />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </Table.Cell>

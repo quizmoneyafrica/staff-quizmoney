@@ -99,7 +99,11 @@ const WithdrawalTable: React.FC<IWithdrawalTableTableProps> = ({
           <Table.Body>
             {paginatedData?.length > 0 ? (
               paginatedData.map((item, index) => {
-                const { time, fullDate } = formatDateTime(item.createdAt.iso);
+                const createdAt =
+                  typeof item.createdAt === 'string'
+                    ? item.createdAt
+                    : item.createdAt?.iso || '';
+                const { time, fullDate } = formatDateTime(createdAt);
 
                 return (
                   <Table.Row key={item.id}>
@@ -141,9 +145,9 @@ const WithdrawalTable: React.FC<IWithdrawalTableTableProps> = ({
                     <Table.Cell className="px-4 py-4">
                       <p
                         className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
-                          item.status === 'resolved'
+                          item.status === 'APPROVED'
                             ? 'bg-green-100 text-green-800'
-                            : item.status === 'failed'
+                            : item.status === 'REJECTED'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}

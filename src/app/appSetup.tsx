@@ -13,6 +13,7 @@ import { disableConsoleInProduction, isIosPwaInstalled } from './utils/utils';
 import useFcmToken from './hooks/useFcmToken';
 import QueryProvider from '@/app/components/query-provider';
 import AppLoader from '@/app/components/loader/loader';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 function RootHydrationWatcher() {
   const dispatch = useAppDispatch();
@@ -42,21 +43,23 @@ function AppSetup({ children }: Props) {
 
   return (
     <Theme appearance="light" className="!font-text">
-      <Suspense fallback={<AppLoader />}>
-        <QueryProvider>
-          <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor}>
-              {isVisible && !token && !isIosPwaInstalled() && (
-                <PermissionGuide />
-              )}
-              <RootHydrationWatcher />
-              <Toaster appearance="light" />
-              <EnablePushOnIosButton />
-              {children}
-            </PersistGate>
-          </Provider>
-        </QueryProvider>
-      </Suspense>
+      <NuqsAdapter>
+        <Suspense fallback={<AppLoader />}>
+          <QueryProvider>
+            <Provider store={store}>
+              <PersistGate loading={null} persistor={persistor}>
+                {isVisible && !token && !isIosPwaInstalled() && (
+                  <PermissionGuide />
+                )}
+                <RootHydrationWatcher />
+                <Toaster appearance="light" />
+                <EnablePushOnIosButton />
+                {children}
+              </PersistGate>
+            </Provider>
+          </QueryProvider>
+        </Suspense>
+      </NuqsAdapter>
     </Theme>
   );
 }

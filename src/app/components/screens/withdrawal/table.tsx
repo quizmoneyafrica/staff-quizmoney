@@ -6,6 +6,8 @@ import Pagination from '../../leaderboard/Pagination';
 import WithdrawalModal from './withdrawalmodal';
 import React, { useState } from 'react';
 import { convertToLocaleString } from '@/app/utils';
+import { useRouter } from 'next/navigation';
+import { VerifiedIcon } from '@/app/icons/icons';
 
 interface PaginationInfo {
   currentPage: number;
@@ -24,6 +26,9 @@ interface WithdrawalRequest {
   createdAt: string;
   firstName: string;
   availableBalance: number;
+  customerId: string;
+  avatarUrl?: string;
+  kycVerified?: boolean;
   approvedBy?: string;
 }
 
@@ -42,6 +47,7 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
   onPageChange,
   currentPage = 1,
 }) => {
+  const router = useRouter();
   type SortableWithdrawalKeys =
     | 'id'
     | 'firstName'
@@ -164,18 +170,33 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
+                        <div
+                          className="bg-primary-50 flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full p-1 transition-opacity hover:opacity-80"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (item.customerId) {
+                              router.push(
+                                `/players/player-profile/${item.customerId}`,
+                              );
+                            }
+                          }}
+                        >
                           <Avatar
-                            src=""
+                            src={item.avatarUrl || ''}
                             fallback={item.firstName?.charAt(0).toUpperCase()}
                             radius="full"
                             className="bg-primary-50"
                           />
                         </div>
                         <div>
-                          <p className="text-primary-800 font-medium capitalize">
-                            {item.firstName}
-                          </p>
+                          <div className="flex items-center gap-1">
+                            <p className="text-primary-800 font-medium capitalize">
+                              {item.firstName}
+                            </p>
+                            {item.kycVerified && (
+                              <VerifiedIcon className="h-4 w-4 text-blue-500" />
+                            )}
+                          </div>
                           <p className="text-xs text-neutral-500">
                             {item.purpose}
                           </p>

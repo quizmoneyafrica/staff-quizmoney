@@ -2,29 +2,18 @@ import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Copy, Check } from 'lucide-react';
 import classNames from 'classnames';
+import { VerifiedIcon } from '@/app/icons/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatNaira, formatDateTime } from '@/app/utils/utils';
 import {
   useApproveWithdrawal,
   useRejectWithdrawal,
   useGetWithdrawalRequest,
+  type WithdrawalRequest,
 } from '@/app/api/withdrawal';
 import { toast } from 'sonner';
 import { toastPosition } from '@/app/utils/utils';
 import { useAppSelector } from '@/app/hooks/useAuth';
-
-interface WithdrawalRequest {
-  id: string;
-  purpose: string;
-  comment: string;
-  amount: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  processAt: string;
-  createdAt: string;
-  firstName: string;
-  availableBalance: number;
-  approvedBy?: string;
-}
 
 interface WithdrawalModalProps {
   isOpen: boolean;
@@ -235,8 +224,14 @@ const WithdrawalModal: React.FC<WithdrawalModalProps> = ({
                         </div>
                       </div>
                       <div className="flex-1">
-                        <div className="text-lg font-semibold capitalize text-gray-900">
-                          {currentWithdrawalData.firstName || 'Unknown User'}
+                        <div className="flex items-center gap-1">
+                          <div className="text-lg font-semibold capitalize text-gray-900">
+                            {currentWithdrawalData.firstName || 'Unknown User'}
+                          </div>
+                          {(withdrawalData?.kycVerified ||
+                            currentWithdrawalData?.kycVerified) && (
+                            <VerifiedIcon className="h-4 w-4 text-blue-500" />
+                          )}
                         </div>
                         <div className="text-sm text-gray-500">
                           Request ID: {currentWithdrawalData.id}
