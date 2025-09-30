@@ -169,18 +169,18 @@ const RecentWithdrawTable: React.FC<IRecentWithdrawTableProps> = ({
                       </div>
                     </Table.Cell>
                     <Table.Cell className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="bg-primary-50 flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full p-1 transition-opacity hover:opacity-80"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (item.customerId) {
-                              router.push(
-                                `/players/player-profile/${item.customerId}`,
-                              );
-                            }
-                          }}
-                        >
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (item.customerId) {
+                            router.push(
+                              `/players/player-profile/${item.customerId}`,
+                            );
+                          }
+                        }}
+                      >
+                        <div className="bg-primary-50 flex h-[40px] w-[40px] cursor-pointer items-center justify-center rounded-full p-1 transition-opacity hover:opacity-80">
                           <Avatar
                             src={item.avatarUrl || ''}
                             fallback={item.firstName?.charAt(0).toUpperCase()}
