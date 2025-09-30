@@ -1,9 +1,10 @@
 'use client';
+
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { Avatar, Container, Flex, Heading, Text } from '@radix-ui/themes';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   ArrowDownFillIcon,
   BellIcon,
@@ -13,22 +14,20 @@ import {
   SupportIcon,
 } from '../icons/icons';
 import { BuildingIcon } from '@/app/icons/icons';
-
 import { useAppSelector } from '../hooks/useAuth';
 import { DropdownMenu } from 'radix-ui';
 import LogoutDialog from '../components/logout/logout';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
-import NotificationApi from '../api/notification';
-import { setNotifications } from '../store/notificationSlice';
+// import NotificationApi from '../api/notification';
+// import { setNotifications } from '../store/notificationSlice';
 import { bottomNav, navs } from './nav';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { NavDropdown } from '../components/ui/NavDropdown';
-
-interface NotificationError {
-  message: string;
-}
+import { useQuery } from '@tanstack/react-query';
+import DashboardApi from '@/app/api/dashboardApi';
+import { convertToLocaleString } from '@/app/utils';
 
 const HamburgerIcon = ({
   isOpen,
@@ -286,54 +285,63 @@ function AppHeader() {
 
   const pageTitle = getPageTitle();
 
-  const ProfileAndNotification = () => (
-    <div className="flex items-center gap-3 lg:gap-6">
-      {isDashboard && (
-        <div className="flex items-center gap-2 rounded-lg px-3 py-2">
-          <div className="bg-primary-100 rounded-full p-2">
-            <BuildingIcon className="text-blue-800" />
-          </div>
-          <span className="text-sm font-semibold text-[#17478B]">
-            Total DVA
-          </span>
-          <span className="text-primary-900 rounded-full border p-2 text-sm">
-            12000
-          </span>
-        </div>
-      )}
+  const ProfileAndNotification = () => {
+    const { data: dashboardSummary } = useQuery({
+      queryKey: ['dashboardSummary'],
+      queryFn: DashboardApi.fetchDashboardSummary,
+    });
 
-      <Link
-        href="/notification"
-        className="hover:text-primary-900 relative text-neutral-600"
-      >
-        <BellIcon />
-        {unreadCount > 0 && (
-          <div className="bg-primary-900 absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full text-xs text-white">
-            {unreadCount}
+    return (
+      <div className="flex items-center gap-3 lg:gap-6">
+        {isDashboard && (
+          <div className="flex items-center gap-2 rounded-lg px-3 py-2">
+            <div className="bg-primary-100 rounded-full p-2">
+              <BuildingIcon className="text-blue-800" />
+            </div>
+            <span className="text-sm font-semibold text-[#17478B]">
+              Total DVA
+            </span>
+            <span className="text-primary-900 rounded-full border p-2 text-sm">
+              {convertToLocaleString(dashboardSummary?.totalDvaAccounts ?? 0)}
+            </span>
           </div>
         )}
-      </Link>
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          <div className="border-primary-50 flex-none cursor-pointer rounded-full border bg-white p-1 lg:border-none lg:px-2 lg:py-1">
-            <Flex align="center" gap="2">
-              <Avatar
-                src={user?.user?.avatar}
-                fallback={user?.user?.firstName?.charAt(0).toUpperCase()}
-                radius="full"
-                className="bg-primary-50"
-              />
-              <p className="hidden font-medium capitalize text-[#1B212D] lg:flex">
-                {user?.user?.firstName} {user?.user?.lastName}
-              </p>
-              <ArrowDownFillIcon className="hidden text-neutral-500 lg:flex" />
-            </Flex>
-          </div>
-        </DropdownMenu.Trigger>
 
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
-            {/* <DropdownMenu.Item
+        <Link
+          href="/notification"
+          className="hover:text-primary-900 relative text-neutral-600"
+        >
+          <BellIcon />
+          {unreadCount > 0 && (
+            <div className="bg-primary-900 absolute -top-1 right-0 flex h-4 w-4 items-center justify-center rounded-full text-xs text-white">
+              {unreadCount}
+            </div>
+          )}
+        </Link>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger asChild>
+            <div className="border-primary-50 flex-none cursor-pointer rounded-full border bg-white p-1 lg:border-none lg:px-2 lg:py-1">
+              <Flex align="center" gap="2">
+                <Avatar
+                  src={user?.user?.avatar}
+                  fallback={user?.user?.firstName?.charAt(0).toUpperCase()}
+                  radius="full"
+                  className="bg-primary-50"
+                />
+                <p className="hidden font-medium capitalize text-[#1B212D] lg:flex">
+                  {user?.user?.firstName} {user?.user?.lastName}
+                </p>
+                <ArrowDownFillIcon className="hidden text-neutral-500 lg:flex" />
+              </Flex>
+            </div>
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              className="DropdownMenuContent"
+              sideOffset={5}
+            >
+              {/* <DropdownMenu.Item
               className="DropdownMenuItem"
               onClick={() => router.push('/settings/profile')}
             >
@@ -353,30 +361,31 @@ function AppHeader() {
               </span>
             </DropdownMenu.Item> */}
 
-            <Link href="https://quizmoney.ng/how-it-works" target="_blank">
-              <DropdownMenu.Item className="DropdownMenuItem">
-                How It Works{' '}
+              <Link href="https://quizmoney.ng/how-it-works" target="_blank">
+                <DropdownMenu.Item className="DropdownMenuItem">
+                  How It Works{' '}
+                  <span className="RightSlot">
+                    <QuestionMarkCircledIcon />
+                  </span>
+                </DropdownMenu.Item>
+              </Link>
+              <DropdownMenu.Item
+                onSelect={() => {
+                  setOpenLogout(true);
+                }}
+                className="DropdownMenuItem hover:!bg-error-900"
+              >
+                Logout{' '}
                 <span className="RightSlot">
-                  <QuestionMarkCircledIcon />
+                  <LogoutIcon />
                 </span>
               </DropdownMenu.Item>
-            </Link>
-            <DropdownMenu.Item
-              onSelect={() => {
-                setOpenLogout(true);
-              }}
-              className="DropdownMenuItem hover:!bg-error-900"
-            >
-              Logout{' '}
-              <span className="RightSlot">
-                <LogoutIcon />
-              </span>
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
-    </div>
-  );
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      </div>
+    );
+  };
 
   return (
     <>

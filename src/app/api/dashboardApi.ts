@@ -5,6 +5,7 @@ interface DashboardSummary {
   totalUsers: number;
   lastGamePlayers: number;
   availableWalletBalance: number;
+  totalDvaAccounts: number;
 }
 
 interface DashboardSummaryApiResponse {
