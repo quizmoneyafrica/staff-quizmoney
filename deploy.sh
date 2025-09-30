@@ -31,6 +31,7 @@ git push origin dev
 
 git checkout quizmoney-v2
 git merge dev
+git pull origin quizmoney-v2
 git push origin quizmoney-v2
 
 git checkout dev
