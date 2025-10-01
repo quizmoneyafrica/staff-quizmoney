@@ -6,12 +6,16 @@ export const gameConfigSchema = Joi.object({
     'number.min': 'Minimum stake must be 0 or greater',
     'any.required': 'Minimum stake is required',
   }),
-  maximumStake: Joi.number().min(Joi.ref('minimumStake')).required().messages({
-    'number.base': 'Maximum stake must be a number',
-    'number.min':
-      'Maximum stake must be greater than or equal to minimum stake',
-    'any.required': 'Maximum stake is required',
-  }),
+  maximumStake: Joi.number()
+    .min(Joi.ref('minimumStake'))
+    .greater(Joi.ref('minimumStake'))
+    .required()
+    .messages({
+      'number.base': 'Maximum stake must be a number',
+      'number.min': 'Maximum stake cannot be less than minimum stake',
+      'number.greater': 'Maximum stake must be greater than minimum stake',
+      'any.required': 'Maximum stake is required',
+    }),
   maxRespin: Joi.number().integer().min(0).max(1073741824).required().messages({
     'number.base': 'Max respin must be a number',
     'number.integer': 'Max respin must be an integer',
@@ -51,10 +55,10 @@ export const gameConfigSchema = Joi.object({
           'string.empty': 'ID is required',
           'any.required': 'ID is required',
         }),
-        chance: Joi.number().min(0).max(100).required().messages({
-          'number.base': 'Chance must be a number',
+        chance: Joi.number().min(0).max(1).required().messages({
+          'number.base': 'Chance (probability) must be a number',
           'number.min': 'Chance must be 0 or greater',
-          'number.max': 'Chance must be 100 or less',
+          'number.max': 'Chance must be 1 or less (probability range: 0-1)',
           'any.required': 'Chance is required',
         }),
         questions: Joi.number()
@@ -64,7 +68,7 @@ export const gameConfigSchema = Joi.object({
           .required()
           .messages({
             'number.base': 'Questions must be a number',
-            'number.integer': 'Questions must be an integer',
+            'number.integer': 'Questions must be a whole number (no decimals)',
             'number.min': 'Questions must be 1 or greater',
             'number.max': 'Questions must be less than or equal to 1073741824',
             'any.required': 'Questions is required',

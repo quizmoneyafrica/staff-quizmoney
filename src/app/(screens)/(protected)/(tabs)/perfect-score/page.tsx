@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import {
   PerfectScoreGame,
   UpdatePerfectScoreGamePayload,
@@ -75,6 +76,7 @@ const timeRangeOptions = ['24h', '7days', '30days', 'custom'];
 
 function PerfectScorePage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [configMode, setConfigMode] = useState<'view' | 'edit'>('view');
   const [selected, setSelected] = useState('7days');
@@ -211,8 +213,7 @@ function PerfectScorePage() {
     } catch (error) {}
   };
   const handleViewConfiguration = () => {
-    setConfigMode('view');
-    setShowConfigModal(true);
+    router.push('/perfect-score/stake-settings');
   };
 
   const handleCustomDateChange = (dateRange: {
@@ -263,20 +264,37 @@ function PerfectScorePage() {
     } catch (error) {}
   };
 
-  const [statsData, setStatsData] = useState<StatsData>({
-    totalEntries: 0,
-    totalRevenue: 0,
-    extraTrialsBought: 0,
-    spinsPurchased: 0,
-    totalAmountWon: 0,
-    averageDuration: 0,
-  });
+  const { data: statsData, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['perfectScoreStats'],
+    queryFn: () =>
+      GameApi.getGameStats({
+        gameType: 'PERFECT_SCORE',
+      }),
+    select: (response) => {
+      if (response.data?.success) {
+        return {
+          totalEntries: response.data.data?.totalEntry || 0,
+          totalRevenue: response.data.data?.totalRevenue || 0,
 
-  const isLoadingStats = false;
+          spinsPurchased: response.data.data?.trialPurchased || 0,
+          totalAmountWon: response.data.data?.totalAmountWon || 0,
+          averageDuration: 0,
+        };
+      }
+      return {
+        totalEntries: 0,
+        totalRevenue: 0,
+        spinsPurchased: 0,
+        totalAmountWon: 0,
+        averageDuration: 0,
+      };
+    },
+  });
 
   const statsValues = statsData || {
     totalEntries: 0,
     totalRevenue: 0,
+    extraTrialsBought: 0,
     spinsPurchased: 0,
     totalAmountWon: 0,
     averageDuration: 0,
@@ -306,19 +324,18 @@ function PerfectScorePage() {
     {
       title: 'Spins Purchased',
       value: statsValues.spinsPurchased,
-      bgColor: 'lightGreen' as const,
-      icon: <WalletCardIconLightGreen />,
-      bgImage: <WalletIconBigGreen />,
-      format: formatNaira,
+      bgColor: 'redError' as const,
+      icon: <SmallRedWallet />,
+      bgImage: <WalletIconBigRedError />,
+      format: formatNumber,
       isLoading: isLoadingStats,
     },
     {
-      title: 'Total Amount won',
+      title: 'Total Amount Won',
       value: statsValues.totalAmountWon,
-      bgColor: 'redError' as const,
-      icon: <SmallRedWallet />,
-
-      bgImage: <WalletIconBigRedError />,
+      bgColor: 'lightGreen' as const,
+      icon: <WalletCardIconLightGreen />,
+      bgImage: <WalletIconBigGreen />,
       format: formatNaira,
       isLoading: isLoadingStats,
     },

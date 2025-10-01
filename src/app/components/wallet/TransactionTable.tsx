@@ -339,7 +339,7 @@ const TransactionTable: React.FC = () => {
                         </div>
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4 capitalize">
-                        {tx.transactionType}
+                        {tx.direction}
                       </Table.Cell>
                       <Table.Cell className="px-4 py-4">
                         <Tooltip>
