@@ -185,7 +185,7 @@ function PerfectScorePage() {
     try {
       const payload: UpdatePerfectScoreGamePayload = {
         ...data,
-        type: 'PerfectScoreConfigRequest',
+        // type: 'PerfectScoreConfigRequest',
         gameId: configData.gameId || '',
         weightProbabilities: data.weightProbabilities.map((wp) => ({
           ...wp,
@@ -236,7 +236,7 @@ function PerfectScorePage() {
     try {
       const payload: UpdatePerfectScoreGamePayload = {
         ...formData,
-        type: 'PerfectScoreConfigRequest' as const,
+        // type: 'PerfectScoreConfigRequest' as const,
         gameId: gameData?.gameId || '',
         minimumStake: Number(formData.minimumStake),
         maximumStake: Number(formData.maximumStake),

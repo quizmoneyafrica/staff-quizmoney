@@ -250,7 +250,7 @@ export default function PerfectScoreStakeSettings() {
     try {
       const payload: UpdatePerfectScoreGamePayload = {
         ...validatedFormData,
-        type: 'PerfectScoreConfigRequest',
+        // type: 'PerfectScoreConfigRequest',
         gameId: gameData?.gameId || '',
         weightProbabilities: validatedFormData.weightProbabilities.map(
           (wp) => ({
