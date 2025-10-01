@@ -467,6 +467,8 @@ const GameApi = {
     payload: UpdateNumberGuessingGamePayload,
   ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
     const requestPayload = {
+      gameId: payload.gameId,
+
       minimumStake: payload.minimumStake,
       maximumStake: payload.maximumStake,
       upperBound: payload.upperBound,
