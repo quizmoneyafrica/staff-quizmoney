@@ -2,6 +2,8 @@
 
 git pull origin dev
 
+git pull origin quizmoney-v2
+
 # Check if the .gitignore file exists
 if [ ! -f .gitignore ]; then
   echo ".gitignore file does not exist, creating one."
