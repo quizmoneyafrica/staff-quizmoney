@@ -4,46 +4,62 @@ import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  validateGameConfig,
-  prepareGameConfigData,
-  type GameConfigFormData,
-} from '@/app/components/number-guessing/GameConfigurationModal.schema';
 
 interface GameConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: {
+    stakeRange: {
+      minimum: number;
+      maximum: number;
+    };
+    range: number;
+    stakeMultiplier: number;
+    baseTrial: number;
     costPerTrial: number;
+    maxTrialPurchase: number;
     numberRange: {
       lowerBound: number;
       upperBound: number;
     };
-    baseTrial: number;
-    maxTrialPurchase: number;
-    stakeMultiplier: number;
   }) => void;
   loading?: boolean;
   mode: 'view' | 'edit';
   initialData?: {
+    stakeMinimum?: number;
+    stakeMaximum?: number;
+    range?: number;
+    stakeMultiplier?: number;
+    baseTrial?: number;
     costPerTrial?: number;
+    maxTrialPurchase?: number;
     lowerBound?: number;
     upperBound?: number;
-    range?: number;
-    baseTrial?: number;
-    maxTrialPurchase?: number;
-    stakeMultiplier?: number;
   };
 }
 
+interface FormData {
+  stakeMinimum: string;
+  stakeMaximum: string;
+  range: string;
+  stakeMultiplier: string;
+  baseTrial: string;
+  costPerTrial: string;
+  maxTrialPurchase: string;
+  lowerBound: string;
+  upperBound: string;
+}
+
 interface FormErrors {
+  stakeMinimum?: string;
+  stakeMaximum?: string;
+  range?: string;
+  stakeMultiplier?: string;
+  baseTrial?: string;
   costPerTrial?: string;
+  maxTrialPurchase?: string;
   lowerBound?: string;
   upperBound?: string;
-  range?: string;
-  baseTrial?: string;
-  maxTrialPurchase?: string;
-  stakeMultiplier?: string;
 }
 
 const GameConfigModal: React.FC<GameConfigModalProps> = ({
@@ -54,13 +70,16 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
   mode,
   initialData,
 }) => {
-  const [formData, setFormData] = useState<GameConfigFormData>({
+  const [formData, setFormData] = useState<FormData>({
+    stakeMinimum: '',
+    stakeMaximum: '',
+    range: '',
+    stakeMultiplier: '',
+    baseTrial: '',
     costPerTrial: '',
+    maxTrialPurchase: '',
     lowerBound: '',
     upperBound: '',
-    baseTrial: '',
-    maxTrialPurchase: '',
-    stakeMultiplier: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -73,14 +92,17 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
   useEffect(() => {
     if (isOpen && initialData) {
       setFormData({
+        stakeMinimum: initialData.stakeMinimum?.toString() || '',
+        stakeMaximum: initialData.stakeMaximum?.toString() || '',
+        range: initialData.range?.toString() || '',
+        stakeMultiplier: initialData.stakeMultiplier
+          ? `x ${initialData.stakeMultiplier}`
+          : '',
+        baseTrial: initialData.baseTrial?.toString() || '',
         costPerTrial: initialData.costPerTrial?.toString() || '',
+        maxTrialPurchase: initialData.maxTrialPurchase?.toString() || '',
         lowerBound: initialData.lowerBound?.toString() || '',
         upperBound: initialData.upperBound?.toString() || '',
-        baseTrial: initialData.baseTrial?.toString() || '',
-        maxTrialPurchase: initialData.maxTrialPurchase?.toString() || '',
-        stakeMultiplier: initialData.stakeMultiplier
-          ? `X ${initialData.stakeMultiplier}`
-          : '',
       });
     }
     setCurrentMode(mode);
@@ -94,12 +116,15 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
 
   const resetForm = () => {
     setFormData({
+      stakeMinimum: '',
+      stakeMaximum: '',
+      range: '',
+      stakeMultiplier: '',
+      baseTrial: '',
       costPerTrial: '',
+      maxTrialPurchase: '',
       lowerBound: '',
       upperBound: '',
-      baseTrial: '',
-      maxTrialPurchase: '',
-      stakeMultiplier: '',
     });
     setErrors({});
     setSubmitStatus('idle');
@@ -107,33 +132,37 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
     setCurrentMode(mode);
   };
 
-  const validateForm = (): boolean => {
-    const { isValid, errors: validationErrors } = validateGameConfig(formData);
-    setErrors(validationErrors);
-    return isValid;
-  };
-
-  const handleInputChange = (
-    field: keyof GameConfigFormData,
-    value: string,
-  ) => {
+  const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
-
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
     try {
-      const submitData = prepareGameConfigData(formData);
-      await onSubmit(submitData);
+      const submitData = {
+        stakeRange: {
+          minimum: parseFloat(formData.stakeMinimum),
+          maximum: parseFloat(formData.stakeMaximum),
+        },
+        range: parseFloat(formData.range),
+        stakeMultiplier: parseFloat(
+          formData.stakeMultiplier.replace(/[^0-9.]/g, ''),
+        ),
+        baseTrial: parseInt(formData.baseTrial),
+        costPerTrial: parseFloat(formData.costPerTrial),
+        maxTrialPurchase: parseInt(formData.maxTrialPurchase),
+        numberRange: {
+          lowerBound: parseFloat(formData.lowerBound),
+          upperBound: parseFloat(formData.upperBound),
+        },
+      };
 
+      await onSubmit(submitData);
       setSubmitStatus('success');
       setTimeout(() => {
         handleClose();
@@ -158,15 +187,6 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
     setErrors({});
     setSubmitStatus('idle');
   };
-
-  const isFormValid =
-    formData.costPerTrial.trim() &&
-    formData.lowerBound.trim() &&
-    formData.upperBound.trim() &&
-    formData.baseTrial.trim() &&
-    formData.maxTrialPurchase.trim() &&
-    formData.stakeMultiplier.trim() &&
-    Object.keys(errors).length === 0;
 
   const isViewMode = currentMode === 'view';
 
@@ -197,151 +217,78 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.2 }}
                 >
+                  {/* Stake Range */}
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Cost per Trial
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-700">
-                        ₦
-                      </span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={formData.costPerTrial}
-                        onChange={(e) =>
-                          handleInputChange('costPerTrial', e.target.value)
-                        }
-                        placeholder="100"
-                        disabled={isViewMode || loading || isSubmitting}
-                        className={`w-full rounded-md border py-3 pl-8 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                          errors.costPerTrial
-                            ? 'border-red-500'
-                            : 'border-gray-300'
-                        }`}
-                      />
-                    </div>
-                    {errors.costPerTrial && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.costPerTrial}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Number Range
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Stake Range
                     </label>
                     <div className="flex gap-4">
                       <div className="flex-1">
-                        <input
-                          type="number"
-                          min="0"
-                          value={formData.lowerBound}
-                          onChange={(e) =>
-                            handleInputChange('lowerBound', e.target.value)
-                          }
-                          placeholder="0"
-                          disabled={isViewMode || loading || isSubmitting}
-                          className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                            errors.lowerBound
-                              ? 'border-red-500'
-                              : 'border-gray-300'
-                          }`}
-                        />
-                        <p className="mt-1 text-xs text-gray-500">
-                          Lower Bound
-                        </p>
-                        {errors.lowerBound && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {errors.lowerBound}
-                          </p>
-                        )}
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900">
+                            ₦
+                          </span>
+                          <input
+                            type="number"
+                            value={formData.stakeMinimum}
+                            onChange={(e) =>
+                              handleInputChange('stakeMinimum', e.target.value)
+                            }
+                            placeholder="1000"
+                            disabled={isViewMode || loading || isSubmitting}
+                            className="w-full rounded-md border border-gray-300 bg-gray-50 py-3 pl-8 pr-4 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                            Minimum
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center justify-center py-3">
                         <div className="h-px w-4 bg-gray-300"></div>
                       </div>
                       <div className="flex-1">
-                        <input
-                          type="number"
-                          min="0"
-                          value={formData.upperBound}
-                          onChange={(e) =>
-                            handleInputChange('upperBound', e.target.value)
-                          }
-                          placeholder="5000"
-                          disabled={isViewMode || loading || isSubmitting}
-                          className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                            errors.upperBound
-                              ? 'border-red-500'
-                              : 'border-gray-300'
-                          }`}
-                        />
-                        <p className="mt-1 text-xs text-gray-500">
-                          Upper Bound
-                        </p>
-                        {errors.upperBound && (
-                          <p className="mt-1 text-sm text-red-600">
-                            {errors.upperBound}
-                          </p>
-                        )}
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900">
+                            ₦
+                          </span>
+                          <input
+                            type="number"
+                            value={formData.stakeMaximum}
+                            onChange={(e) =>
+                              handleInputChange('stakeMaximum', e.target.value)
+                            }
+                            placeholder="1,000,000"
+                            disabled={isViewMode || loading || isSubmitting}
+                            className="w-full rounded-md border border-gray-300 bg-gray-50 py-3 pl-8 pr-4 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                            Maximum
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
+                  {/* Range */}
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Base Trial
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Range
                     </label>
                     <input
                       type="number"
-                      min="1"
-                      value={formData.baseTrial}
+                      value={formData.range}
                       onChange={(e) =>
-                        handleInputChange('baseTrial', e.target.value)
+                        handleInputChange('range', e.target.value)
                       }
-                      placeholder="3"
+                      placeholder="50"
                       disabled={isViewMode || loading || isSubmitting}
-                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                        errors.baseTrial ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
-                    {errors.baseTrial && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.baseTrial}
-                      </p>
-                    )}
                   </div>
 
+                  {/* Stake Multiplier */}
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Max Trial Purchase
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={formData.maxTrialPurchase}
-                      onChange={(e) =>
-                        handleInputChange('maxTrialPurchase', e.target.value)
-                      }
-                      placeholder="2"
-                      disabled={isViewMode || loading || isSubmitting}
-                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                        errors.maxTrialPurchase
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      }`}
-                    />
-                    {errors.maxTrialPurchase && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.maxTrialPurchase}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
                       Stake Multiplier
                     </label>
                     <input
@@ -350,19 +297,112 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                       onChange={(e) =>
                         handleInputChange('stakeMultiplier', e.target.value)
                       }
-                      placeholder="X 3"
+                      placeholder="x 3"
                       disabled={isViewMode || loading || isSubmitting}
-                      className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#17478B] disabled:bg-gray-100 ${
-                        errors.stakeMultiplier
-                          ? 'border-red-500'
-                          : 'border-gray-300'
-                      }`}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
-                    {errors.stakeMultiplier && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.stakeMultiplier}
-                      </p>
-                    )}
+                  </div>
+
+                  {/* Base Trial */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Base Trial
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.baseTrial}
+                      onChange={(e) =>
+                        handleInputChange('baseTrial', e.target.value)
+                      }
+                      placeholder="3"
+                      disabled={isViewMode || loading || isSubmitting}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  {/* Cost per Trial */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Cost per Trial
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900">
+                        ₦
+                      </span>
+                      <input
+                        type="number"
+                        value={formData.costPerTrial}
+                        onChange={(e) =>
+                          handleInputChange('costPerTrial', e.target.value)
+                        }
+                        placeholder="1000"
+                        disabled={isViewMode || loading || isSubmitting}
+                        className="w-full rounded-md border border-gray-300 bg-gray-50 py-3 pl-8 pr-4 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Max Trial Purchase */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Max Trial Purchase
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.maxTrialPurchase}
+                      onChange={(e) =>
+                        handleInputChange('maxTrialPurchase', e.target.value)
+                      }
+                      placeholder="2"
+                      disabled={isViewMode || loading || isSubmitting}
+                      className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  {/* Number Range */}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-900">
+                      Number Range
+                    </label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={formData.lowerBound}
+                            onChange={(e) =>
+                              handleInputChange('lowerBound', e.target.value)
+                            }
+                            placeholder="0"
+                            disabled={isViewMode || loading || isSubmitting}
+                            className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                            Lower Bound
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center py-3">
+                        <div className="h-px w-4 bg-gray-300"></div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="relative">
+                          <input
+                            type="number"
+                            value={formData.upperBound}
+                            onChange={(e) =>
+                              handleInputChange('upperBound', e.target.value)
+                            }
+                            placeholder="5000"
+                            disabled={isViewMode || loading || isSubmitting}
+                            className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                            Upper Bound
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
 
@@ -375,20 +415,8 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                   <button
                     type="button"
                     onClick={isViewMode ? handleEditToggle : handleSubmit}
-                    disabled={
-                      (!isFormValid && !isViewMode) || loading || isSubmitting
-                    }
-                    className={`
-                      flex h-[53px] w-full
-                      items-center justify-center space-x-2
-                      rounded-[25px] bg-[#17478B] text-base 
-                      font-semibold text-white
-                      transition duration-200
-                      hover:bg-[#133a6e] disabled:cursor-not-allowed disabled:opacity-50 md:w-[538px]
-                    `}
-                    style={{
-                      fontFamily: 'Space Grotesk, sans-serif',
-                    }}
+                    disabled={loading || isSubmitting}
+                    className="flex h-[53px] w-full items-center justify-center space-x-2 rounded-lg bg-[#2563EB] text-base font-semibold text-white transition duration-200 hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSubmitting ? (
                       <>
@@ -413,7 +441,6 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                   </button>
                 </motion.div>
 
-                {/* Status Messages */}
                 {submitStatus === 'error' && (
                   <motion.div
                     initial={{ opacity: 0 }}

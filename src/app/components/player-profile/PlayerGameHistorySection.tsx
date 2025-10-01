@@ -6,11 +6,14 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CustomImage from '../CustomImage';
 import * as Dialog from '@radix-ui/react-dialog';
-import GameHistoryModal from './GameHistoryModal';
+
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { formatNaira } from '@/app/utils/utils';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+import GameHistoryHeader from './GameHistoryHeader';
 
 type GameHistoryItem = {
   gameId: string;
@@ -53,6 +56,8 @@ type TransformedGameHistoryItem = {
   earnings: number;
   position: number;
   gameResultStatus: string;
+  gameType: string;
+  displayGameType: string;
 };
 
 interface PlayerGameHistorySectionProps {
@@ -65,6 +70,7 @@ export default function PlayerGameHistorySection({
   userId,
 }: PlayerGameHistorySectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<'live' | 'zone'>('live');
 
   const router = useRouter();
 
@@ -93,7 +99,7 @@ export default function PlayerGameHistorySection({
     enabled: !!userId,
   });
 
-  const gameHistoryData =
+  const liveGameHistoryData =
     gameHistoryResponse?.data?.data?.content?.map((game: any) => ({
       ...game,
 
@@ -110,11 +116,46 @@ export default function PlayerGameHistorySection({
       currentQuestionOrder: 0,
       prizeBetween: 0,
       coinPrizeBetween: 0,
-      gameType: 'QUIZ',
+      gameType: 'LIVE',
       reward: 0,
       rewardType: 'NONE',
       customerGameLobbyStatus: 'COMPLETED',
     })) || [];
+
+  // Mock data
+  const mockZoneGameTypes = [
+    'Memory Game',
+    'Perfect Scores',
+    'Number Guessing',
+  ];
+  const mockZoneGames = mockZoneGameTypes.map((zoneType, i) => ({
+    gameId: `zone-${i + 1}-${Math.random().toString(36).substring(7)}`,
+    customerId: userId,
+    status: ['WON', 'LOSS', 'DRAW'][i % 3],
+    gameResultStatus: ['WON', 'LOSS', 'DRAW'][i % 3],
+    fee: 0,
+    duration: 0,
+    startTime: new Date(
+      Date.now() - (i + 1) * 5 * 24 * 60 * 60 * 1000,
+    ).toISOString(),
+    endTime: new Date().toISOString(),
+    description: '',
+    prize: i === 0 ? 2500 : 0,
+    coinPrize: 0,
+    name: 'Zone Game',
+    numberOfQuestions: 0,
+    currentQuestionOrder: 0,
+    prizeBetween: 0,
+    coinPrizeBetween: 0,
+    gameType: 'ZONE',
+    zoneGameType: zoneType,
+    reward: 0,
+    rewardType: 'NONE',
+    customerGameLobbyStatus: 'COMPLETED',
+  }));
+
+  const gameHistoryData =
+    activeTab === 'live' ? liveGameHistoryData : mockZoneGames;
 
   const pagination = {
     totalPages: gameHistoryResponse?.data?.data?.totalPages || 0,
@@ -165,7 +206,7 @@ export default function PlayerGameHistorySection({
   };
 
   const transformGameData = (
-    game: GameHistoryItem,
+    game: GameHistoryItem & { zoneGameType?: string },
   ): TransformedGameHistoryItem => {
     const gameName = 'Game ' + (game.gameId || '').substring(0, 6);
     const startDate = game.startTime ? new Date(game.startTime) : new Date();
@@ -191,6 +232,11 @@ export default function PlayerGameHistorySection({
       earnings = 0;
     }
 
+    const isLiveGame = game.gameType === 'LIVE' || game.gameType === 'QUIZ';
+    const displayGameType = isLiveGame
+      ? 'Live Game'
+      : game.zoneGameType || 'Memory Game';
+
     return {
       id: game.gameId,
       date: startDate.toISOString(),
@@ -208,6 +254,8 @@ export default function PlayerGameHistorySection({
       earnings: earnings,
       position: 0,
       gameResultStatus: game.gameResultStatus || 'UNKNOWN',
+      gameType: game.gameType,
+      displayGameType: displayGameType,
     };
   };
 
@@ -288,6 +336,9 @@ export default function PlayerGameHistorySection({
         Game History
       </h2>
 
+      {/* Tabs and Filter Section */}
+      <GameHistoryHeader activeTab={activeTab} onTabChange={setActiveTab} />
+
       <div className="relative w-full overflow-x-auto rounded-lg">
         <div className="inline-block min-w-full align-middle">
           <div className="overflow-hidden">
@@ -301,6 +352,14 @@ export default function PlayerGameHistorySection({
                     data-aos-delay="200"
                   >
                     Game ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+                    data-aos="fade-up"
+                    data-aos-delay="300"
+                  >
+                    Game Type
                   </th>
                   <th
                     scope="col"
@@ -356,6 +415,11 @@ export default function PlayerGameHistorySection({
                             </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <span className="inline-flex rounded-sm bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                          {transformedGame.displayGameType}
+                        </span>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         <span className="text-primary-900 inline-flex rounded-full bg-blue-100 px-2 text-xs font-semibold leading-5">
@@ -464,18 +528,7 @@ export default function PlayerGameHistorySection({
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Previous</span>
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  <ChevronLeft />
                 </button>
 
                 {Array.from(
@@ -585,18 +638,7 @@ export default function PlayerGameHistorySection({
                   className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
                 >
                   <span className="sr-only">Next</span>
-                  <svg
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    aria-hidden="true"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  <ChevronRight />
                 </button>
               </nav>
             </div>
