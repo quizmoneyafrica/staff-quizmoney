@@ -293,8 +293,8 @@ export interface UpdatePerfectScoreGamePayload {
 }
 
 export interface UpdateNumberGuessingGamePayload {
-  type: string;
-  gameId: string;
+  type?: string;
+  gameId?: string;
   minimumStake: number;
   maximumStake: number;
   range?: number;
@@ -467,8 +467,6 @@ const GameApi = {
     payload: UpdateNumberGuessingGamePayload,
   ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
     const requestPayload = {
-      type: payload.type,
-      gameId: payload.gameId,
       minimumStake: payload.minimumStake,
       maximumStake: payload.maximumStake,
       upperBound: payload.upperBound,

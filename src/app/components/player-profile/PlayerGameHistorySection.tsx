@@ -397,23 +397,13 @@ export default function PlayerGameHistorySection({
                       data-aos-delay={700 + index * 100}
                     >
                       <td className="whitespace-nowrap px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                            <CustomImage
-                              src="/assets/images/gamepad.svg"
-                              alt="Game"
-                              width={20}
-                              height={20}
-                            />
-                          </div>
-                          <div className="ml-4">
-                            <h3 className="text-sm font-medium text-gray-900">
-                              {transformedGame.gameName}
-                            </h3>
-                            <p className="text-sm text-gray-500">
-                              {formatDateForDisplay(transformedGame.date)}
-                            </p>
-                          </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900">
+                            {game.gameId}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {formatDateForDisplay(game.startTime)}
+                          </p>
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
@@ -437,7 +427,7 @@ export default function PlayerGameHistorySection({
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
-                        <div className="flex flex-col items-end">
+                        <div className="flex justify-center">
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               transformedGame.gameResultStatus === 'WON'
@@ -448,9 +438,6 @@ export default function PlayerGameHistorySection({
                             }`}
                           >
                             {transformedGame.status}
-                          </span>
-                          <span className="mt-1 text-sm font-medium text-gray-900">
-                            {transformedGame.reward.value}
                           </span>
                         </div>
                       </td>
