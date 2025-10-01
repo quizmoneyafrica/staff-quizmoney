@@ -4,6 +4,32 @@ import React, { useState, useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Joi from 'joi';
+
+const validationSchema = Joi.object().keys({
+  stakeMinimum: Joi.number().required().min(0).label('Minimum Stake'),
+  stakeMaximum: Joi.number()
+    .required()
+    .greater(Joi.ref('stakeMinimum'))
+    .label('Maximum Stake')
+    .messages({
+      'number.greater': 'Maximum stake must be greater than minimum stake',
+      'number.base': 'Maximum stake must be a valid number',
+    }),
+  range: Joi.number().required().min(0).label('Range'),
+  stakeMultiplier: Joi.number().required().min(0).label('Stake Multiplier'),
+  baseTrial: Joi.number().required().min(1).label('Base Trial'),
+  costPerTrial: Joi.number().required().min(0).label('Cost per Trial'),
+  maxTrialPurchase: Joi.number().required().min(0).label('Max Trial Purchase'),
+  lowerBound: Joi.number().required().min(0).label('Lower Bound'),
+  upperBound: Joi.number()
+    .required()
+    .min(Joi.ref('lowerBound'))
+    .label('Upper Bound')
+    .messages({
+      'number.min': 'Upper bound must be greater than lower bound',
+    }),
+});
 
 interface GameConfigModalProps {
   isOpen: boolean;
@@ -95,9 +121,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
         stakeMinimum: initialData.stakeMinimum?.toString() || '',
         stakeMaximum: initialData.stakeMaximum?.toString() || '',
         range: initialData.range?.toString() || '',
-        stakeMultiplier: initialData.stakeMultiplier
-          ? `x ${initialData.stakeMultiplier}`
-          : '',
+        stakeMultiplier: initialData.stakeMultiplier?.toString() || '',
         baseTrial: initialData.baseTrial?.toString() || '',
         costPerTrial: initialData.costPerTrial?.toString() || '',
         maxTrialPurchase: initialData.maxTrialPurchase?.toString() || '',
@@ -132,27 +156,139 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
     setCurrentMode(mode);
   };
 
+  const validateField = async (field: keyof FormData, value: string) => {
+    try {
+      if (value === '') {
+        setErrors((prev) => ({ ...prev, [field]: undefined }));
+        return;
+      }
+
+      if (
+        [
+          'stakeMinimum',
+          'stakeMaximum',
+          'range',
+          'stakeMultiplier',
+          'baseTrial',
+          'costPerTrial',
+          'maxTrialPurchase',
+          'lowerBound',
+          'upperBound',
+        ].includes(field)
+      ) {
+        if (isNaN(parseFloat(value)) || value.trim() === '') {
+          setErrors((prev) => ({
+            ...prev,
+            [field]: 'Please enter a valid number',
+          }));
+          return;
+        }
+      }
+
+      if (field === 'stakeMaximum' && value && formData.stakeMinimum) {
+        const min = parseFloat(formData.stakeMinimum);
+        const max = parseFloat(value);
+        if (min === max) {
+          setErrors((prev) => ({
+            ...prev,
+            stakeMaximum: 'Minimum and maximum stake cannot be the same',
+          }));
+          return;
+        }
+        if (max < min) {
+          setErrors((prev) => ({
+            ...prev,
+            stakeMaximum: 'Maximum stake must be greater than minimum stake',
+          }));
+          return;
+        }
+      }
+
+      if (field === 'stakeMinimum' && value && formData.stakeMaximum) {
+        const min = parseFloat(value);
+        const max = parseFloat(formData.stakeMaximum);
+        if (min === max) {
+          setErrors((prev) => ({
+            ...prev,
+            stakeMinimum: 'Minimum and maximum stake cannot be the same',
+          }));
+          return;
+        }
+        if (min > max) {
+          setErrors((prev) => ({
+            ...prev,
+            stakeMinimum: 'Minimum stake must be less than maximum stake',
+          }));
+          return;
+        }
+      }
+
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error instanceof Joi.ValidationError) {
+          const errorMessage = error.details?.[0]?.message;
+          if (errorMessage && !errorMessage.includes('is not allowed')) {
+            setErrors((prev) => ({ ...prev, [field]: errorMessage }));
+          } else {
+            setErrors((prev) => ({ ...prev, [field]: undefined }));
+          }
+        } else {
+          setErrors((prev) => ({ ...prev, [field]: error.message }));
+        }
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          [field]: 'An unknown error occurred',
+        }));
+      }
+    }
+  };
+
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
+
+    validateField(field, value);
   };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setSubmitStatus('idle');
+    setErrors({});
 
     try {
+      const validatedData = {
+        stakeMinimum: parseFloat(formData.stakeMinimum),
+        stakeMaximum: parseFloat(formData.stakeMaximum),
+        range: parseFloat(formData.range),
+        stakeMultiplier: parseFloat(formData.stakeMultiplier),
+        baseTrial: parseInt(formData.baseTrial),
+        costPerTrial: parseFloat(formData.costPerTrial),
+        maxTrialPurchase: parseInt(formData.maxTrialPurchase),
+        lowerBound: parseFloat(formData.lowerBound),
+        upperBound: parseFloat(formData.upperBound),
+      };
+
+      const { error } = await validationSchema.validateAsync(validatedData, {
+        abortEarly: false,
+      });
+
+      if (error) {
+        const validationErrors: FormErrors = {};
+        error.details.forEach((detail) => {
+          const key = detail.path[0] as keyof FormErrors;
+          validationErrors[key] = detail.message;
+        });
+        setErrors(validationErrors);
+        throw new Error('Validation failed');
+      }
       const submitData = {
         stakeRange: {
           minimum: parseFloat(formData.stakeMinimum),
           maximum: parseFloat(formData.stakeMaximum),
         },
         range: parseFloat(formData.range),
-        stakeMultiplier: parseFloat(
-          formData.stakeMultiplier.replace(/[^0-9.]/g, ''),
-        ),
+        stakeMultiplier: parseFloat(formData.stakeMultiplier),
         baseTrial: parseInt(formData.baseTrial),
         costPerTrial: parseFloat(formData.costPerTrial),
         maxTrialPurchase: parseInt(formData.maxTrialPurchase),
@@ -224,46 +360,82 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                     </label>
                     <div className="flex gap-4">
                       <div className="flex-1">
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900">
-                            ₦
-                          </span>
-                          <input
-                            type="number"
-                            value={formData.stakeMinimum}
-                            onChange={(e) =>
-                              handleInputChange('stakeMinimum', e.target.value)
-                            }
-                            placeholder="1000"
-                            disabled={isViewMode || loading || isSubmitting}
-                            className="w-full rounded-md border border-gray-300 bg-gray-50 py-3 pl-8 pr-4 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                          />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                            Minimum
-                          </span>
+                        <div className="relative h-[72px]">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="relative w-full">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900">
+                                ₦
+                              </span>
+                              <input
+                                type="number"
+                                value={formData.stakeMinimum}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    'stakeMinimum',
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Enter minimum stake"
+                                disabled={isViewMode || loading || isSubmitting}
+                                className={`w-full rounded-md border ${
+                                  errors.stakeMinimum
+                                    ? 'border-red-500'
+                                    : 'border-gray-300'
+                                } bg-gray-50 py-3 pl-8 pr-12 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100`}
+                              />
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                                Minimum
+                              </span>
+                            </div>
+                          </div>
+                          {errors.stakeMinimum && (
+                            <div className="absolute -bottom-5 left-0 w-full">
+                              <p className="text-xs text-red-500">
+                                {errors.stakeMinimum}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center justify-center py-3">
                         <div className="h-px w-4 bg-gray-300"></div>
                       </div>
                       <div className="flex-1">
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900">
-                            ₦
-                          </span>
-                          <input
-                            type="number"
-                            value={formData.stakeMaximum}
-                            onChange={(e) =>
-                              handleInputChange('stakeMaximum', e.target.value)
-                            }
-                            placeholder="1,000,000"
-                            disabled={isViewMode || loading || isSubmitting}
-                            className="w-full rounded-md border border-gray-300 bg-gray-50 py-3 pl-8 pr-4 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                          />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                            Maximum
-                          </span>
+                        <div className="relative h-[72px]">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="relative w-full">
+                              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-900">
+                                ₦
+                              </span>
+                              <input
+                                type="number"
+                                value={formData.stakeMaximum}
+                                onChange={(e) =>
+                                  handleInputChange(
+                                    'stakeMaximum',
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Enter maximum stake"
+                                disabled={isViewMode || loading || isSubmitting}
+                                className={`w-full rounded-md border ${
+                                  errors.stakeMaximum
+                                    ? 'border-red-500'
+                                    : 'border-gray-300'
+                                } bg-gray-50 py-3 pl-8 pr-12 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100`}
+                              />
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                                Maximum
+                              </span>
+                            </div>
+                          </div>
+                          {errors.stakeMaximum && (
+                            <div className="absolute -bottom-5 left-0 w-full">
+                              <p className="text-xs text-red-500">
+                                {errors.stakeMaximum}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -280,7 +452,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                       onChange={(e) =>
                         handleInputChange('range', e.target.value)
                       }
-                      placeholder="50"
+                      placeholder="Enter range"
                       disabled={isViewMode || loading || isSubmitting}
                       className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
@@ -297,7 +469,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                       onChange={(e) =>
                         handleInputChange('stakeMultiplier', e.target.value)
                       }
-                      placeholder="x 3"
+                      placeholder="Enter stake multiplier"
                       disabled={isViewMode || loading || isSubmitting}
                       className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
@@ -314,7 +486,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                       onChange={(e) =>
                         handleInputChange('baseTrial', e.target.value)
                       }
-                      placeholder="3"
+                      placeholder="Enter base trials"
                       disabled={isViewMode || loading || isSubmitting}
                       className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
@@ -353,7 +525,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                       onChange={(e) =>
                         handleInputChange('maxTrialPurchase', e.target.value)
                       }
-                      placeholder="2"
+                      placeholder="Enter max trial purchase"
                       disabled={isViewMode || loading || isSubmitting}
                       className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                     />
@@ -373,7 +545,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                             onChange={(e) =>
                               handleInputChange('lowerBound', e.target.value)
                             }
-                            placeholder="0"
+                            placeholder="Enter lower bound"
                             disabled={isViewMode || loading || isSubmitting}
                             className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                           />
@@ -393,7 +565,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
                             onChange={(e) =>
                               handleInputChange('upperBound', e.target.value)
                             }
-                            placeholder="5000"
+                            placeholder="Enter upper bound"
                             disabled={isViewMode || loading || isSubmitting}
                             className="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                           />
