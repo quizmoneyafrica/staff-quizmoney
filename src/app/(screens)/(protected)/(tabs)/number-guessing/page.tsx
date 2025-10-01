@@ -6,6 +6,21 @@ import type {
   UpdateNumberGuessingGamePayload,
   NumberGuessingGame,
 } from '@/app/api/game';
+
+interface NumberGuessingGameConfig {
+  subType: string;
+  minimumStake: number;
+  maximumStake: number;
+  range: number;
+  stakeMultiplier: number;
+  numberOfAttempts: number;
+  costPerTrial: number;
+  maxTrials: number;
+}
+
+interface ExtendedNumberGuessingGame extends NumberGuessingGame {
+  config: NumberGuessingGameConfig;
+}
 import NumberGuessingStatCard from '@/app/components/number-guessing/NumberGuessingStatCard';
 import GameConfiguration from '@/app/components/number-guessing/GameConfiguration';
 import RecentGamesTable from '@/app/components/number-guessing/RecentGamesTable';
@@ -58,37 +73,43 @@ function NumberGuessingPage() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [configMode, setConfigMode] = useState<'view' | 'edit'>('view');
 
-  const defaultConfig: NumberGuessingGame = {
+  const defaultConfig: ExtendedNumberGuessingGame = {
     gameId: '',
     name: 'Number Guessing',
     description: 'Number Guessing Game',
     type: 'NUMBER_GUESSER',
     config: {
-      minimumStake: 100,
-      maximumStake: 10000,
+      subType: 'NUMBER_GUESSER',
+      minimumStake: 0,
+      maximumStake: 0,
+      range: 0,
+      stakeMultiplier: 0,
+      numberOfAttempts: 0,
+      costPerTrial: 0,
+      maxTrials: 0,
     },
   };
 
   const { data: gameConfig, isLoading: isLoadingConfig } = useQuery<
-    NumberGuessingGame,
+    ExtendedNumberGuessingGame,
     Error
   >({
     queryKey: ['numberGuessingGame'],
-    queryFn: async (): Promise<NumberGuessingGame> => {
+    queryFn: async (): Promise<ExtendedNumberGuessingGame> => {
       try {
         const response = await GameApi.getNumberGuessingGame('NUMBER_GUESSER');
 
         if (response.data?.success && response.data?.data) {
-          return response.data.data as NumberGuessingGame;
+          return response.data.data as ExtendedNumberGuessingGame;
         }
 
-        return response.data?.data || defaultConfig;
+        return defaultConfig;
       } catch (error) {
         console.error('Failed to fetch game config:', error);
-        return defaultConfig;
+        return defaultConfig as ExtendedNumberGuessingGame;
       }
     },
-    initialData: defaultConfig,
+    initialData: defaultConfig as ExtendedNumberGuessingGame,
   });
 
   const { data: statsData, isLoading: isLoadingStats } = useQuery({
@@ -121,6 +142,10 @@ function NumberGuessingPage() {
     baseTrial: number;
     maxTrialPurchase: number;
     stakeMultiplier: number;
+    stakeRange: {
+      minimum: number;
+      maximum: number;
+    };
   }) => {
     try {
       if (!gameConfig?.gameId) {
@@ -130,8 +155,8 @@ function NumberGuessingPage() {
       const updatePayload: UpdateNumberGuessingGamePayload = {
         type: 'numberGuesser',
         gameId: gameConfig.gameId,
-        minimumStake: gameConfig.config?.minimumStake || 0,
-        maximumStake: gameConfig.config?.maximumStake || 0,
+        minimumStake: data.stakeRange.minimum,
+        maximumStake: data.stakeRange.maximum,
         upperBound: data.numberRange.upperBound,
         lowerBound: data.numberRange.lowerBound,
         stakeMultiplier: data.stakeMultiplier,
@@ -156,27 +181,17 @@ function NumberGuessingPage() {
     totalAmountWon: 0,
   };
 
-  const configData = gameConfig
-    ? {
-        costPerTrial: 100,
-        lowerBound: 0,
-        upperBound: 5000,
-        baseTrial: 3,
-        maxTrialPurchase: 2,
-        stakeMultiplier: 3,
-        minimumStake: gameConfig.config?.minimumStake || 0,
-        maximumStake: gameConfig.config?.maximumStake || 0,
-      }
-    : {
-        costPerTrial: 100,
-        lowerBound: 0,
-        upperBound: 5000,
-        baseTrial: 3,
-        maxTrialPurchase: 2,
-        stakeMultiplier: 3,
-        minimumStake: 0,
-        maximumStake: 0,
-      };
+  const configData = {
+    costPerTrial: gameConfig?.config?.costPerTrial ?? 0,
+    lowerBound: gameConfig?.config?.range ?? 0,
+    upperBound: gameConfig?.config?.range ?? 0,
+    baseTrial: gameConfig?.config?.numberOfAttempts ?? 0,
+    maxTrialPurchase: gameConfig?.config?.maxTrials ?? 0,
+    stakeMultiplier: gameConfig?.config?.stakeMultiplier ?? 0,
+    stakeMinimum: gameConfig?.config?.minimumStake ?? 0,
+    stakeMaximum: gameConfig?.config?.maximumStake ?? 0,
+    range: gameConfig?.config?.range ?? 0,
+  };
 
   const numberGuessingStats = [
     {
