@@ -3,8 +3,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
 
-import GameApi from '../api/game';
-import { CreateGamePayload, CreateGameResponse } from '../api/game';
+import GameApi, { CreateGamePayload, CreateGameResponse } from '../api/game';
 
 interface UseCreateGameOptions {
   onSuccess?: (data: CreateGameResponse) => void;
@@ -21,13 +20,11 @@ export const useCreateGame = (options?: UseCreateGameOptions) => {
     mutationFn: async (
       payload: CreateGamePayload,
     ): Promise<CreateGameResponse> => {
-      try {
-        const response = await GameApi.createGame(payload);
-        return response.data;
-      } catch (error) {
-        throw error;
-      }
+      const response = await GameApi.createGame(payload);
+      return response.data;
     },
+    // Disable retries
+    retry: false,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['games'] });
       if (options?.redirectOnSuccess !== false) {
