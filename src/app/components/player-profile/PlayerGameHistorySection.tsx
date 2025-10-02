@@ -7,12 +7,14 @@ import { useQuery } from '@tanstack/react-query';
 import CustomImage from '../CustomImage';
 import * as Dialog from '@radix-ui/react-dialog';
 
-import PlayerApi from '@/app/api/PlayerProfileApi';
+import PlayerApi, {
+  GameApi,
+  type GameZoneHistoryItem,
+} from '@/app/api/PlayerProfileApi';
 import { formatNaira } from '@/app/utils/utils';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
 import GameHistoryHeader from './GameHistoryHeader';
 
 type GameHistoryItem = {
@@ -71,43 +73,144 @@ export default function PlayerGameHistorySection({
 }: PlayerGameHistorySectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<'live' | 'zone'>('live');
+  const [gameZoneFilter, setGameZoneFilter] = useState<string>('');
 
   const router = useRouter();
 
   const handleViewHistory = (
     gameId: string,
     customerId: string,
+    gameType?: string,
     status?: string,
   ) => {
+    if (!gameId) {
+      console.error('Game ID is required to view history');
+      return;
+    }
+
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     params.append('customerId', customerId);
 
-    router.push(
-      `/players/player-profile/${userId}/game-history/${gameId}?${params.toString()}`,
-    );
+    let basePath = '';
+    const normalizedGameType = gameType?.toUpperCase();
+
+    switch (normalizedGameType) {
+      case 'NUMBER_GUESSER':
+        basePath = '/number-guessing/game-history';
+        break;
+      case 'MEMORY_GAME':
+        basePath = '/memory-game/game-history';
+        break;
+      case 'PERFECT_SCORE':
+        basePath = '/perfect-score/game-history';
+        break;
+      default:
+        console.warn(
+          `Unknown game type: ${gameType}, defaulting to number-guessing`,
+        );
+        basePath = '/number-guessing/game-history';
+    }
+
+    router.push(`${basePath}/${gameId}?${params.toString()}`);
   };
+
   const {
     data: gameHistoryResponse,
-    isLoading,
-    error,
-    isError,
+    isLoading: isLoadingLiveGames,
+    error: liveGamesError,
+    isError: isLiveGamesError,
   } = useQuery({
     queryKey: ['playerGameHistory', userId, currentPage],
     queryFn: () =>
       PlayerApi.getPlayerGameHistory(userId, currentPage - 1, ITEMS_PER_PAGE),
-    enabled: !!userId,
+    enabled: !!userId && activeTab === 'live',
   });
+
+  const {
+    data: gameZoneHistoryResponse,
+    isLoading: isLoadingZoneGames,
+    error: zoneGamesError,
+    isError: isZoneGamesError,
+  } = useQuery({
+    queryKey: ['playerGameZoneHistory', userId, currentPage, gameZoneFilter],
+    queryFn: async () => {
+      const gameTypes = [
+        'NUMBER_GUESSER',
+        'MEMORY_GAME',
+        'PERFECT_SCORE',
+      ] as const;
+
+      const responses = await Promise.all(
+        gameTypes.map((gameType) =>
+          GameApi.getGameZoneHistory(
+            gameType,
+            userId,
+            currentPage - 1,
+            ITEMS_PER_PAGE,
+            gameZoneFilter as 'WON' | 'LOSS' | 'IN_PROGRESS' | undefined,
+          ).catch((err) => {
+            console.error(`Error fetching ${gameType} history:`, err);
+            return { data: { data: { content: [] } } };
+          }),
+        ),
+      );
+
+      const combinedContent = responses.flatMap(
+        (response) => response.data?.data?.content || [],
+      );
+
+      combinedContent.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+
+      const combinedResponse = {
+        data: {
+          content: combinedContent,
+          pageNo: currentPage - 1,
+          pageSize: ITEMS_PER_PAGE,
+          totalElements: combinedContent.length,
+          totalPages: Math.ceil(combinedContent.length / ITEMS_PER_PAGE),
+          last: true,
+        },
+      };
+
+      console.log('Combined game zone history response:', combinedResponse);
+      return combinedResponse;
+    },
+    enabled: !!userId && activeTab === 'zone',
+  });
+
+  React.useEffect(() => {
+    if (gameZoneHistoryResponse?.data?.content) {
+      console.log('Filtered game zone history:', {
+        totalItems: gameZoneHistoryResponse.data.content.length,
+        customerId: userId,
+        items: gameZoneHistoryResponse.data.content.map((g) => ({
+          id: g.id,
+          customerId: g.customerId,
+          result: g.result,
+          amountWon: g.amountWon,
+          createdAt: g.createdAt,
+        })),
+      });
+    }
+  }, [gameZoneHistoryResponse, userId]);
+
+  const isLoading =
+    activeTab === 'live' ? isLoadingLiveGames : isLoadingZoneGames;
+  const error = activeTab === 'live' ? liveGamesError : zoneGamesError;
+  const isError = activeTab === 'live' ? isLiveGamesError : isZoneGamesError;
 
   const liveGameHistoryData =
     gameHistoryResponse?.data?.data?.content?.map((game: any) => ({
       ...game,
-
       status: game.gameResultStatus || 'COMPLETED',
       fee: 0,
       duration: 0,
-      startTime: new Date().toISOString(),
-      endTime: new Date().toISOString(),
+      startTime: game.startTime || new Date().toISOString(),
+      endTime: game.endTime || new Date().toISOString(),
       description: '',
       prize: 0,
       coinPrize: 0,
@@ -122,46 +225,98 @@ export default function PlayerGameHistorySection({
       customerGameLobbyStatus: 'COMPLETED',
     })) || [];
 
+  const gameZoneHistoryData =
+    gameZoneHistoryResponse?.data?.content
+      ?.filter((game: GameZoneHistoryItem) => {
+        // Client-side filter for the current user
+        const isForCurrentUser = !game.customerId || game.customerId === userId;
+        if (!isForCurrentUser) {
+          console.warn('Filtered out game not belonging to current user:', {
+            gameId: game.id,
+            gameCustomerId: game.customerId,
+            currentUserId: userId,
+          });
+        }
+        return isForCurrentUser;
+      })
+      .map((game: GameZoneHistoryItem) => {
+        const gameType = 'NUMBER_GUESSER';
+        const gameName = gameType ? gameType.replace(/_/g, ' ') : 'Game';
+
+        return {
+          gameId: game.id || '',
+          status: game.result || 'COMPLETED',
+          fee: 0,
+          duration: 0,
+          startTime: game.createdAt || new Date().toISOString(),
+          endTime: game.createdAt || new Date().toISOString(),
+          description: '',
+          prize: game.amountWon || 0,
+          coinPrize: 0,
+          name: gameName,
+          numberOfQuestions: 0,
+          currentQuestionOrder: 0,
+          prizeBetween: 0,
+          coinPrizeBetween: 0,
+          customerId: game.customerId || '',
+          gameType: 'ZONE',
+          reward: game.amountWon || 0,
+          rewardType: game.amountWon ? 'MONEY' : 'NONE',
+          gameResultStatus: game.result || 'COMPLETED',
+          customerGameLobbyStatus: 'COMPLETED',
+          zoneGameType: gameName,
+        };
+      }) || [];
+
   // Mock data
-  const mockZoneGameTypes = [
-    'Memory Game',
-    'Perfect Scores',
-    'Number Guessing',
-  ];
-  const mockZoneGames = mockZoneGameTypes.map((zoneType, i) => ({
-    gameId: `zone-${i + 1}-${Math.random().toString(36).substring(7)}`,
-    customerId: userId,
-    status: ['WON', 'LOSS', 'DRAW'][i % 3],
-    gameResultStatus: ['WON', 'LOSS', 'DRAW'][i % 3],
-    fee: 0,
-    duration: 0,
-    startTime: new Date(
-      Date.now() - (i + 1) * 5 * 24 * 60 * 60 * 1000,
-    ).toISOString(),
-    endTime: new Date().toISOString(),
-    description: '',
-    prize: i === 0 ? 2500 : 0,
-    coinPrize: 0,
-    name: 'Zone Game',
-    numberOfQuestions: 0,
-    currentQuestionOrder: 0,
-    prizeBetween: 0,
-    coinPrizeBetween: 0,
-    gameType: 'ZONE',
-    zoneGameType: zoneType,
-    reward: 0,
-    rewardType: 'NONE',
-    customerGameLobbyStatus: 'COMPLETED',
-  }));
+  // const mockZoneGameTypes = [
+  //   'Memory Game',
+  //   'Perfect Scores',
+  //   'Number Guessing',
+  // ];
+  // const mockZoneGames = mockZoneGameTypes.map((zoneType, i) => ({
+  //   gameId: `zone-${i + 1}-${Math.random().toString(36).substring(7)}`,
+  //   customerId: userId,
+  //   status: ['WON', 'LOSS', 'DRAW'][i % 3],
+  //   gameResultStatus: ['WON', 'LOSS', 'DRAW'][i % 3],
+  //   fee: 0,
+  //   duration: 0,
+  //   startTime: new Date(
+  //     Date.now() - (i + 1) * 5 * 24 * 60 * 60 * 1000,
+  //   ).toISOString(),
+  //   endTime: new Date().toISOString(),
+  //   description: '',
+  //   prize: i === 0 ? 2500 : 0,
+  //   coinPrize: 0,
+  //   name: 'Zone Game',
+  //   numberOfQuestions: 0,
+  //   currentQuestionOrder: 0,
+  //   prizeBetween: 0,
+  //   coinPrizeBetween: 0,
+  //   gameType: 'ZONE',
+  //   zoneGameType: zoneType,
+  //   reward: 0,
+  //   rewardType: 'NONE',
+  //   customerGameLobbyStatus: 'COMPLETED',
+  // }));
 
   const gameHistoryData =
-    activeTab === 'live' ? liveGameHistoryData : mockZoneGames;
+    activeTab === 'live' ? liveGameHistoryData : gameZoneHistoryData;
 
   const pagination = {
-    totalPages: gameHistoryResponse?.data?.data?.totalPages || 0,
-    totalCount: gameHistoryResponse?.data?.data?.totalElements || 0,
+    totalPages:
+      activeTab === 'live'
+        ? gameHistoryResponse?.data?.data?.totalPages || 0
+        : gameZoneHistoryResponse?.data?.totalPages || 0,
+    totalCount:
+      activeTab === 'live'
+        ? gameHistoryResponse?.data?.data?.totalElements || 0
+        : gameZoneHistoryResponse?.data?.totalElements || 0,
     currentPage: currentPage,
-    hasNext: !gameHistoryResponse?.data?.data?.last,
+    hasNext:
+      activeTab === 'live'
+        ? !gameHistoryResponse?.data?.data?.last
+        : !gameZoneHistoryResponse?.data?.last,
     hasPrev: currentPage > 1,
   };
 
@@ -259,34 +414,18 @@ export default function PlayerGameHistorySection({
     };
   };
 
-  if (isLoading) {
-    return (
-      <div
-        className="rounded-xl bg-white p-6"
-        data-aos="fade-left"
-        data-aos-duration="800"
-      >
-        <h2 className="mb-6 text-2xl font-semibold text-gray-900">
-          Game History
-        </h2>
+  const renderContent = () => {
+    if (isLoading) {
+      return (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
           <span className="mt-2 text-gray-600">Loading game history...</span>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (isError) {
-    return (
-      <div
-        className="rounded-xl bg-white p-6"
-        data-aos="fade-left"
-        data-aos-duration="800"
-      >
-        <h2 className="mb-6 text-2xl font-semibold text-gray-900">
-          Game History
-        </h2>
+    if (isError) {
+      return (
         <div className="rounded-lg bg-red-50 p-4 text-center">
           <p className="text-red-600">
             Error loading game history:{' '}
@@ -301,26 +440,103 @@ export default function PlayerGameHistorySection({
             Try again
           </button>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (!gameHistoryData.length) {
-    return (
-      <div
-        className="rounded-xl bg-white p-6"
-        data-aos="fade-left"
-        data-aos-duration="800"
-      >
-        <h2 className="mb-6 text-2xl font-semibold text-gray-900">
-          Game History
-        </h2>
+    if (!gameHistoryData.length) {
+      return (
         <div className="rounded-lg bg-gray-50 p-8 text-center">
           <p className="text-gray-600">No game history found.</p>
         </div>
+      );
+    }
+
+    return (
+      <div className="relative w-full overflow-x-auto rounded-lg">
+        <div className="inline-block min-w-full align-middle">
+          <div className="overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Game ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Game Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Rewards
+                  </th>
+                  <th className="whitespace-nowrap px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Game Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {gameHistoryData.map((game, index) => (
+                  <tr key={`${game.gameId}-${index}`}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm text-gray-900">{game.gameId}</div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(game.startTime).toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                        {game.zoneGameType || game.gameType}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      {game.rewardType === 'MONEY' ? (
+                        <span className="font-medium text-green-600">
+                          {formatNaira(game.reward || 0)}
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">No reward</span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          game.gameResultStatus === 'WON'
+                            ? 'bg-green-100 text-green-800'
+                            : game.gameResultStatus === 'LOSS'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {game.gameResultStatus || 'UNKNOWN'}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <button
+                        onClick={() =>
+                          handleViewHistory(
+                            game.gameId,
+                            game.customerId,
+                            game.zoneGameType
+                              ?.replace(/\s+/g, '_')
+                              .toUpperCase(),
+                            game.status,
+                          )
+                        }
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
-  }
+  };
 
   return (
     <div
@@ -336,8 +552,14 @@ export default function PlayerGameHistorySection({
         Game History
       </h2>
 
-      {/* Tabs and Filter Section */}
-      <GameHistoryHeader activeTab={activeTab} onTabChange={setActiveTab} />
+      <GameHistoryHeader
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+
+          setCurrentPage(1);
+        }}
+      />
 
       <div className="relative w-full overflow-x-auto rounded-lg">
         <div className="inline-block min-w-full align-middle">
@@ -448,6 +670,9 @@ export default function PlayerGameHistorySection({
                             handleViewHistory(
                               game.gameId,
                               game.customerId,
+                              game.zoneGameType
+                                ?.replace(/ /g, '_')
+                                .toUpperCase(),
                               game.status,
                             )
                           }

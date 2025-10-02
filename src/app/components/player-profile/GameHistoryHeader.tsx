@@ -38,11 +38,11 @@ export default function GameHistoryHeader({
   };
 
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="inline-flex rounded-lg bg-blue-50 p-1">
+    <div className="flex flex-col items-center justify-between gap-2 sm:flex-row sm:gap-4">
+      <div className="inline-flex w-full rounded-lg bg-blue-50 p-0.5 sm:w-auto sm:p-1">
         <button
           onClick={() => onTabChange('live')}
-          className={`rounded-md px-6 py-2 text-sm font-medium transition-all ${
+          className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all sm:px-6 sm:py-2 sm:text-sm ${
             activeTab === 'live'
               ? 'bg-[#2B6CB0] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
@@ -52,7 +52,7 @@ export default function GameHistoryHeader({
         </button>
         <button
           onClick={() => onTabChange('zone')}
-          className={`rounded-md px-6 py-2 text-sm font-medium transition-all ${
+          className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all sm:px-6 sm:py-2 sm:text-sm ${
             activeTab === 'zone'
               ? 'bg-[#2B6CB0] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
@@ -62,24 +62,24 @@ export default function GameHistoryHeader({
         </button>
       </div>
 
-      <div className="relative" ref={filterDropdownRef}>
+      <div className="relative w-full sm:w-auto" ref={filterDropdownRef}>
         <button
           onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="flex items-center gap-1 whitespace-nowrap rounded-md border border-[#D9D9D9] bg-white px-4 py-2 text-sm font-medium text-[#1B212D] outline-none transition-colors hover:bg-gray-50"
+          className="flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-md border border-[#D9D9D9] bg-white px-3 py-1.5 text-xs font-medium text-[#1B212D] outline-none transition-colors hover:bg-gray-50 sm:w-auto sm:justify-start sm:px-4 sm:py-2 sm:text-sm"
         >
-          <ListFilter className="h-4 w-4" />
-          <span className="text-sm">
+          <ListFilter className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="text-xs sm:text-sm">
             {selectedFilter === 'All Games' ? 'Filter by' : selectedFilter}
           </span>
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4" />
         </button>
         {isFilterOpen && (
-          <div className="absolute right-0 top-full z-10 mt-2 w-40 overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg">
+          <div className="absolute right-0 top-full z-10 mt-2 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg sm:w-40">
             <div className="py-1">
               {['All Games', 'Win', 'Loss'].map((status) => (
                 <div key={status}>
                   <button
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    className="w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 sm:px-4 sm:py-2 sm:text-sm"
                     onClick={() => handleFilterSelect(status)}
                   >
                     {status}

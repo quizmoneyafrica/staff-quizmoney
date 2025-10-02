@@ -118,7 +118,7 @@ const GameConfigModal: React.FC<GameConfigModalProps> = ({
       const submitData = prepareGameConfigData(formData);
 
       await onSubmit({
-        type: 'memoryGame',
+        // type: 'memoryGame',
         gameId: '',
         minimumStake: 0,
         maximumStake: 0,
