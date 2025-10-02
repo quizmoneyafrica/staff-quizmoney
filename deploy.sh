@@ -1,8 +1,8 @@
 #!/bin/bash
 
-git pull origin dev
-
 git pull origin quizmoney-v2
+
+git pull origin dev
 
 # Check if the .gitignore file exists
 if [ ! -f .gitignore ]; then
