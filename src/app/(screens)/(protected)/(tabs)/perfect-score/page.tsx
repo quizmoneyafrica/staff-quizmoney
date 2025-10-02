@@ -12,6 +12,7 @@ import {
 import PerfectScoreGameConfiguration from '@/app/components/perfect-score/PerfectScoreGameConfiguration';
 import PerfectScoreRecentGamesTable from '@/app/components/perfect-score/PerfectScoreRecentGamesTable';
 import PerfectScoreGameConfigModal from '@/app/components/perfect-score/PerfectScoreGameConfigModal';
+import PerfectScoreQuestionBank from '@/app/components/perfect-score/PerfectScoreQuestionBank';
 import PerfectScoreStatCard from '@/app/components/perfect-score/PerfectScoreStatCard';
 import TimeRangeDropdown from '@/app/components/common/TimeRangeDropdown';
 import GameApi from '@/app/api/game';
@@ -370,7 +371,10 @@ function PerfectScorePage() {
         ))}
       </div>
 
-      <PerfectScoreGameConfiguration onConfigure={handleViewConfiguration} />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <PerfectScoreGameConfiguration onConfigure={handleViewConfiguration} />
+        <PerfectScoreQuestionBank />
+      </div>
 
       <PerfectScoreRecentGamesTable />
 
