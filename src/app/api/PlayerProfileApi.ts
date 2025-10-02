@@ -419,6 +419,60 @@ const PlayerApi = {
   },
 };
 
+export interface GameZoneHistoryItem {
+  id: string;
+  subType: 'NUMBER_GUESSER' | 'MEMORY_GAME' | 'PERFECT_SCORE';
+  name?: string;
+  email?: string;
+  result?: 'WON' | 'LOSS' | 'IN_PROGRESS';
+  amountWon?: number;
+  customerId?: string;
+  createdAt?: string;
+  gameId?: string;
+  entryFee?: number;
+  gameTime?: string;
+}
+
+export interface GameZoneHistoryResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    content: GameZoneHistoryItem[];
+    pageNo: number;
+    pageSize: number;
+    totalElements: number;
+    totalPages: number;
+    last: boolean;
+  };
+}
+
+const GameApi = {
+  getGameZoneHistory: (
+    gameType: 'NUMBER_GUESSER' | 'MEMORY_GAME' | 'PERFECT_SCORE' | 'ALL',
+    customerId: string,
+    page: number = 0,
+    size: number = 10,
+    result?: 'WON' | 'LOSS' | 'IN_PROGRESS',
+    search?: string,
+  ): Promise<AxiosResponse<GameZoneHistoryResponse>> => {
+    const params = new URLSearchParams({
+      'game-type': gameType,
+      'customer-id': customerId,
+      page: page.toString(),
+      size: size.toString(),
+      ...(result && { result }),
+      ...(search && { search }),
+    });
+
+    const url = `/qm-games/game-sessions?${params.toString()}`;
+
+    return request.get(url);
+  },
+};
+
+export { GameApi };
+
 export default PlayerApi;
 export type {
   ViewPlayerProfileRequest,

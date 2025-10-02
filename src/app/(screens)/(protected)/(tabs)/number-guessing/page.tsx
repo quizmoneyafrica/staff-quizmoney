@@ -153,6 +153,7 @@ function NumberGuessingPage() {
       }
 
       const updatePayload: UpdateNumberGuessingGamePayload = {
+        gameId: gameConfig.gameId,
         minimumStake: data.stakeRange.minimum,
         maximumStake: data.stakeRange.maximum,
         upperBound: data.numberRange.upperBound,

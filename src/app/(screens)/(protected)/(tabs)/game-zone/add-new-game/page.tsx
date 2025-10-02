@@ -46,6 +46,7 @@ function Page() {
   const [datetimeInput, setDatetimeInput] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [questionsLimit] = useState(10);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createGameMutation = useCreateGame({
     onSuccess: () => {
@@ -319,9 +320,12 @@ function Page() {
         return;
       }
 
+      setIsSubmitting(true);
       await createGameMutation.mutateAsync(apiPayload);
     } catch (error) {
       console.error('Error creating game:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -454,15 +458,17 @@ function Page() {
       </div>
 
       <button
-        disabled={createGameMutation.isPending}
+        disabled={isSubmitting || createGameMutation.isPending}
         onClick={handleSubmitGame}
         className={`mt-5 w-full cursor-pointer rounded-lg px-6 py-3 font-medium text-white transition-colors md:w-auto ${
-          createGameMutation.isPending
+          isSubmitting || createGameMutation.isPending
             ? 'cursor-not-allowed bg-gray-400'
             : 'bg-blue-600 hover:bg-blue-700'
         }`}
       >
-        {createGameMutation.isPending ? 'Creating Game...' : `Create Game`}
+        {isSubmitting || createGameMutation.isPending
+          ? 'Creating Game...'
+          : `Create Game`}
       </button>
 
       {/* <QuestionsSection
