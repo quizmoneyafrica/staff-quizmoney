@@ -255,7 +255,7 @@ export interface GetGameSessionsParams {
 }
 
 export interface UpdateMemoryGamePayload {
-  type: string;
+  // type: string;
   gameId: string;
   minimumStake: number;
   maximumStake: number;
@@ -267,7 +267,7 @@ export interface UpdateMemoryGamePayload {
 }
 
 export interface UpdatePerfectScoreGamePayload {
-  type: string;
+  // type: string;
   gameId: string;
   minimumStake: number;
   maximumStake: number;
@@ -293,7 +293,7 @@ export interface UpdatePerfectScoreGamePayload {
 }
 
 export interface UpdateNumberGuessingGamePayload {
-  type?: string;
+  // type?: string;
   gameId?: string;
   minimumStake: number;
   maximumStake: number;
@@ -467,6 +467,8 @@ const GameApi = {
     payload: UpdateNumberGuessingGamePayload,
   ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
     const requestPayload = {
+      gameId: payload.gameId,
+
       minimumStake: payload.minimumStake,
       maximumStake: payload.maximumStake,
       upperBound: payload.upperBound,

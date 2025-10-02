@@ -138,7 +138,7 @@ function MemoryGamePage() {
       }
 
       const updatePayload: UpdateMemoryGamePayload = {
-        type: 'memoryGame',
+        // type: 'memoryGame',
         gameId: gameConfig.gameId,
         minimumStake: gameConfig.config?.minimumStake || 0,
         maximumStake: gameConfig.config?.maximumStake || 0,
