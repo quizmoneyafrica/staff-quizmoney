@@ -3,6 +3,7 @@ import React from 'react';
 import InfoCard from './InfoCard';
 import { GameInfo } from './types';
 import { GraphBar, DateIcon, ClockIcon, PlayerWallet } from '@/app/icons/icons';
+import { Wallet } from 'lucide-react';
 import { formatNairaValue } from '@/app/utils/utils';
 
 interface GameInfoSectionProps {
@@ -32,7 +33,7 @@ const GameInfoSection: React.FC<GameInfoSectionProps> = ({ gameInfo }) => {
           label="Play Time"
         />
         <InfoCard
-          icon={<PlayerWallet className="h-5 w-5" />}
+          icon={<Wallet className="text-primary-900 h-5 w-5" />}
           value={formatNairaValue(gameInfo.totalEarned)}
           label="Total Earned"
         />
