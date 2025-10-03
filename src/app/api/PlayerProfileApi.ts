@@ -329,7 +329,7 @@ const PlayerApi = {
 
   getPlayerGameStats(
     data: GetPlayerGameStatsRequest,
-  ): Promise<AxiosResponse<GameStatsResponse>> {
+  ): Promise<AxiosResponse<PlayerDashboardStatsResponse>> {
     return request.post(`/getPlayerGameStats`, data, {});
   },
 
