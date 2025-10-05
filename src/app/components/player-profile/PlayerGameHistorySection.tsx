@@ -92,6 +92,13 @@ export default function PlayerGameHistorySection({
     if (status) params.append('status', status);
     params.append('customerId', customerId);
 
+    if (activeTab === 'live') {
+      router.push(
+        `/players/player-profile/${userId}/game-history/${gameId}?${params.toString()}`,
+      );
+      return;
+    }
+
     let basePath = '';
     const normalizedGameType = gameType?.toUpperCase();
 
