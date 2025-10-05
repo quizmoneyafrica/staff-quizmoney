@@ -1,6 +1,5 @@
 import { AxiosResponse } from 'axios';
 import { request } from '@/app/api/config';
-import { UnknownAction } from '@reduxjs/toolkit';
 
 export interface PlayerGameQuestion {
   questionNumber: string;
@@ -168,7 +167,7 @@ interface PlayerProfileData {
   message: string;
 }
 
-interface GameStatsResponse {
+interface PlayerDashboardStatsResponse {
   result: {
     message: string;
     gameHistory: {
@@ -289,6 +288,30 @@ interface UpdateCustomerProfileResponse {
   };
 }
 
+export interface GameStatsResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    gameId: string;
+    score: number;
+    rank: number;
+    firstName: string;
+    avatarUrl: string;
+    questionsAnswered: Array<{
+      questionText: string;
+      questionOptions: Array<{
+        optionId: string;
+        option: string;
+        answer: boolean;
+      }>;
+      customerAnswer: string;
+      isCorrect: boolean;
+      eraserUsed: boolean;
+    }>;
+  };
+}
+
 const PlayerApi = {
   viewPlayerProfile(
     data: ViewPlayerProfileRequest,
@@ -306,7 +329,7 @@ const PlayerApi = {
 
   getPlayerGameStats(
     data: GetPlayerGameStatsRequest,
-  ): Promise<AxiosResponse<GameStatsResponse>> {
+  ): Promise<AxiosResponse<PlayerDashboardStatsResponse>> {
     return request.post(`/getPlayerGameStats`, data, {});
   },
 
@@ -332,6 +355,15 @@ const PlayerApi = {
     return request.get(
       `/games/history?customerId=${customerId}&page=${page}&size=${size}`,
     );
+  },
+
+  getGameStats(
+    gameId: string,
+    customerId: string,
+  ): Promise<AxiosResponse<GameStatsResponse>> {
+    return request.get(`/games/${gameId}/stats`, {
+      params: { customerId },
+    });
   },
 
   getPlayerTransactions(
@@ -481,7 +513,7 @@ export type {
   PlayerProfileData,
   GameHistoryItem,
   // TransactionItem,
-  GameStatsResponse,
+  PlayerDashboardStatsResponse,
   PlayerTransactionsResponse,
   UpdatePlayerPayload,
   UpdatePlayerVerificationRequest,
