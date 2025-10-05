@@ -11,6 +11,11 @@ import BackButton from '@/app/icons/BackButton';
 import GameHistoryActions from '@/app/components/player-profile/game-history/GameHistoryActions';
 import DeleteUserModal from '@/app/components/player-profile/DeleteUserModal';
 import { usePlayerGameDetails } from '@/app/hooks/usePlayerGameDetails';
+import type {
+  PlayerGameQuestion,
+  GetPlayerGameDetailsResult,
+} from '@/app/api/PlayerProfileApi';
+import { useGameStats } from '@/app/hooks/useGameStats';
 import FlagUserModal from '@/app/components/player-profile/FlagUserModal';
 import PlayerApi from '@/app/api/PlayerProfileApi';
 import { toast } from 'sonner';
@@ -22,6 +27,7 @@ const GameHistoryPage: React.FC = () => {
   const userId = params.userId as string;
   const gameId = params['game-id'] as string;
   const statusFromQuery = searchParams.get('status');
+  const customerId = searchParams.get('customerId') || userId;
 
   const [isBlacklisted, setIsBlacklisted] = useState(false);
   const [isFlagModalOpen, setIsFlagModalOpen] = useState(false);
@@ -29,37 +35,90 @@ const GameHistoryPage: React.FC = () => {
   const handleOpenDeleteModal = () => setIsDeleteModalOpen(true);
   const handleCloseDeleteModal = () => setIsDeleteModalOpen(false);
 
-  const { data, isLoading, isError } = usePlayerGameDetails(userId, gameId);
+  const {
+    data: gameStatsData,
+    isLoading,
+    isError,
+  } = useGameStats(gameId, customerId);
+
+  const { data: fallbackData } = usePlayerGameDetails(userId, gameId);
 
   const { data: playerData, refetch } = usePlayerProfile(userId);
 
   useEffect(() => {
     if (playerData) {
-      // setKycVerified(playerData.userDetails.kycVerified || false);
       setIsBlacklisted(playerData?.status === 'FLAGGED' || false);
     }
   }, [playerData]);
 
   if (isLoading) return <p>Loading...</p>;
-  if (isError || !data) return <p>Failed to load game details.</p>;
+  if (isError || (!gameStatsData && !fallbackData))
+    return <p>Failed to load game details.</p>;
 
-  const gameDetails = data.gameDetails;
-  const totalEarned = data.totalEarned ?? gameDetails?.totalEarned ?? 0;
-  const totalTimeTaken =
-    data.totalTimeTaken ?? gameDetails?.totalTimeTaken ?? '';
-  const correctQuestionNumbers =
-    data.correctQuestionNumbers ?? gameDetails?.correctQuestionNumbers ?? [];
-  const incorrectQuestionNumbers =
-    data.incorrectQuestionNumbers ??
-    gameDetails?.incorrectQuestionNumbers ??
-    [];
-  const questions = data.questions ?? gameDetails?.questions ?? [];
+  const isNewAPI = !!gameStatsData;
 
-  // game info for GameInfoSection
+  console.log('Data processing:', { gameStatsData, fallbackData, isNewAPI });
+
+  let gameDetails,
+    totalEarned,
+    totalTimeTaken,
+    correctQuestionNumbers,
+    incorrectQuestionNumbers,
+    questions;
+
+  if (isNewAPI && gameStatsData) {
+    const questionsAnswered = gameStatsData.questionsAnswered || [];
+
+    const correctAnswers = questionsAnswered
+      .map((q, index) => (q.isCorrect ? index + 1 : null))
+      .filter((num) => num !== null);
+    const incorrectAnswers = questionsAnswered
+      .map((q, index) => (!q.isCorrect ? index + 1 : null))
+      .filter((num) => num !== null);
+
+    gameDetails = {
+      gameId: gameStatsData.gameId,
+      status: 'COMPLETED',
+      startDate: { iso: new Date().toISOString() },
+    };
+    totalEarned = 0;
+    totalTimeTaken = '00:00';
+    correctQuestionNumbers = correctAnswers;
+    incorrectQuestionNumbers = incorrectAnswers;
+    questions = questionsAnswered.map((q, index) => ({
+      questionNumber: index + 1,
+      questionText: q.questionText,
+      questionOptions: q.questionOptions,
+      customerAnswer: q.customerAnswer,
+      isCorrect: q.isCorrect,
+      eraserUsed: q.eraserUsed,
+    }));
+  } else {
+    // old data structure
+    const legacy = fallbackData as GetPlayerGameDetailsResult | undefined;
+    gameDetails = legacy?.gameDetails;
+    totalEarned = legacy?.totalEarned ?? gameDetails?.totalEarned ?? 0;
+    totalTimeTaken =
+      legacy?.totalTimeTaken ?? gameDetails?.totalTimeTaken ?? '';
+    correctQuestionNumbers =
+      legacy?.correctQuestionNumbers ??
+      gameDetails?.correctQuestionNumbers ??
+      [];
+    incorrectQuestionNumbers =
+      legacy?.incorrectQuestionNumbers ??
+      gameDetails?.incorrectQuestionNumbers ??
+      [];
+    questions = legacy?.questions ?? gameDetails?.questions ?? [];
+  }
+
   const gameInfo = {
-    id: gameDetails.gameId,
-    date: new Date(gameDetails.startDate.iso).toLocaleDateString(),
-    time: new Date(gameDetails.startDate.iso).toLocaleTimeString(),
+    id: gameDetails?.gameId || 'Unknown',
+    date: gameDetails?.startDate?.iso
+      ? new Date(gameDetails.startDate.iso).toLocaleDateString()
+      : new Date().toLocaleDateString(),
+    time: gameDetails?.startDate?.iso
+      ? new Date(gameDetails.startDate.iso).toLocaleTimeString()
+      : new Date().toLocaleTimeString(),
     playTime: totalTimeTaken,
     totalEarned: `${totalEarned}`,
   };
@@ -71,24 +130,55 @@ const GameHistoryPage: React.FC = () => {
     ? incorrectQuestionNumbers.map(Number)
     : [];
 
+  type NewApiOption = { optionId: string; option: string; answer: boolean };
+  type NewApiQuestion = {
+    questionText: string;
+    questionOptions: NewApiOption[];
+    customerAnswer: string;
+    isCorrect: boolean;
+    eraserUsed: boolean;
+  };
+
   const mappedQuestions = Array.isArray(questions)
-    ? [...questions]
-        .filter((q) => !isNaN(parseInt(q.questionNumber)))
-        .sort((a, b) => parseInt(a.questionNumber) - parseInt(b.questionNumber))
-        .map((q) => ({
-          id: parseInt(q.questionNumber),
-          question: q.question,
-          correctAnswer: q.correctAnswer,
-          userAnswer: q.userAnswer,
-          isCorrect: q.userAnswer === q.correctAnswer,
-          answeredTime: q.timeTaken,
-          databaseTime: new Date(q.createdAt.iso).toLocaleString(),
-          hasEraser: q.usedEraser,
-        }))
+    ? [...questions].map(
+        (q: NewApiQuestion | PlayerGameQuestion, idx: number) => {
+          // New
+          if ('questionText' in q && 'questionOptions' in q) {
+            const correctOption = (q.questionOptions as NewApiOption[]).find(
+              (o: NewApiOption) => o.answer,
+            );
+            return {
+              id: idx + 1,
+              question: q.questionText,
+              correctAnswer: correctOption ? correctOption.option : undefined,
+              userAnswer: q.customerAnswer,
+              isCorrect: !!q.isCorrect,
+              answeredTime: undefined,
+              databaseTime: undefined,
+              hasEraser: !!q.eraserUsed,
+            };
+          }
+
+          // Legacy
+          const questionNumberParsed = parseInt(q.questionNumber);
+          return {
+            id: isNaN(questionNumberParsed) ? idx + 1 : questionNumberParsed,
+            question: q.question,
+            correctAnswer: q.correctAnswer,
+            userAnswer: q.userAnswer,
+            isCorrect: q.userAnswer === q.correctAnswer,
+            answeredTime: q.timeTaken,
+            databaseTime: q.createdAt?.iso
+              ? new Date(q.createdAt.iso).toLocaleString()
+              : undefined,
+            hasEraser: q.usedEraser,
+          };
+        },
+      )
     : [];
 
   const correctCount = correctAnswers.length;
-  const totalQuestions = gameDetails.totalQuestions;
+  const totalQuestions = Array.isArray(questions) ? questions.length : 0;
 
   const handleOpenFlagModal = () => setIsFlagModalOpen(true);
   const handleCloseFlagModal = () => setIsFlagModalOpen(false);
@@ -101,7 +191,6 @@ const GameHistoryPage: React.FC = () => {
       toast.success(`User has been ${newFlagStatus ? 'flagged' : 'unflagged'}`);
       refetch();
     } catch (err) {
-      console.error(err);
       toast.error('Failed to update flag status.');
       throw err;
     }
