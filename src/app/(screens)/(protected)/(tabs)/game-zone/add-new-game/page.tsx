@@ -89,13 +89,21 @@ function Page() {
       'entryFee',
       'gamePrize',
       'prizeBetween',
+      'coinPrize',
+      'coinPrizeBetween',
     ];
 
     if (allowedFields.includes(name as keyof Game)) {
       dispatch(
         setCreateGameField({
           field: name as keyof Game,
-          value: ['entryFee', 'gamePrize', 'prizeBetween'].includes(name)
+          value: [
+            'entryFee',
+            'gamePrize',
+            'prizeBetween',
+            'coinPrize',
+            'coinPrizeBetween',
+          ].includes(name)
             ? Number(value)
             : value,
         }),
