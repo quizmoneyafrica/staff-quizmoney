@@ -25,9 +25,14 @@ export const transformGameDataForAPI = (
   gameDetails: Game,
   questions: Question[],
 ): CreateGamePayload => {
-  const startTime = gameDetails.startDate?.iso
+  let startTime = gameDetails.startDate?.iso
     ? gameDetails.startDate.iso
     : new Date().toISOString();
+
+  // 10 seconds to the start time
+  const startDate = new Date(startTime);
+  startDate.setSeconds(startDate.getSeconds() + 10);
+  startTime = startDate.toISOString();
 
   const duration = 30;
 
