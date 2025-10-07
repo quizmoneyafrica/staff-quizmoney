@@ -221,18 +221,21 @@ function Page() {
         'entryFee',
         'gamePrize',
         'prizeBetween',
+        'coinPrize',
         'coinPrizeBetween',
       ].includes(name)
     ) {
       setFetchedData((prev) => ({
         ...prev,
-        [name]:
-          name === 'gamePrize' ||
-          name === 'entryFee' ||
-          name === 'prizeBetween' ||
-          name === 'coinPrizeBetween'
-            ? Number(value) || 0
-            : value,
+        [name]: [
+          'entryFee',
+          'gamePrize',
+          'prizeBetween',
+          'coinPrize',
+          'coinPrizeBetween',
+        ].includes(name)
+          ? Number(value) || 0
+          : value,
       }));
 
       if (name === 'name') {
