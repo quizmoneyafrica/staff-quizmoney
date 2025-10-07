@@ -74,6 +74,7 @@ export default function PlayerGameHistorySection({
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState<'live' | 'zone'>('live');
   const [gameZoneFilter, setGameZoneFilter] = useState<string>('');
+  const [gameLiveFilter, setGameLiveFilter] = useState<string>('');
 
   const router = useRouter();
 
@@ -128,9 +129,16 @@ export default function PlayerGameHistorySection({
     error: liveGamesError,
     isError: isLiveGamesError,
   } = useQuery({
-    queryKey: ['playerGameHistory', userId, currentPage],
-    queryFn: () =>
-      PlayerApi.getPlayerGameHistory(userId, currentPage - 1, ITEMS_PER_PAGE),
+    queryKey: ['playerGameHistory', userId, currentPage, gameLiveFilter],
+    queryFn: () => {
+      const resultStatus = gameLiveFilter === 'All Games' ? '' : gameLiveFilter;
+      return PlayerApi.getPlayerGameHistory(
+        userId,
+        currentPage - 1,
+        ITEMS_PER_PAGE,
+        resultStatus as 'WON' | 'LOSS' | '',
+      );
+    },
     enabled: !!userId && activeTab === 'live',
   });
 
@@ -563,7 +571,14 @@ export default function PlayerGameHistorySection({
         activeTab={activeTab}
         onTabChange={(tab) => {
           setActiveTab(tab);
-
+          setCurrentPage(1);
+        }}
+        onFilterChange={(filter) => {
+          if (activeTab === 'live') {
+            setGameLiveFilter(filter);
+          } else {
+            setGameZoneFilter(filter);
+          }
           setCurrentPage(1);
         }}
       />

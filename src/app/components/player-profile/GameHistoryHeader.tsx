@@ -29,11 +29,19 @@ export default function GameHistoryHeader({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleFilterSelect = (filter: string) => {
-    setSelectedFilter(filter);
+  const filterOptions = [
+    { display: 'All Games', value: '' },
+    { display: 'Win', value: 'WON' },
+    { display: 'Loss', value: 'LOSS' },
+  ];
+
+  const handleFilterSelect = (display: string) => {
+    const selected =
+      filterOptions.find((opt) => opt.display === display) || filterOptions[0];
+    setSelectedFilter(display);
     setIsFilterOpen(false);
     if (onFilterChange) {
-      onFilterChange(filter === 'All Games' ? '' : filter.toUpperCase());
+      onFilterChange(selected.value);
     }
   };
 
@@ -76,13 +84,13 @@ export default function GameHistoryHeader({
         {isFilterOpen && (
           <div className="absolute right-0 top-full z-10 mt-2 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-lg sm:w-40">
             <div className="py-1">
-              {['All Games', 'Win', 'Loss'].map((status) => (
-                <div key={status}>
+              {filterOptions.map(({ display }) => (
+                <div key={display}>
                   <button
                     className="w-full px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 sm:px-4 sm:py-2 sm:text-sm"
-                    onClick={() => handleFilterSelect(status)}
+                    onClick={() => handleFilterSelect(display)}
                   >
-                    {status}
+                    {display}
                   </button>
                 </div>
               ))}

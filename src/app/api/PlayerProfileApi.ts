@@ -337,6 +337,7 @@ const PlayerApi = {
     customerId: string,
     page: number = 0,
     size: number = 10,
+    result?: 'WON' | 'LOSS' | 'DRAW' | 'PENDING' | '',
   ): Promise<
     AxiosResponse<{
       success: boolean;
@@ -352,9 +353,11 @@ const PlayerApi = {
       };
     }>
   > {
-    return request.get(
-      `/games/history?customerId=${customerId}&page=${page}&size=${size}`,
-    );
+    let url = `/games/history?customerId=${customerId}&page=${page}&size=${size}`;
+    if (result) {
+      url += `&result=${result}`;
+    }
+    return request.get(url);
   },
 
   getGameStats(
