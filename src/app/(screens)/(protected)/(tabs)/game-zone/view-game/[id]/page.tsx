@@ -148,7 +148,7 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Prize Between (Winners)"
+              label="Share Prize Between Winners (%)"
               name="prizeBetween"
               type="text"
               value={`${fetchedData?.prizeBetween}`}
@@ -156,7 +156,7 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Coin Prize Between (Winners)"
+              label="Share Coin Prize Between Winners (%)"
               name="coinPrizeBetween"
               type="text"
               value={`${fetchedData?.coinPrizeBetween}`}
