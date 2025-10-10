@@ -131,7 +131,7 @@ function Page() {
         const result = res?.data?.data as GameQuestionResponse;
 
         const questionsWithIds: QuestionWithId[] =
-          result.questions?.map((question) =>
+          result?.questions?.map((question) =>
             transformApiQuestionToQuestionState({
               questionId: question.questionId,
               order: question.order,
@@ -141,15 +141,15 @@ function Page() {
           ) || [];
 
         const transformedGame: GameWithIds = {
-          objectId: result.gameId,
-          name: result.name,
+          objectId: result?.gameId,
+          name: result?.name,
           startDate: {
-            iso: result.startTime,
+            iso: result?.startTime,
           },
           completed: false,
-          entryFee: String(result.fee),
-          gamePrize: result.prize,
-          coinPrize: result.coinPrize,
+          entryFee: String(result?.fee),
+          gamePrize: result?.prize,
+          coinPrize: result?.coinPrize,
           prizeBetween: result?.prizeBetween ?? 0,
           coinPrizeBetween: result?.coinPrizeBetween ?? 0,
           winners: [],
@@ -160,13 +160,15 @@ function Page() {
           createdAt: '',
           updatedAt: '',
           questions: questionsWithIds,
-          gameDescription: result.description || '',
+          gameDescription: result?.description || '',
+          leaderboardLimit: result?.leaderboardLimit || 0,
+          leaderboardPercentage: result?.leaderboardPercentage || 0,
         };
 
         setFetchedData(transformedGame);
         dispatch(setCurrentGame(transformedGame));
 
-        const isoString = result.startTime;
+        const isoString = result?.startTime;
         if (isoString) {
           const dateObj = new Date(isoString);
 
@@ -223,20 +225,38 @@ function Page() {
         'prizeBetween',
         'coinPrize',
         'coinPrizeBetween',
+        'leaderboardLimit',
+        'leaderboardPercentage',
       ].includes(name)
     ) {
-      setFetchedData((prev) => ({
-        ...prev,
-        [name]: [
-          'entryFee',
-          'gamePrize',
-          'prizeBetween',
-          'coinPrize',
-          'coinPrizeBetween',
-        ].includes(name)
-          ? Number(value) || 0
-          : value,
-      }));
+      const numericValue = [
+        'entryFee',
+        'gamePrize',
+        'prizeBetween',
+        'coinPrize',
+        'coinPrizeBetween',
+        'leaderboardLimit',
+        'leaderboardPercentage',
+      ].includes(name)
+        ? Number(value) || 0
+        : value;
+
+      // Auto-calculate coinPrizeBetween when prizeBetween changes
+      if (name === 'prizeBetween') {
+        const prizeBetweenValue = Number(value);
+        const coinPrizeBetweenValue = 100 - prizeBetweenValue;
+
+        setFetchedData((prev) => ({
+          ...prev,
+          prizeBetween: prizeBetweenValue,
+          coinPrizeBetween: coinPrizeBetweenValue,
+        }));
+      } else {
+        setFetchedData((prev) => ({
+          ...prev,
+          [name]: numericValue,
+        }));
+      }
 
       if (name === 'name') {
         dispatch(
@@ -264,12 +284,12 @@ function Page() {
   };
 
   const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) {
+    if (!result?.destination) {
       return;
     }
 
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
+    const sourceIndex = result?.source.index;
+    const destinationIndex = result?.destination.index;
 
     if (sourceIndex === destinationIndex) {
       return;
@@ -389,6 +409,17 @@ function Page() {
         return;
       }
 
+      const prizeSum =
+        Number(fetchedData.prizeBetween) + Number(fetchedData.coinPrizeBetween);
+      if (Math.abs(prizeSum - 100) > 0.01) {
+        toast.error('Prize percentages must sum to 100%');
+        const prizeBetweenField = document.querySelector(
+          'input[name="prizeBetween"]',
+        ) as HTMLInputElement;
+        prizeBetweenField?.focus();
+        return;
+      }
+
       const transformedQuestions = fetchedData.questions.map(
         (question, index) =>
           transformQuestionStateToApiQuestion(question, index + 1),
@@ -475,25 +506,49 @@ function Page() {
               name="startDateTime"
               value={datetimeInput}
               onChange={handleChange}
+              required
             />
 
             <CustomTextField
-              label="Share Prize Between (Winners)"
+              label="Share Prize Between Winners (%)"
               name="prizeBetween"
               type="number"
               value={toStringValue(fetchedData?.prizeBetween)}
               onChange={handleChange}
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode="decimal"
+              min={0}
+              max={100}
+              required
             />
             <CustomTextField
-              label="Share Coin Prize Between (Winners)"
+              label="Share Coin Between Winners (%)"
               name="coinPrizeBetween"
               type="number"
               value={toStringValue(fetchedData?.coinPrizeBetween)}
               onChange={handleChange}
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode="decimal"
+              disabled
+              required
+            />
+
+            <CustomTextField
+              label="Leaderboard Limit"
+              name="leaderboardLimit"
+              type="number"
+              value={fetchedData?.leaderboardLimit}
+              onChange={handleChange}
+              required
+            />
+
+            <CustomTextField
+              label="Leaderboard Percentage"
+              name="leaderboardPercentage"
+              type="number"
+              value={fetchedData?.leaderboardPercentage}
+              onChange={handleChange}
+              inputMode="decimal"
+              max={100}
+              required
             />
           </div>
         </div>

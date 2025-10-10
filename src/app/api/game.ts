@@ -15,6 +15,8 @@ export interface CreateGamePayload {
   duration?: number;
   prizeBetween?: number;
   coinPrizeBetween?: number;
+  leaderboardLimit: number;
+  leaderboardPercentage: number;
 }
 
 export interface CreateGameResponse {
@@ -59,6 +61,8 @@ export interface GameQuestionResponse {
   coinPrize: number;
   prizeBetween?: number;
   coinPrizeBetween?: number;
+  leaderboardLimit: number;
+  leaderboardPercentage: number;
   name: string;
   questionCount: number;
   questions: GameQuestion[];
@@ -335,6 +339,8 @@ export interface GameDetailsResponse {
   questionCount?: number;
   prizeBetween: number;
   coinPrizeBetween: number;
+  leaderboardLimit?: number;
+  leaderboardPercentage?: number;
   questions?: GameQuestion[];
   [key: string]: unknown;
 }

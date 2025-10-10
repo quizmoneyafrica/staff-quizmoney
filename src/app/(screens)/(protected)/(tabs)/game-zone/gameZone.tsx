@@ -40,6 +40,8 @@ interface ApiGame {
   name: string;
   prizeBetween?: number;
   coinPrizeBetween?: number;
+  leaderboardLimit?: number;
+  leaderboardPercentage?: number;
 }
 
 function GameZone() {
@@ -77,6 +79,8 @@ function GameZone() {
       updatedAt: '',
       questions: [],
       gameDescription: apiGame.description || '',
+      leaderboardLimit: apiGame?.leaderboardLimit || 0,
+      leaderboardPercentage: apiGame?.leaderboardPercentage || 0,
     };
   };
 

@@ -57,8 +57,6 @@ const GameHistoryPage: React.FC = () => {
 
   const isNewAPI = !!gameStatsData;
 
-  console.log('Data processing:', { gameStatsData, fallbackData, isNewAPI });
-
   let gameDetails,
     totalEarned,
     totalTimeTaken,

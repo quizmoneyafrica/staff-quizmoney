@@ -337,7 +337,7 @@ const PlayerApi = {
     customerId: string,
     page: number = 0,
     size: number = 10,
-    result?: 'WON' | 'LOSS' | 'DRAW' | 'PENDING' | '',
+    result?: 'WON' | 'LOSS' | 'DRAW' | 'PENDING' | 'IN_PROGRESS' | '',
   ): Promise<
     AxiosResponse<{
       success: boolean;

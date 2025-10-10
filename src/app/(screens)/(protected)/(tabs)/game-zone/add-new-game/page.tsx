@@ -90,21 +90,44 @@ function Page() {
       'prizeBetween',
       'coinPrize',
       'coinPrizeBetween',
+      'leaderboardLimit',
+      'leaderboardPercentage',
     ];
 
     if (allowedFields.includes(name as keyof Game)) {
+      let fieldValue: string | number = value;
+
+      if (
+        [
+          'entryFee',
+          'gamePrize',
+          'prizeBetween',
+          'coinPrize',
+          'coinPrizeBetween',
+          'leaderboardLimit',
+          'leaderboardPercentage',
+        ].includes(name)
+      ) {
+        fieldValue = Number(value);
+      }
+
+      // Auto-calculate coinPrizeBetween when prizeBetween changes
+      if (name === 'prizeBetween') {
+        const prizeBetweenValue = Number(value);
+        const coinPrizeBetweenValue = 100 - prizeBetweenValue;
+
+        dispatch(
+          setCreateGameField({
+            field: 'coinPrizeBetween',
+            value: coinPrizeBetweenValue,
+          }),
+        );
+      }
+
       dispatch(
         setCreateGameField({
           field: name as keyof Game,
-          value: [
-            'entryFee',
-            'gamePrize',
-            'prizeBetween',
-            'coinPrize',
-            'coinPrizeBetween',
-          ].includes(name)
-            ? Number(value)
-            : value,
+          value: fieldValue,
         }),
       );
     }
@@ -201,8 +224,8 @@ function Page() {
       return false;
     }
 
-    if (!game.prizeBetween || toNumber(game.prizeBetween) < 1) {
-      toast.error('Please enter the number of winners to share prize');
+    if (!game.prizeBetween || toNumber(game.prizeBetween) < 0) {
+      toast.error('Please enter a valid prize percentage');
       const prizeBetweenField = document.querySelector(
         'input[name="prizeBetween"]',
       ) as HTMLInputElement;
@@ -210,12 +233,23 @@ function Page() {
       return false;
     }
 
-    if (!game.coinPrizeBetween || toNumber(game.coinPrizeBetween) < 1) {
-      toast.error('Please enter the number of winners to share coin prize');
+    if (!game.coinPrizeBetween || toNumber(game.coinPrizeBetween) < 0) {
+      toast.error('Please enter a valid coin prize percentage');
       const coinPrizeBetweenField = document.querySelector(
         'input[name="coinPrizeBetween"]',
       ) as HTMLInputElement;
       coinPrizeBetweenField?.focus();
+      return false;
+    }
+
+    const prizeSum =
+      toNumber(game.prizeBetween) + toNumber(game.coinPrizeBetween);
+    if (Math.abs(prizeSum - 100) > 0.01) {
+      toast.error('Prize percentages must sum to 100%');
+      const prizeBetweenField = document.querySelector(
+        'input[name="prizeBetween"]',
+      ) as HTMLInputElement;
+      prizeBetweenField?.focus();
       return false;
     }
 
@@ -403,24 +437,45 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Prize Between (Winners)"
+              label="Share Prize Between Winners (%)"
               name="prizeBetween"
               type="number"
               value={toString(game.prizeBetween)}
               onChange={handleGameDetailsChange}
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode="decimal"
+              min={0}
+              max={100}
               required
             />
 
             <CustomTextField
-              label="Share Coin Between (Winners)"
+              label="Share Coin Between Winners (%)"
               name="coinPrizeBetween"
               type="number"
               value={toString(game.coinPrizeBetween)}
               onChange={handleGameDetailsChange}
-              inputMode="numeric"
-              pattern="[0-9]*"
+              inputMode="decimal"
+              disabled
+              required
+            />
+
+            <CustomTextField
+              label="Leaderboard Limit"
+              name="leaderboardLimit"
+              type="number"
+              value={toString(game.leaderboardLimit)}
+              onChange={handleGameDetailsChange}
+              required
+            />
+
+            <CustomTextField
+              label="Leaderboard Percentage"
+              name="leaderboardPercentage"
+              type="number"
+              value={game.leaderboardPercentage}
+              onChange={handleGameDetailsChange}
+              inputMode="decimal"
+              max={100}
               required
             />
 
