@@ -425,10 +425,14 @@ function Page() {
           transformQuestionStateToApiQuestion(question, index + 1),
       );
 
+      const startDate = new Date(datetimeInput);
+      startDate.setSeconds(startDate.getSeconds() + 10);
+      const adjustedStartTime = startDate.toISOString();
+
       const payload = {
         fee: Number(fetchedData.entryFee),
         duration: 30,
-        startTime: datetimeInput,
+        startTime: adjustedStartTime,
         description: fetchedData.gameDescription ?? '',
         prize: fetchedData.gamePrize,
         coinPrize: fetchedData.coinPrize,
