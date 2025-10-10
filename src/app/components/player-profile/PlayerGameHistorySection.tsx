@@ -75,6 +75,7 @@ export default function PlayerGameHistorySection({
   const [activeTab, setActiveTab] = useState<'live' | 'zone'>('live');
   const [gameZoneFilter, setGameZoneFilter] = useState<string>('');
   const [gameLiveFilter, setGameLiveFilter] = useState<string>('');
+  const [isTabLoading, setIsTabLoading] = useState(false);
 
   const router = useRouter();
 
@@ -136,7 +137,7 @@ export default function PlayerGameHistorySection({
         userId,
         currentPage - 1,
         ITEMS_PER_PAGE,
-        resultStatus as 'WON' | 'LOSS' | '',
+        resultStatus as 'WON' | 'LOSS' | 'IN_PROGRESS' | '',
       );
     },
     enabled: !!userId && activeTab === 'live',
@@ -214,7 +215,8 @@ export default function PlayerGameHistorySection({
   }, [gameZoneHistoryResponse, userId]);
 
   const isLoading =
-    activeTab === 'live' ? isLoadingLiveGames : isLoadingZoneGames;
+    isTabLoading ||
+    (activeTab === 'live' ? isLoadingLiveGames : isLoadingZoneGames);
   const error = activeTab === 'live' ? liveGamesError : zoneGamesError;
   const isError = activeTab === 'live' ? isLiveGamesError : isZoneGamesError;
 
@@ -569,9 +571,18 @@ export default function PlayerGameHistorySection({
 
       <GameHistoryHeader
         activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          setCurrentPage(1);
+        loading={isTabLoading}
+        onTabChange={async (tab) => {
+          if (tab === activeTab) return;
+
+          setIsTabLoading(true);
+          try {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            setActiveTab(tab);
+            setCurrentPage(1);
+          } finally {
+            setIsTabLoading(false);
+          }
         }}
         onFilterChange={(filter) => {
           if (activeTab === 'live') {
@@ -711,7 +722,7 @@ export default function PlayerGameHistorySection({
         </div>
       </div>
 
-      {pagination && pagination.totalPages > 1 && (
+      {pagination && pagination.totalPages > 0 && (
         <div className="mt-6 flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
           <div className="flex flex-1 justify-between sm:hidden">
             <button

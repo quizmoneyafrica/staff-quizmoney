@@ -5,12 +5,14 @@ interface GameHistoryHeaderProps {
   activeTab: 'live' | 'zone';
   onTabChange: (tab: 'live' | 'zone') => void;
   onFilterChange?: (filter: string) => void;
+  loading?: boolean;
 }
 
 export default function GameHistoryHeader({
   activeTab,
   onTabChange,
   onFilterChange,
+  loading = false,
 }: GameHistoryHeaderProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('All Games');
@@ -33,6 +35,7 @@ export default function GameHistoryHeader({
     { display: 'All Games', value: '' },
     { display: 'Win', value: 'WON' },
     { display: 'Loss', value: 'LOSS' },
+    { display: 'In Progress', value: 'IN_PROGRESS' },
   ];
 
   const handleFilterSelect = (display: string) => {
@@ -49,24 +52,78 @@ export default function GameHistoryHeader({
     <div className="flex flex-col items-center justify-between gap-2 sm:flex-row sm:gap-4">
       <div className="inline-flex w-full rounded-lg bg-blue-50 p-0.5 sm:w-auto sm:p-1">
         <button
-          onClick={() => onTabChange('live')}
+          onClick={() => !loading && onTabChange('live')}
+          disabled={loading}
           className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all sm:px-6 sm:py-2 sm:text-sm ${
             activeTab === 'live'
-              ? 'bg-[#2B6CB0] text-white shadow-sm'
+              ? 'flex items-center gap-2 bg-[#2B6CB0] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
-          }`}
+          } ${loading ? 'cursor-not-allowed opacity-70' : ''}`}
         >
-          Live game History
+          {activeTab === 'live' && loading ? (
+            <>
+              <svg
+                className="-ml-1 mr-1 h-3 w-3 animate-spin text-white sm:h-4 sm:w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Loading...
+            </>
+          ) : (
+            'Live game History'
+          )}
         </button>
         <button
-          onClick={() => onTabChange('zone')}
+          onClick={() => !loading && onTabChange('zone')}
+          disabled={loading}
           className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all sm:px-6 sm:py-2 sm:text-sm ${
             activeTab === 'zone'
-              ? 'bg-[#2B6CB0] text-white shadow-sm'
+              ? 'flex items-center gap-2 bg-[#2B6CB0] text-white shadow-sm'
               : 'text-gray-600 hover:text-gray-900'
-          }`}
+          } ${loading ? 'cursor-not-allowed opacity-70' : ''}`}
         >
-          Game Zone History
+          {activeTab === 'zone' && loading ? (
+            <>
+              <svg
+                className="-ml-1 mr-1 h-3 w-3 animate-spin text-white sm:h-4 sm:w-4"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Loading...
+            </>
+          ) : (
+            'Game Zone History'
+          )}
         </button>
       </div>
 
