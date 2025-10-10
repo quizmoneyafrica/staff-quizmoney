@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { cn } from './utils';
+import type { ComponentProps } from 'react';
 
-type CustomTextFieldProps = {
+type CustomTextFieldProps = ComponentProps<'input'> & {
   label?: string;
   name?: string;
   type?: string;
   placeholder?: string;
-  value?: string;
+  value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
   disabled?: boolean;
@@ -37,6 +38,7 @@ export default function CustomTextField({
   inputMode,
   pattern,
   accept,
+  ...props
 }: CustomTextFieldProps) {
   return (
     <div className="w-full space-y-1">
@@ -68,6 +70,7 @@ export default function CustomTextField({
           )}
           inputMode={inputMode}
           pattern={pattern}
+          {...props}
         />
 
         {icon && (
