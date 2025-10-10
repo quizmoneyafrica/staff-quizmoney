@@ -192,27 +192,10 @@ export default function PlayerGameHistorySection({
         },
       };
 
-      console.log('Combined game zone history response:', combinedResponse);
       return combinedResponse;
     },
     enabled: !!userId && activeTab === 'zone',
   });
-
-  React.useEffect(() => {
-    if (gameZoneHistoryResponse?.data?.content) {
-      console.log('Filtered game zone history:', {
-        totalItems: gameZoneHistoryResponse.data.content.length,
-        customerId: userId,
-        items: gameZoneHistoryResponse.data.content.map((g) => ({
-          id: g.id,
-          customerId: g.customerId,
-          result: g.result,
-          amountWon: g.amountWon,
-          createdAt: g.createdAt,
-        })),
-      });
-    }
-  }, [gameZoneHistoryResponse, userId]);
 
   const isLoading =
     isTabLoading ||

@@ -58,6 +58,8 @@ function Page() {
               apiQuestion.options.find((opt) => opt.answer)?.option || '',
           })),
           gameDescription: result.description || '',
+          leaderboardLimit: result.leaderboardLimit || 0,
+          leaderboardPercentage: result.leaderboardPercentage || 0,
         };
 
         setFetchedData(transformedGame);
@@ -146,7 +148,7 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Prize Between (Winners)"
+              label="Share Prize Between Winners (%)"
               name="prizeBetween"
               type="text"
               value={`${fetchedData?.prizeBetween}`}
@@ -154,10 +156,24 @@ function Page() {
             />
 
             <CustomTextField
-              label="Share Coin Prize Between (Winners)"
+              label="Share Coin Prize Between Winners (%)"
               name="coinPrizeBetween"
               type="text"
               value={`${fetchedData?.coinPrizeBetween}`}
+              readOnly
+            />
+            <CustomTextField
+              label="Leaderboard Limit"
+              name="leaderboardLimit"
+              type="text"
+              value={`${fetchedData?.leaderboardLimit ?? 0}`}
+              readOnly
+            />
+            <CustomTextField
+              label="Leaderboard Percentage"
+              name="leaderboardPercentage"
+              type="text"
+              value={`${fetchedData?.leaderboardPercentage ?? 0}`}
               readOnly
             />
           </div>
