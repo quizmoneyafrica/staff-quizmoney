@@ -92,6 +92,7 @@ function Page() {
       'coinPrizeBetween',
       'leaderboardLimit',
       'leaderboardPercentage',
+      'prizePercentage',
     ];
 
     if (allowedFields.includes(name as keyof Game)) {
@@ -106,6 +107,7 @@ function Page() {
           'coinPrizeBetween',
           'leaderboardLimit',
           'leaderboardPercentage',
+          'prizePercentage',
         ].includes(name)
       ) {
         fieldValue = Number(value);
@@ -473,6 +475,16 @@ function Page() {
               name="leaderboardPercentage"
               type="number"
               value={game.leaderboardPercentage}
+              onChange={handleGameDetailsChange}
+              inputMode="decimal"
+              max={100}
+              required
+            />
+            <CustomTextField
+              label="Prize Percentage"
+              name="prizePercentage"
+              type="number"
+              value={game.prizePercentage}
               onChange={handleGameDetailsChange}
               inputMode="decimal"
               max={100}

@@ -17,6 +17,7 @@ export interface Game {
   coinPrizeBetween: number;
   leaderboardLimit: number;
   leaderboardPercentage: number;
+  prizePercentage: number;
   winners: string[];
   users: string[];
   userTimes: any[];
@@ -59,6 +60,7 @@ export const initialGame: Game = {
   coinPrizeBetween: 30,
   leaderboardLimit: 0,
   leaderboardPercentage: 0,
+  prizePercentage: 0,
   winners: [],
   users: [],
   userTimes: [],
