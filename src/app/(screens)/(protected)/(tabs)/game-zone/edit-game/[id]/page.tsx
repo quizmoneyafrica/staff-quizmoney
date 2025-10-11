@@ -163,6 +163,7 @@ function Page() {
           gameDescription: result?.description || '',
           leaderboardLimit: result?.leaderboardLimit || 0,
           leaderboardPercentage: result?.leaderboardPercentage || 0,
+          prizePercentage: result?.prizePercentage || 0,
         };
 
         setFetchedData(transformedGame);
@@ -227,6 +228,7 @@ function Page() {
         'coinPrizeBetween',
         'leaderboardLimit',
         'leaderboardPercentage',
+        'prizePercentage',
       ].includes(name)
     ) {
       const numericValue = [
@@ -237,6 +239,7 @@ function Page() {
         'coinPrizeBetween',
         'leaderboardLimit',
         'leaderboardPercentage',
+        'prizePercentage',
       ].includes(name)
         ? Number(value) || 0
         : value;
@@ -425,10 +428,14 @@ function Page() {
           transformQuestionStateToApiQuestion(question, index + 1),
       );
 
+      const startDate = new Date(datetimeInput);
+      startDate.setSeconds(startDate.getSeconds() + 10);
+      const adjustedStartTime = startDate.toISOString();
+
       const payload = {
         fee: Number(fetchedData.entryFee),
         duration: 30,
-        startTime: datetimeInput,
+        startTime: adjustedStartTime,
         description: fetchedData.gameDescription ?? '',
         prize: fetchedData.gamePrize,
         coinPrize: fetchedData.coinPrize,
@@ -545,6 +552,16 @@ function Page() {
               name="leaderboardPercentage"
               type="number"
               value={fetchedData?.leaderboardPercentage}
+              onChange={handleChange}
+              inputMode="decimal"
+              max={100}
+              required
+            />
+            <CustomTextField
+              label="Prize Percentage"
+              name="prizePercentage"
+              type="number"
+              value={fetchedData?.prizePercentage}
               onChange={handleChange}
               inputMode="decimal"
               max={100}

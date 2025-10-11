@@ -49,6 +49,7 @@ export const transformGameDataForAPI = (
     coinPrizeBetween: gameDetails.coinPrizeBetween || 0,
     leaderboardLimit: gameDetails.leaderboardLimit || 0,
     leaderboardPercentage: gameDetails.leaderboardPercentage || 0,
+    prizePercentage: gameDetails.prizePercentage || 0,
   };
 };
 
