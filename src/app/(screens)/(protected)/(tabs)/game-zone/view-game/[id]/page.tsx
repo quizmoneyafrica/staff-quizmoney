@@ -60,6 +60,7 @@ function Page() {
           gameDescription: result.description || '',
           leaderboardLimit: result.leaderboardLimit || 0,
           leaderboardPercentage: result.leaderboardPercentage || 0,
+          prizePercentage: result.prizePercentage || 0,
         };
 
         setFetchedData(transformedGame);
@@ -174,6 +175,13 @@ function Page() {
               name="leaderboardPercentage"
               type="text"
               value={`${fetchedData?.leaderboardPercentage ?? 0}`}
+              readOnly
+            />
+            <CustomTextField
+              label="Prize Percentage"
+              name="prizePercentage"
+              type="text"
+              value={`${fetchedData?.prizePercentage ?? 0}`}
               readOnly
             />
           </div>

@@ -163,6 +163,7 @@ function Page() {
           gameDescription: result?.description || '',
           leaderboardLimit: result?.leaderboardLimit || 0,
           leaderboardPercentage: result?.leaderboardPercentage || 0,
+          prizePercentage: result?.prizePercentage || 0,
         };
 
         setFetchedData(transformedGame);
@@ -227,6 +228,7 @@ function Page() {
         'coinPrizeBetween',
         'leaderboardLimit',
         'leaderboardPercentage',
+        'prizePercentage',
       ].includes(name)
     ) {
       const numericValue = [
@@ -237,6 +239,7 @@ function Page() {
         'coinPrizeBetween',
         'leaderboardLimit',
         'leaderboardPercentage',
+        'prizePercentage',
       ].includes(name)
         ? Number(value) || 0
         : value;
@@ -549,6 +552,16 @@ function Page() {
               name="leaderboardPercentage"
               type="number"
               value={fetchedData?.leaderboardPercentage}
+              onChange={handleChange}
+              inputMode="decimal"
+              max={100}
+              required
+            />
+            <CustomTextField
+              label="Prize Percentage"
+              name="prizePercentage"
+              type="number"
+              value={fetchedData?.prizePercentage}
               onChange={handleChange}
               inputMode="decimal"
               max={100}
