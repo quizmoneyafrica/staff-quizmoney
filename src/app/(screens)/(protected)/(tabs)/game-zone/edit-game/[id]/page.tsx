@@ -444,6 +444,9 @@ function Page() {
         questions: transformedQuestions,
         prizeBetween: fetchedData.prizeBetween ?? 0,
         coinPrizeBetween: fetchedData.coinPrizeBetween ?? 0,
+        leaderboardLimit: fetchedData?.leaderboardLimit ?? 0,
+        leaderboardPercentage: fetchedData?.leaderboardPercentage ?? 0,
+        prizePercentage: fetchedData?.prizePercentage ?? 0,
       };
 
       await updateGame(params.id as string, payload);
