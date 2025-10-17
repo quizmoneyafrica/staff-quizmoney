@@ -475,20 +475,7 @@ const GameApi = {
   updateNumberGuessingGame(
     payload: UpdateNumberGuessingGamePayload,
   ): Promise<AxiosResponse<ApiSuccessResponse<GenericApiResponse>>> {
-    const requestPayload = {
-      gameId: payload.gameId,
-
-      minimumStake: payload.minimumStake,
-      maximumStake: payload.maximumStake,
-      upperBound: payload.upperBound,
-      lowerBound: payload.lowerBound,
-      stakeMultiplier: payload.stakeMultiplier,
-      numberOfAttempts: payload.numberOfAttempts,
-      costPerTrial: payload.costPerTrial,
-      maxTrials: payload.maxTrials,
-    };
-
-    return request.patch(`/number-guesser`, requestPayload);
+    return request.patch(`/number-guesser`, payload);
   },
 
   getGameSessions(

@@ -135,6 +135,7 @@ function NumberGuessingPage() {
 
   const handleConfigSubmit = async (data: {
     costPerTrial: number;
+    range: number;
     numberRange: {
       lowerBound: number;
       upperBound: number;
@@ -162,6 +163,7 @@ function NumberGuessingPage() {
         numberOfAttempts: data.baseTrial,
         costPerTrial: data.costPerTrial,
         maxTrials: data.maxTrialPurchase,
+        range: data.range,
       };
 
       await GameApi.updateNumberGuessingGame(updatePayload);
