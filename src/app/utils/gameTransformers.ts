@@ -81,9 +81,9 @@ export const validateGamePayload = (payload: CreateGamePayload): string[] => {
     errors.push('Game name is required');
   }
 
-  if (payload.fee < 100) {
-    errors.push('Entry fee must be at least ₦100');
-  }
+  // if (payload.fee < 100) {
+  //   errors.push('Entry fee must be at least ₦100');
+  // }
 
   if (payload.prize < 500) {
     errors.push('Game prize must be at least ₦500');

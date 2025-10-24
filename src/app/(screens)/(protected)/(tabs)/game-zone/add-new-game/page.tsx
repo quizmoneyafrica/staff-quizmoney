@@ -179,8 +179,8 @@ function Page() {
       return false;
     }
 
-    if (!game.entryFee || toNumber(game.entryFee) < 100) {
-      toast.error('Please enter a valid entry fee (minimum ₦100)');
+    if (!game.entryFee || toNumber(game.entryFee) < 1) {
+      toast.error('Please enter a valid entry fee (minimum ₦1)');
       const entryFeeField = document.querySelector(
         'input[name="entryFee"]',
       ) as HTMLInputElement;
@@ -226,14 +226,14 @@ function Page() {
       return false;
     }
 
-    if (!game.prizeBetween || toNumber(game.prizeBetween) < 0) {
-      toast.error('Please enter a valid prize percentage');
-      const prizeBetweenField = document.querySelector(
-        'input[name="prizeBetween"]',
-      ) as HTMLInputElement;
-      prizeBetweenField?.focus();
-      return false;
-    }
+    // if (!game.prizeBetween || toNumber(game.prizeBetween) < 0) {
+    //   toast.error('Please enter a valid prize percentage');
+    //   const prizeBetweenField = document.querySelector(
+    //     'input[name="prizeBetween"]',
+    //   ) as HTMLInputElement;
+    //   prizeBetweenField?.focus();
+    //   return false;
+    // }
 
     if (!game.coinPrizeBetween || toNumber(game.coinPrizeBetween) < 0) {
       toast.error('Please enter a valid coin prize percentage');
