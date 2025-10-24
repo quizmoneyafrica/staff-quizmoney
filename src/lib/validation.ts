@@ -54,7 +54,7 @@ export const gameSchema = Joi.object({
     'number.base': 'Coin prize must be a number.',
     'number.min': 'Coin prize must be at least 50.',
   }),
-  questions: Joi.array().items(questionSchema).min(1).required().messages({
+  questions: Joi.array().items(questionSchema).min(0).required().messages({
     'array.min': 'At least one question is required.',
   }),
 });

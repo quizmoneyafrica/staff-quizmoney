@@ -58,10 +58,10 @@ const gameDetailsSchema = Joi.object({
   gameDescription: Joi.string().trim().max(500).allow('').optional().messages({
     'string.max': 'Game description cannot exceed 500 characters',
   }),
-  entryFee: Joi.number().integer().min(100).max(100000).required().messages({
+  entryFee: Joi.number().integer().min(1).max(100000).required().messages({
     'number.base': 'Entry fee must be a valid number',
     'number.integer': 'Entry fee must be a whole number',
-    'number.min': 'Entry fee must be at least ₦100',
+    'number.min': 'Entry fee must be at least ₦1',
     'number.max': 'Entry fee cannot exceed ₦100,000',
     'any.required': 'Entry fee is required',
   }),
