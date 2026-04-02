@@ -79,6 +79,9 @@ importers:
       framer-motion:
         specifier: ^12.9.4
         version: 12.16.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      joi:
+        specifier: ^18.1.2
+        version: 18.1.2
       lucide-react:
         specifier: ^0.511.0
         version: 0.511.0(react@19.1.0)
@@ -1564,6 +1567,44 @@ packages:
       }
     engines: { node: '>=6' }
     hasBin: true
+
+  '@hapi/address@5.1.1':
+    resolution:
+      {
+        integrity: sha512-A+po2d/dVoY7cYajycYI43ZbYMXukuopIsqCjh5QzsBCipDtdofHntljDlpccMjIfTy6UOkg+5KPriwYch2bXA==,
+      }
+    engines: { node: '>=14.0.0' }
+
+  '@hapi/formula@3.0.2':
+    resolution:
+      {
+        integrity: sha512-hY5YPNXzw1He7s0iqkRQi+uMGh383CGdyyIGYtB+W5N3KHPXoqychklvHhKCC9M3Xtv0OCs/IHw+r4dcHtBYWw==,
+      }
+
+  '@hapi/hoek@11.0.7':
+    resolution:
+      {
+        integrity: sha512-HV5undWkKzcB4RZUusqOpcgxOaq6VOAH7zhhIr2g3G8NF/MlFO75SjOr2NfuSx0Mh40+1FqCkagKLJRykUWoFQ==,
+      }
+
+  '@hapi/pinpoint@2.0.1':
+    resolution:
+      {
+        integrity: sha512-EKQmr16tM8s16vTT3cA5L0kZZcTMU5DUOZTuvpnY738m+jyP3JIUj+Mm1xc1rsLkGBQ/gVnfKYPwOmPg1tUR4Q==,
+      }
+
+  '@hapi/tlds@1.1.6':
+    resolution:
+      {
+        integrity: sha512-xdi7A/4NZokvV0ewovme3aUO5kQhW9pQ2YD1hRqZGhhSi5rBv4usHYidVocXSi9eihYsznZxLtAiEYYUL6VBGw==,
+      }
+    engines: { node: '>=14.0.0' }
+
+  '@hapi/topo@6.0.2':
+    resolution:
+      {
+        integrity: sha512-KR3rD5inZbGMrHmgPxsJ9dbi6zEK+C3ZwUwTa+eMwWLz7oijWUTWD2pMSNNYJAU6Qq+65NkxXjqHr/7LM2Xkqg==,
+      }
 
   '@hello-pangea/dnd@18.0.1':
     resolution:
@@ -3161,6 +3202,12 @@ packages:
     resolution:
       {
         integrity: sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==,
+      }
+
+  '@standard-schema/spec@1.1.0':
+    resolution:
+      {
+        integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==,
       }
 
   '@standard-schema/utils@0.3.0':
@@ -6023,6 +6070,13 @@ packages:
         integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==,
       }
     hasBin: true
+
+  joi@18.1.2:
+    resolution:
+      {
+        integrity: sha512-rF5MAmps5esSlhCA+N1b6IYHDw9j/btzGaqfgie522jS02Ju/HXBxamlXVlKEHAxoMKQL77HWI8jlqWsFuekZA==,
+      }
+    engines: { node: '>= 20' }
 
   js-tokens@4.0.0:
     resolution:
@@ -9838,6 +9892,22 @@ snapshots:
       protobufjs: 7.5.3
       yargs: 17.7.2
 
+  '@hapi/address@5.1.1':
+    dependencies:
+      '@hapi/hoek': 11.0.7
+
+  '@hapi/formula@3.0.2': {}
+
+  '@hapi/hoek@11.0.7': {}
+
+  '@hapi/pinpoint@2.0.1': {}
+
+  '@hapi/tlds@1.1.6': {}
+
+  '@hapi/topo@6.0.2':
+    dependencies:
+      '@hapi/hoek': 11.0.7
+
   '@hello-pangea/dnd@18.0.1(@types/react@19.1.6)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
       '@babel/runtime': 7.27.4
@@ -10965,6 +11035,8 @@ snapshots:
   '@socket.io/component-emitter@3.1.2': {}
 
   '@standard-schema/spec@1.0.0': {}
+
+  '@standard-schema/spec@1.1.0': {}
 
   '@standard-schema/utils@0.3.0': {}
 
@@ -12843,6 +12915,16 @@ snapshots:
       supports-color: 8.1.1
 
   jiti@2.4.2: {}
+
+  joi@18.1.2:
+    dependencies:
+      '@hapi/address': 5.1.1
+      '@hapi/formula': 3.0.2
+      '@hapi/hoek': 11.0.7
+      '@hapi/pinpoint': 2.0.1
+      '@hapi/tlds': 1.1.6
+      '@hapi/topo': 6.0.2
+      '@standard-schema/spec': 1.1.0
 
   js-tokens@4.0.0: {}
 
