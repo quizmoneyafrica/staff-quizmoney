@@ -108,7 +108,7 @@ const ChangePasswordPage = () => {
                 type={showNewPassword ? 'text' : 'password'}
                 {...register('newPassword')}
                 placeholder="Enter your password"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className="focus:ring-primary-800 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2"
               />
               <button
                 type="button"
@@ -162,7 +162,7 @@ const ChangePasswordPage = () => {
                 type={showConfirmPassword ? 'text' : 'password'}
                 {...register('confirmPassword')}
                 placeholder="Confirm your password"
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className="focus:ring-primary-800 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition-all focus:border-transparent focus:ring-2"
               />
               <button
                 type="button"
@@ -213,7 +213,7 @@ const ChangePasswordPage = () => {
             type="button"
             onClick={handleSubmit(onSubmit)}
             disabled={!isValid || isLoading}
-            className="mt-8 w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            className="hover:bg-primary-800 mt-8 w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors duration-200 disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             {isLoading ? (
               <div className="flex items-center justify-center gap-2">
@@ -251,7 +251,7 @@ const ChangePasswordPage = () => {
 
               <button
                 onClick={handleSuccessModalClose}
-                className="w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition-colors duration-200 hover:bg-blue-700"
+                className="hover:bg-primary-800 w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition-colors duration-200"
               >
                 Go back to settings
               </button>

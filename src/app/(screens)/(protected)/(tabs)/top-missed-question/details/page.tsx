@@ -51,7 +51,7 @@ const QuestionDetailsPage: React.FC<QuestionDetailsProps> = () => {
 
   const getBarColor = (percentage: number) => {
     if (percentage >= 50) return 'bg-blue-600';
-    if (percentage >= 20) return 'bg-blue-500';
+    if (percentage >= 20) return 'bg-primary-800';
     if (percentage >= 10) return 'bg-blue-400';
     return 'bg-blue-300';
   };

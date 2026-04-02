@@ -1,37 +1,45 @@
-'use client';
+// 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import NumberGuessingGameHistory from './NumberGuessingGameHistory';
+// import { useSearchParams } from 'next/navigation';
+// import { useParams } from 'next/navigation';
+// import { useEffect, useState } from 'react';
+// import NumberGuessingGameHistory from './NumberGuessingGameHistory';
 
-export default function Page() {
-  const params = useParams();
+// export default function Page() {
+//   const params = useParams();
 
-  const searchParams = useSearchParams();
-  const [isMounted, setIsMounted] = useState(false);
+//   const searchParams = useSearchParams();
+//   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+//   useEffect(() => {
+//     setIsMounted(true);
+//   }, []);
 
-  if (!isMounted) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-      </div>
-    );
-  }
+//   if (!isMounted) {
+//     return (
+//       <div className="flex min-h-screen items-center justify-center">
+//         <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+//       </div>
+//     );
+//   }
 
-  const gameId = searchParams?.get('gameId') || '';
-  const status = searchParams?.get('status') || '';
+//   const gameId = searchParams?.get('gameId') || '';
+//   const status = searchParams?.get('status') || '';
 
-  return (
-    <NumberGuessingGameHistory
-      params={params as { id: string }}
-      searchParams={{ gameId, status }}
-    />
-  );
+//   return (
+//     <NumberGuessingGameHistory
+//       params={params as { id: string }}
+//       searchParams={{ gameId, status }}
+//     />
+//   );
+// }
+
+// export const dynamic = 'force-dynamic';
+
+import React from 'react';
+
+function Page() {
+  return <div></div>;
 }
 
-export const dynamic = 'force-dynamic';
+export default Page;

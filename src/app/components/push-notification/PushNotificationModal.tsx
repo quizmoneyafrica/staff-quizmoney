@@ -237,7 +237,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
                       className={`flex items-center gap-2 rounded-md px-6 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                         isEdit
                           ? 'bg-green-500 hover:bg-green-600 focus:ring-green-500'
-                          : 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'
+                          : 'bg-primary-800 focus:ring-primary-800 hover:bg-blue-600'
                       }`}
                     >
                       {loading ? (

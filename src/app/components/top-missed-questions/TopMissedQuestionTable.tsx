@@ -201,7 +201,7 @@ const TopMissedQuestionTable: React.FC<TopMissedQuestionTableProps> = ({
         <p className="mb-4 text-red-600">Failed to load missed questions</p>
         <button
           onClick={() => refetch()}
-          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          className="hover:bg-primary-800 rounded bg-blue-600 px-4 py-2 text-white"
         >
           Try Again
         </button>
@@ -241,7 +241,7 @@ const TopMissedQuestionTable: React.FC<TopMissedQuestionTableProps> = ({
 
         <Button
           onClick={handleExportCSV}
-          className="rounded-full bg-blue-900 px-6 py-2 text-white hover:bg-blue-700"
+          className="hover:bg-primary-800 rounded-full bg-blue-900 px-6 py-2 text-white"
         >
           Export CSV
         </Button>
@@ -314,7 +314,7 @@ const TopMissedQuestionTable: React.FC<TopMissedQuestionTableProps> = ({
                       <Table.Cell className="px-4 py-4">
                         <Button
                           onClick={() => handleViewDetailsClick(question)}
-                          className="rounded-full bg-blue-900 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700"
+                          className="hover:bg-primary-800 rounded-full bg-blue-900 px-4 py-2 text-sm text-white transition-colors"
                         >
                           View Details
                         </Button>

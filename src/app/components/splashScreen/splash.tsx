@@ -1,16 +1,18 @@
 'use client';
-import { useAppSelector } from '@/app/hooks/useAuth';
+import { useAuthStore } from '@/app/lib/auth-store';
+// import { useAppSelector } from '@/app/hooks/useAuth';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 
 export default function Splash() {
   const router = useRouter();
-  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const rehydrated = useAppSelector((s) => s.auth.rehydrated);
+  // const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  // const rehydrated = useAppSelector((s) => s.auth.rehydrated);
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    if (!rehydrated) return;
+    // if (!rehydrated) return;
 
     const timer = setTimeout(() => {
       if (isAuthenticated) {
@@ -18,10 +20,10 @@ export default function Splash() {
       } else {
         router.replace('/login');
       }
-    }, 1000);
+    }, 2000);
 
     return () => clearTimeout(timer);
-  }, [rehydrated, isAuthenticated, router]);
+  }, [isAuthenticated, router]);
 
   return (
     <main

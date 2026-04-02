@@ -1,6 +1,6 @@
 import React from 'react';
-import PlayersParent from '@/app/components/player/PlayersParent';
 import { Metadata } from 'next';
+import PlayersPage from './playerpage';
 
 export const metadata: Metadata = {
   title: 'Players | QM Admin',
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 function Page() {
-  return <PlayersParent />;
+  return <PlayersPage />;
 }
 
 export default Page;

@@ -1,231 +1,220 @@
-import * as React from 'react';
-import { useState } from 'react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@radix-ui/react-dropdown-menu';
-import { WithdrawalRequest } from '@/app/store/withdrawalSlice';
-import { formatDateTime, formatNaira } from '@/app/utils/utils';
-import { CaretSortIcon, DotsVerticalIcon } from '@radix-ui/react-icons';
-import { Avatar, Table } from '@radix-ui/themes';
-import Pagination from '../../leaderboard/Pagination';
+'use client';
 
-interface IWithdrawalTableTableProps {
-  data: WithdrawalRequest[];
-  viewDetails: (data: WithdrawalRequest) => void;
+import { Avatar } from '@radix-ui/themes';
+import { DropdownMenu } from 'radix-ui';
+import { MoreVertical, Eye } from 'lucide-react';
+import { formatNaira, formatDateTime, getInitials } from '@/app/lib/utils';
+import type { WithdrawalRequest } from '@/app/lib/types';
+import WithdrawalStatusBadge from './withdrawalStatusBadge';
+
+interface Props {
+  withdrawals: WithdrawalRequest[];
+  onViewDetails: (w: WithdrawalRequest) => void;
+  // Optional — for full page pagination
+  pagination?: {
+    page: number;
+    totalPages: number;
+    total: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
-const WithdrawalTable: React.FC<IWithdrawalTableTableProps> = ({
-  data,
-  viewDetails,
-}) => {
-  type SortableWithdrawalKeys =
-    | 'id'
-    | 'firstName'
-    | 'amount'
-    | 'balance'
-    | 'status'
-    | 'createdAt';
-
-  const [sortBy, setSortBy] = React.useState<SortableWithdrawalKeys | ''>('');
-  const [sortOrder, setSortOrder] = React.useState<'asc' | 'desc'>('asc');
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const itemsPerPage = 10;
-
-  const handleSort = (key: SortableWithdrawalKeys) => {
-    if (sortBy === key) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(key);
-      setSortOrder('asc');
-    }
-  };
-
-  const sortedData = React.useMemo(() => {
-    if (sortBy) {
-      return data.slice().sort((a, b) => {
-        const order = sortOrder === 'asc' ? 1 : -1;
-        const aValue = a[sortBy] as string | number | Date;
-        const bValue = b[sortBy] as string | number | Date;
-
-        if (aValue < bValue) return -1 * order;
-        if (aValue > bValue) return 1 * order;
-        return 0;
-      });
-    }
-    return data;
-  }, [data, sortBy, sortOrder]);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedData = sortedData?.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(sortedData?.length / itemsPerPage);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+export default function WithdrawalTable({
+  withdrawals,
+  onViewDetails,
+  pagination,
+}: Props) {
+  if (withdrawals.length === 0) {
+    return (
+      <div className="flex h-32 items-center justify-center text-sm text-neutral-400">
+        No withdrawal requests found
+      </div>
+    );
+  }
 
   return (
-    <>
+    <div>
       <div className="overflow-x-auto">
-        <Table.Root
-          variant="ghost"
-          className="min-w-full border-collapse text-sm"
-        >
-          <Table.Header className="bg-primary-50">
-            <Table.Row>
-              <Th label="Request ID" onClick={() => handleSort('id')} />
-              <Th label="First Name" onClick={() => handleSort('firstName')} />
-              <Th
-                label="Wallet Balance"
-                onClick={() => handleSort('balance')}
-              />
-              <Th
-                label="Amount Requested"
-                onClick={() => handleSort('amount')}
-              />
-              <Th
-                label="Withdrawal Status"
-                onClick={() => handleSort('status')}
-              />
-              <Table.Cell className="px-4 py-2 text-left">Action</Table.Cell>
-            </Table.Row>
-          </Table.Header>
-          <Table.Body>
-            {paginatedData?.length > 0 ? (
-              paginatedData.map((item, index) => {
-                const createdAt =
-                  typeof item.createdAt === 'string'
-                    ? item.createdAt
-                    : item.createdAt?.iso || '';
-                const { time, fullDate } = formatDateTime(createdAt);
-
-                return (
-                  <Table.Row key={item.id}>
-                    <Table.Cell className="whitespace-nowrap px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-neutral-50">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-heading font-bold uppercase text-neutral-800">
-                            {/* {item.id} */}
-                            {fullDate}
-                          </p>
-                          <p className="text-xs text-neutral-500">{time}</p>
-                        </div>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary-50 flex h-[40px] w-[40px] items-center justify-center rounded-full p-1">
-                          <Avatar
-                            src=""
-                            fallback={item.firstName?.charAt(0).toUpperCase()}
-                            radius="full"
-                            className="bg-primary-50"
-                          />
-                        </div>
-                        <p className="text-primary-800 capitalize">
-                          {item.firstName}
-                        </p>
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      {formatNaira(Number(item.balance), true)}
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      {formatNaira(Number(item.amount), true)}
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <p
-                        className={`font-heading w-fit rounded-full px-4 py-2 text-center capitalize ${
-                          item.status === 'APPROVED'
-                            ? 'bg-green-100 text-green-800'
-                            : item.status === 'REJECTED'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-neutral-100 text-left text-xs font-medium text-neutral-500">
+              <th className="px-6 py-3">Request ID</th>
+              <th className="px-6 py-3">Username</th>
+              <th className="px-6 py-3">Amount Requested</th>
+              <th className="px-6 py-3">Bank</th>
+              <th className="px-6 py-3">Withdrawal Status</th>
+              <th className="px-6 py-3">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-50">
+            {withdrawals.map((w) => (
+              <tr
+                key={w.id}
+                className="cursor-pointer transition-colors hover:bg-neutral-50"
+                onClick={() => onViewDetails(w)}
+              >
+                {/* Request ID */}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-neutral-100 p-2">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-neutral-500"
                       >
-                        {item.status}
+                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                        <line x1="2" y1="10" x2="22" y2="10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="font-medium text-neutral-800">
+                        ID{w.id.slice(0, 3).toUpperCase()}...
+                        {w.id.slice(0, 7).toUpperCase()}
                       </p>
-                    </Table.Cell>
-                    <Table.Cell className="px-4 py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button>
-                            <DotsVerticalIcon />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          side="bottom"
-                          align="start"
-                          className="z-50 w-40 rounded-md border bg-white p-1 shadow-md"
+                      <p className="text-xs text-neutral-400">
+                        {formatDateTime(w.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+
+                {/* Username */}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <Avatar
+                      fallback={getInitials(w.players?.username ?? 'U')}
+                      radius="full"
+                      className="bg-primary-50 p-2 text-xs text-[#00000090]"
+                    />
+
+                    <span className="text-primary-700 font-medium capitalize">
+                      {w.players?.username ?? '—'}
+                    </span>
+                  </div>
+                </td>
+
+                {/* Amount */}
+                <td className="px-6 py-4 font-medium text-neutral-800">
+                  {w.amount_formatted ?? formatNaira(w.amount)}
+                </td>
+
+                {/* Bank */}
+                <td className="px-6 py-4">
+                  <p className="text-neutral-700">
+                    {w.player_bank_accounts?.bank_name ?? '—'}
+                  </p>
+                  <p className="text-xs text-neutral-400">
+                    {w.player_bank_accounts?.account_number}
+                  </p>
+                </td>
+
+                {/* Status */}
+                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                  <WithdrawalStatusBadge status={w.status} />
+                </td>
+
+                {/* Action */}
+                <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <button className="cursor-pointer rounded-full p-1 transition-colors hover:bg-neutral-100">
+                        <MoreVertical size={16} className="text-neutral-500" />
+                      </button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        className="DropdownMenuContent"
+                        sideOffset={4}
+                      >
+                        <DropdownMenu.Item
+                          className="DropdownMenuItem"
+                          onSelect={() => onViewDetails(w)}
                         >
-                          <DropdownMenuItem
-                            className="hover:bg-primary-50 text-primary-900 cursor-pointer rounded px-2 py-1 text-sm font-medium"
-                            // onClick={() => viewDetails(item)}
-                            onClick={() => {
-                              viewDetails(item);
-                              // setSelectedTransaction(transaction);
-                              setIsModalOpen(true);
-                            }}
-                          >
-                            View Details
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </Table.Cell>
-                  </Table.Row>
+                          View Details
+                          <span className="RightSlot">
+                            <Eye size={14} />
+                          </span>
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination — only shown on full page */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-neutral-100 px-6 py-4">
+          <p className="text-xs text-neutral-500">
+            Showing {withdrawals.length} of {pagination.total} requests
+          </p>
+          <div className="flex items-center gap-1">
+            <PageBtn
+              onClick={() => pagination.onPageChange(pagination.page - 1)}
+              disabled={pagination.page <= 1}
+            >
+              ‹
+            </PageBtn>
+            {Array.from(
+              { length: Math.min(5, pagination.totalPages) },
+              (_, i) => {
+                const page = i + 1;
+                return (
+                  <PageBtn
+                    key={page}
+                    onClick={() => pagination.onPageChange(page)}
+                    active={pagination.page === page}
+                  >
+                    {page}
+                  </PageBtn>
                 );
-              })
-            ) : (
-              <Table.Row>
-                <Table.Cell
-                  colSpan={6}
-                  className="text-error-500 py-12 text-center font-bold"
-                >
-                  No Pending Request
-                </Table.Cell>
-              </Table.Row>
+              },
             )}
-          </Table.Body>
-        </Table.Root>
-      </div>
-
-      <div className="mt-4 flex flex-col items-center gap-4 p-4 md:flex-row md:justify-between">
-        <div className="text-sm text-gray-500">
-          Showing data {startIndex + 1} to{' '}
-          {Math.min(endIndex, sortedData?.length)} of {sortedData?.length}{' '}
-          entries
+            {pagination.totalPages > 5 && (
+              <span className="px-1 text-neutral-400">…</span>
+            )}
+            <PageBtn
+              onClick={() => pagination.onPageChange(pagination.page + 1)}
+              disabled={pagination.page >= pagination.totalPages}
+            >
+              ›
+            </PageBtn>
+          </div>
         </div>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      </div>
-    </>
+      )}
+    </div>
   );
-};
-
-export default WithdrawalTable;
-
-interface ThProps {
-  label: string;
-  onClick: () => void;
 }
 
-const Th: React.FC<ThProps> = ({ label, onClick }) => (
-  <Table.Cell className="cursor-pointer px-4 py-2 text-left" onClick={onClick}>
-    <div className="flex items-center gap-1">
-      <span>{label}</span>
-      <CaretSortIcon />
-    </div>
-  </Table.Cell>
-);
+function PageBtn({
+  children,
+  onClick,
+  disabled,
+  active,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`min-w-7 h-7 rounded px-2 text-xs font-medium transition ${
+        active
+          ? 'bg-primary-800 text-white'
+          : 'text-neutral-600 hover:bg-neutral-100 disabled:opacity-40'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}

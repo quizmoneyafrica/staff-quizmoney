@@ -1,5 +1,3 @@
-'use client';
-
 import * as React from 'react';
 import { Spinner } from '@radix-ui/themes';
 import { cn } from './utils';

@@ -1,5 +1,3 @@
-import CryptoJS from 'crypto-js';
-
 const SECRET_KEY: string = process.env.NEXT_PUBLIC_SECRET_KEY || '';
 
 export const encryptData = (data: object): string => {

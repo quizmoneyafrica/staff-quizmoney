@@ -57,7 +57,7 @@ const NotificationSuccessPopup: React.FC<NotificationSuccessPopupProps> = ({
                     {[...Array(12)].map((_, i) => (
                       <motion.div
                         key={i}
-                        className="absolute h-2 w-2 rounded-full bg-gradient-to-r from-green-400 to-blue-500"
+                        className="bg-linear-to-r to-primary-800 absolute h-2 w-2 rounded-full from-green-400"
                         initial={{
                           x: Math.random() * 300 - 150,
                           y: -20,
@@ -94,7 +94,7 @@ const NotificationSuccessPopup: React.FC<NotificationSuccessPopupProps> = ({
                     damping: 15,
                     stiffness: 300,
                   }}
-                  className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-green-400 to-green-500 shadow-lg"
+                  className="bg-linear-to-r mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full from-green-400 to-green-500 shadow-lg"
                 >
                   <CheckCircle className="h-8 w-8 text-white" />
                 </motion.div>
@@ -121,7 +121,7 @@ const NotificationSuccessPopup: React.FC<NotificationSuccessPopupProps> = ({
                 >
                   <div className="rounded-lg bg-gray-50 p-4">
                     <div className="mb-2 flex items-center gap-3">
-                      <Send className="h-4 w-4 text-blue-500" />
+                      <Send className="text-primary-800 h-4 w-4" />
                       <span className="text-sm font-medium text-gray-700">
                         Notification Title
                       </span>
@@ -131,9 +131,9 @@ const NotificationSuccessPopup: React.FC<NotificationSuccessPopupProps> = ({
                     </p>
                   </div>
 
-                  <div className="rounded-lg bg-gradient-to-r from-blue-50 to-green-50 p-4">
+                  <div className="bg-linear-to-r rounded-lg from-blue-50 to-green-50 p-4">
                     <div className="mb-2 flex items-center gap-3">
-                      <Users className="h-4 w-4 text-blue-500" />
+                      <Users className="text-primary-800 h-4 w-4" />
                       <span className="text-sm font-medium text-gray-700">
                         Recipients
                       </span>
@@ -164,7 +164,7 @@ const NotificationSuccessPopup: React.FC<NotificationSuccessPopupProps> = ({
                         duration: 3.4,
                         ease: 'easeInOut',
                       }}
-                      className="h-full rounded-full bg-gradient-to-r from-green-400 to-blue-500"
+                      className="bg-linear-to-r to-primary-800 h-full rounded-full from-green-400"
                     />
                   </div>
                   <p className="mt-2 text-center text-xs text-gray-500">
@@ -177,7 +177,7 @@ const NotificationSuccessPopup: React.FC<NotificationSuccessPopupProps> = ({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.7 }}
-                    className="absolute right-4 top-4 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="focus:ring-primary-800 absolute right-4 top-4 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
                   >
                     <X className="h-5 w-5" />
                   </motion.button>

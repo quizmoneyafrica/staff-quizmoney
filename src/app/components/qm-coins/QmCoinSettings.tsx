@@ -42,7 +42,7 @@ const FormField = ({
   };
 
   const baseClasses =
-    'h-[55px] rounded-[5px] border border-[#00000080] bg-white px-3 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors';
+    'h-[55px] rounded-[5px] border border-[#00000080] bg-white px-3 py-2 outline-none focus:border-primary-800 focus:ring-1 focus:ring-primary-800 transition-colors';
   const sizeClasses = size === 'standard' ? 'w-[300px]' : 'w-[621px]';
 
   if (isSelect) {

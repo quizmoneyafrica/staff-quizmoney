@@ -4,12 +4,12 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { Flex, Text } from '@radix-ui/themes';
 import { usePathname, useRouter } from 'next/navigation';
-import { NavItem } from '@/app/layout/nav';
+import { navs } from '@/app/layout/nav';
 
 interface NavDropdownProps {
   icon: React.ReactNode;
   title: string;
-  items: NavItem[];
+  items: Array<(typeof navs)[number]>;
 }
 
 export function NavDropdown({ icon, title, items }: NavDropdownProps) {

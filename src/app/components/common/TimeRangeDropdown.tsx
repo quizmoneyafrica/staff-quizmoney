@@ -164,7 +164,7 @@ const TimeRangeDropdown = ({
                 ? 'cursor-not-allowed opacity-30'
                 : 'cursor-pointer hover:bg-gray-100'
             }
-            ${isSelected ? 'hover:bg-blue-700' : ''}
+            ${isSelected ? 'hover:bg-primary-800' : ''}
           `}
         >
           {day.getDate()}
@@ -229,7 +229,7 @@ const TimeRangeDropdown = ({
             {selected === 'Custom' && customDateRange && (
               <span className="w-4"></span>
             )}
-            <ChevronDownIcon className="h-3 w-3 flex-shrink-0" />
+            <ChevronDownIcon className="h-3 w-3 shrink-0" />
           </DropdownMenu.Trigger>
           {selected === 'Custom' && customDateRange && (
             <button
@@ -303,7 +303,7 @@ const TimeRangeDropdown = ({
                   <button
                     onClick={handleApply}
                     disabled={!startDate || !endDate}
-                    className="rounded bg-blue-600 px-3 py-1 text-xs text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                    className="hover:bg-primary-800 rounded bg-blue-600 px-3 py-1 text-xs text-white transition-colors disabled:cursor-not-allowed disabled:bg-gray-300"
                   >
                     Apply
                   </button>

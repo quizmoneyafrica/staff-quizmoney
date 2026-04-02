@@ -1,8 +1,8 @@
 import React from 'react';
-import GameZone from './gameZone';
+import GameZonePage from './live-game/gamezone';
 
 function Page() {
-  return <GameZone />;
+  return <GameZonePage />;
 }
 
 export default Page;

@@ -1,6 +1,6 @@
 import AppHeader from '@/app/layout/appHeader';
 import SidebarNav from '@/app/layout/SidebarNav';
-import ProtectedRoute from '@/app/security/protectedRoute';
+import ProtectedRoute from '@/components/protected-route';
 
 export default function ProtectedLayout({
   children,
@@ -9,9 +9,9 @@ export default function ProtectedLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="grid-areas-mobile lg:grid-areas-desktop grid grid-cols-1 lg:h-screen lg:grid-cols-[250px_1fr] lg:grid-rows-1">
+      <div className="grid grid-cols-1 lg:h-screen lg:grid-cols-[250px_1fr]">
         <SidebarNav />
-        <main className="grid-in-content min-h-screen bg-[#F7F7F7] lg:h-screen">
+        <main className="min-h-screen bg-[#F7F7F7] lg:h-screen">
           <div className="h-full overflow-y-auto px-6 pb-24 pt-4 lg:pb-6">
             <AppHeader />
             {children}

@@ -21,7 +21,7 @@ const ReferralSettingsConfiguration: React.FC<
       </div>
       <Button
         onClick={onConfigure}
-        className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+        className="hover:bg-primary-800 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white"
       >
         View Current Settings
       </Button>

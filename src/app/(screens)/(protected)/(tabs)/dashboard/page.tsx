@@ -1,11 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
-import DashboardApi from '@/app/api/dashboardApi';
-import DashboardCards, {
-  DashboardCardsLoading,
-} from '@/app/components/screens/dashboard/Cards';
+
+import { useState } from 'react';
+import { useAuthStore } from '@/app/lib/auth-store';
+import { useDashboardStats, useBasicDashboardStats } from '@/app/lib/queries';
+import { hasPermission } from '@/app/lib/permissions';
+import { formatNaira } from '@/app/lib/utils';
 import LastGameWinners from '@/app/components/screens/dashboard/LastGameWinners';
 import NextLiveGame from '@/app/components/screens/dashboard/NextLiveGame';
 import RecentWithdraw from '@/app/components/screens/dashboard/RecentWithdraw';
+import StatCard from '@/app/components/screens/dashboard/Cards';
 import {
   EyeIcon,
   EyeSlash,
@@ -16,103 +20,119 @@ import {
   WalletCardIcon,
   WalletIconBig,
 } from '@/app/icons/icons';
-import { formatNaira } from '@/app/utils/utils';
-import { useQuery } from '@tanstack/react-query';
-import React, { useState } from 'react';
-import { convertToLocaleString } from '@/app/utils';
-import { useAppSelector } from '@/app/hooks/useAuth';
+export default function DashboardPage() {
+  const [showBalance, setShowBalance] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const canSeeFull = user ? hasPermission(user.role, 'dashboard.full') : false;
 
-function Page() {
-  const [showTotalAmount, setShowTotalAmount] = useState(false);
-  const user = useAppSelector((s) => s.auth.userEncryptedData);
+  const fullQuery = useDashboardStats();
+  const basicQuery = useBasicDashboardStats();
 
-  const { data: dashboardSummary, isLoading } = useQuery({
-    queryKey: ['dashboardSummary'],
-    queryFn: DashboardApi.fetchDashboardSummary,
-  });
+  const { data, isLoading } = canSeeFull ? fullQuery : basicQuery;
+
+  const totalPlayers = data?.players?.total ?? 0;
+  const lastGamePlayers = data?.games?.recent?.[0]?.total_players ?? 0;
+  const totalDeposits =
+    canSeeFull && 'revenue' in (data ?? {})
+      ? (data as any).revenue?.total_deposits_kobo ?? 0
+      : null;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {isLoading ? (
-          <DashboardCardsLoading />
-        ) : (
-          <DashboardCards
-            bgImage={<UsersIconBig />}
-            title="Total No of Users"
-            bgColor="blue"
-            icon={<UsersIcon />}
-          >
-            <p>{convertToLocaleString(dashboardSummary?.totalUsers) ?? 0}</p>
-          </DashboardCards>
-        )}
-        {isLoading ? (
-          <DashboardCardsLoading />
-        ) : (
-          <DashboardCards
-            bgImage={<GameIconBig />}
-            title="No of last game players"
-            bgColor="green"
-            icon={<GameIcon />}
-          >
-            <p>
-              {convertToLocaleString(dashboardSummary?.lastGamePlayers) ?? 0}
-            </p>
-          </DashboardCards>
-        )}
+        <StatCard
+          bgImage={<UsersIconBig />}
+          title="Total Users"
+          icon={<UsersIcon />}
+          bgColor="blue"
+          loading={isLoading}
+        >
+          <p className="text-primary-900 text-2xl font-bold">
+            {totalPlayers.toLocaleString()}
+          </p>
+        </StatCard>
 
-        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && isLoading && (
-          <DashboardCardsLoading />
-        )}
+        <StatCard
+          bgImage={<GameIconBig />}
+          title="Last Game Players"
+          icon={<GameIcon />}
+          bgColor="green"
+          loading={isLoading}
+        >
+          <p className="text-positive-900 text-2xl font-bold">
+            {lastGamePlayers.toLocaleString()}
+          </p>
+        </StatCard>
 
-        {['SUPER_ADMIN', 'MANAGER'].includes(user?.role) && !isLoading && (
-          <DashboardCards
+        {canSeeFull && (
+          <StatCard
             bgImage={<WalletIconBig />}
-            title="Available Wallet Balance"
-            bgColor="cyan"
+            title="Total Deposits"
             icon={<WalletCardIcon />}
+            bgColor="cyan"
+            loading={isLoading}
+            action={
+              <button
+                type="button"
+                onClick={() => setShowBalance((v) => !v)}
+                className="cursor-pointer text-neutral-400 hover:text-neutral-600"
+              >
+                {showBalance ? <EyeIcon /> : <EyeSlash />}
+              </button>
+            }
           >
-            <p>
-              {showTotalAmount ? (
-                <span>
-                  {formatNaira(
-                    Number(dashboardSummary?.availableWalletBalance || 0),
-                    true,
-                  )}
-                </span>
-              ) : (
-                <span>********</span>
-              )}
+            <p className="text-secondary-900 text-2xl font-bold">
+              {showBalance ? formatNaira(totalDeposits ?? 0) : '₦ ••••••'}
             </p>
-            {showTotalAmount ? (
-              <button
-                className="cursor-pointer"
-                type="button"
-                onClick={() => setShowTotalAmount(!showTotalAmount)}
-              >
-                <EyeIcon />
-              </button>
-            ) : (
-              <button
-                className="cursor-pointer"
-                type="button"
-                onClick={() => setShowTotalAmount(!showTotalAmount)}
-              >
-                <EyeSlash />
-              </button>
-            )}
-          </DashboardCards>
+          </StatCard>
         )}
       </div>
-      <div className="grid w-full  grid-cols-1 gap-y-10 lg:grid-cols-3 lg:gap-4">
-        <LastGameWinners />
-        <NextLiveGame />
+
+      {/* Middle row */}
+      <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <LastGameWinners />
+        </div>
+        <div className="lg:col-span-2">
+          <NextLiveGame />
+        </div>
       </div>
-      <div className="w-full rounded-lg bg-white ">
+
+      {/* Recent Withdrawals */}
+      <div className="w-full rounded-xl bg-white">
         <RecentWithdraw />
       </div>
     </div>
   );
 }
 
-export default Page;
+// ─── Stat Card ────────────────────────────────────────────────
+
+// interface StatCardProps {
+//   title: string
+//   icon: React.ReactNode
+//   bgColor: string
+//   loading: boolean
+//   children: React.ReactNode
+//   action?: React.ReactNode
+// }
+
+// function StatCard({ title, icon, bgColor, loading, children, action }: StatCardProps) {
+//   if (loading) {
+//     return <div className="h-28 w-full animate-pulse rounded-xl bg-neutral-200" />
+//   }
+
+//   return (
+//     <div className="flex items-center justify-between rounded-xl bg-white p-5 shadow-sm">
+//       <div className="space-y-1">
+//         <p className="text-sm text-neutral-500">{title}</p>
+//         {children}
+//       </div>
+//       <div className="flex flex-col items-end gap-2">
+//         <div className={`${bgColor} rounded-full p-3`}>{icon}</div>
+//         {action}
+//       </div>
+//     </div>
+//   )
+// }

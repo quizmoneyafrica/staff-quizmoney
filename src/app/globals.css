@@ -349,6 +349,9 @@ h6,
 .rt-Heading {
   font-family: var(--dmsans) !important;
 }
+button {
+  cursor: pointer;
+}
 #bg-main {
   position: relative;
   min-height: 100vh;

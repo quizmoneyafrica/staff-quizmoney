@@ -1,134 +1,57 @@
 import {
-  CupIcon,
-  HomeIcon,
-  LogoutIcon,
-  SettingIcon,
-  StoreIcon,
-  SupportIcon,
-  WalletIcon,
-  // BellIcon,
-  UsersIcon,
-  GameIconSP,
-  WithdrawalIcon,
-  AdminManagementIcon,
-  QmCoinNavIcon,
-  MissedQuestionIcon,
-} from '../icons/icons';
-import { UserPlus } from 'lucide-react';
-import { ROUTES } from '@/app/utils';
+  LayoutDashboard,
+  Gamepad2,
+  Users,
+  ArrowDownToLine,
+  TrendingUp,
+  Coins,
+  Bell,
+  ShieldCheck,
+  Settings,
+  LogOut,
+  Trophy,
+  Network,
+} from 'lucide-react';
 
-export interface NavItem {
-  icon: React.ReactNode;
-  path?: string;
-  name: string;
-  isDropdown?: boolean;
-  items?: NavItem[];
-}
-
-export const navs: NavItem[] = [
+export const navs = [
   {
-    icon: <HomeIcon />,
-    path: ROUTES.DASHBOARD,
     name: 'Dashboard',
+    path: '/dashboard',
+    icon: <LayoutDashboard size={18} />,
   },
+  { name: 'Game Zone', path: '/game-zone', icon: <Gamepad2 size={18} /> },
+  { name: 'Players', path: '/players', icon: <Users size={18} /> },
   {
-    icon: <WalletIcon />,
-    path: ROUTES.SALES,
-    name: 'Sales',
+    name: 'Withdrawals',
+    path: '/withdrawal-request',
+    icon: <ArrowDownToLine size={18} />,
   },
+  { name: 'Sales', path: '/sales', icon: <TrendingUp size={18} /> },
+  { name: 'QM Coins', path: '/qm-coins', icon: <Coins size={18} /> },
+  { name: 'Leaderboard', path: '/leaderboard', icon: <Trophy size={18} /> },
   {
-    icon: <StoreIcon />,
-    path: ROUTES.PRODUCTS,
-    name: 'Products',
-  },
-  {
-    isDropdown: true,
-    icon: <GameIconSP />,
-    name: 'Game Zone',
-    items: [
-      {
-        name: 'Live Game Questions',
-        path: '/game-zone',
-        icon: <GameIconSP />,
-      },
-      {
-        name: 'Top Missed Questions',
-        path: ROUTES.TOP_MISSED_QUESTION,
-        icon: <MissedQuestionIcon />,
-      },
-      {
-        name: 'Memory Game',
-        path: '/memory-game',
-        icon: <GameIconSP />,
-      },
-      {
-        name: 'Perfect Score',
-        path: '/perfect-score',
-        icon: <GameIconSP />,
-      },
-      {
-        name: 'Number Guessing',
-        path: '/number-guessing',
-        icon: <GameIconSP />,
-      },
-    ],
-  },
-  {
-    icon: <UsersIcon />,
-    path: ROUTES.PLAYERS,
-    name: 'Players',
-  },
-  {
-    icon: <WalletIcon />,
-    path: ROUTES.WALLET,
-    name: 'Wallet',
-  },
-  {
-    icon: <WithdrawalIcon />,
-    path: ROUTES.WITHDRAWAL_REQUEST,
-    name: 'Withdrawal Request',
-  },
-  {
-    icon: <CupIcon />,
-    path: ROUTES.LEADERBOARD,
-    name: 'Leaderboard',
-  },
-  {
-    icon: <QmCoinNavIcon />,
-    path: ROUTES.QM_COINS,
-    name: 'QM Coins',
-  },
-  {
-    icon: <UserPlus />,
-    path: ROUTES.REFERRAL_MANAGEMENT,
     name: 'Referral Management',
+    path: '/referral-management',
+    icon: <Network size={18} />,
   },
   {
-    icon: <AdminManagementIcon />,
-    path: ROUTES.ADMIN_MANAGEMENT,
+    name: 'Push Notifications',
+    path: '/push-notification',
+    icon: <Bell size={18} />,
+  },
+  {
     name: 'Admin Management',
+    path: '/admin-management',
+    icon: <ShieldCheck size={18} />,
   },
-  // {
-  //   icon: <BellIcon />,
-  //   path: ROUTES.PUSH_NOTIFICATION,
-  //   name: 'Push Notification',
-  // },
   {
-    icon: <SettingIcon />,
-    path: ROUTES.SETTINGS,
-    name: 'Settings',
+    name: 'Platform Settings',
+    path: '/platform-settings',
+    icon: <Settings size={18} />,
   },
 ];
 
 export const bottomNav = [
-  // {
-  //   icon: <SupportIcon />,
-  //   path: '/support',
-  //   name: 'Support',
-  // },
-  {
-    icon: <LogoutIcon />,
-    path: '/',
-    name: 'Logout',
-  },
+  { name: 'Settings', path: '/settings', icon: <Settings size={18} /> },
+  { name: 'Logout', path: null, icon: <LogOut size={18} /> },
 ];

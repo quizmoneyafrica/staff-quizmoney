@@ -41,7 +41,7 @@ export default function QmDrawer({
           <div className="flex flex-1 flex-col overflow-hidden rounded-t-[10px] md:rounded-[10px] md:bg-white">
             {/* Scrollable content wrapper */}
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="mx-auto mb-4 h-1.5 w-12 flex-shrink-0 rounded-full bg-gray-300 " />
+              <div className="mx-auto mb-4 h-1.5 w-12 shrink-0 rounded-full bg-gray-300 " />
 
               {title && (
                 <Drawer.Title

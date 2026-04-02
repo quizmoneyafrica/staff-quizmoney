@@ -1,10 +1,8 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useAppDispatch } from '@/app/hooks/useAuth';
-import { logout } from '@/app/store/authSlice';
 import React, { useState } from 'react';
-import { persistor } from '@/app/store/store';
 import Modal from '../modal/ModalWindow';
+import { useLogout } from '@/app/lib/queries';
 
 type Props = {
   open: boolean;
@@ -13,15 +11,13 @@ type Props = {
 
 const LogoutDialog = ({ open, onOpenChange }: Props) => {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
+  const { mutate: logoutMutate } = useLogout();
 
   const handleLogout = async () => {
     setLoading(true);
 
-    dispatch(logout());
-
-    await persistor.purge();
+    logoutMutate();
 
     setLoading(false);
     onOpenChange(false);

@@ -64,7 +64,7 @@ const DeleteConfirmationModal: React.FunctionComponent<
             <button
               onClick={handleConfirm}
               disabled={isLoading}
-              className="flex cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-900 px-6 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="hover:bg-primary-800 flex cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-900 px-6 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               {isLoading ? 'Deleting...' : 'Yes, Delete'}
