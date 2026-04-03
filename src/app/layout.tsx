@@ -23,6 +23,7 @@ export const metadata: Metadata = {
   generator: 'Quiz Money Admin',
   applicationName: 'Quiz Money Admin',
   referrer: 'origin-when-cross-origin',
+  metadataBase: new URL('https://staff.quizmoney.ng'),
   alternates: {
     canonical: 'https://app.quizmoney.ng',
     languages: {
