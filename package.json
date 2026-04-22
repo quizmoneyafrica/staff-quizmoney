@@ -12,7 +12,8 @@
     "postinstall": "husky install",
     "lint:fix": "npm run lint --fix",
     "ts-error": "./node_modules/.bin/tsc",
-    "pipeline": "./deploy.sh snippet"
+    "pipeline": "./deploy.sh snippet",
+    "test": "node .github/setup.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
